@@ -1,0 +1,35 @@
+import { useState } from 'react';
+import { Game, hasSave } from '../game/game';
+import { ELEMENT_COLOR, ELEMENT_LABEL, SPECIES, STARTERS } from '../game/content';
+import { monsterPortrait } from '../render/art';
+
+export function StartMenu({game}:{game:Game}) {
+  const [choosing,setChoosing]=useState(false);
+  const [seed,setSeed]=useState('');
+  return <div className="start-screen">
+    <img className="start-art" src="/art/trio-elemental-web.png" alt="" aria-hidden="true"/>
+    <div className="start-card">
+      <div className="eyebrow">UMA AVENTURA ENTRE MUNDOS</div>
+      <h1>Cartas <span>&</span> Monstros</h1>
+      <p className="subtitle">Explore uma região viva, crie laços com criaturas elementais e reúna os três selos.</p>
+      {choosing?<>
+        <div className="small-heading">Escolha seu primeiro companheiro</div>
+        <div className="starter-grid">
+          {STARTERS.map(id=>{
+            const s=SPECIES[id];return <button className="starter-card" key={id} onClick={()=>game.newGame(id,seed.trim()?Number(seed):undefined)}>
+              <img src={monsterPortrait(id)} alt={s.name}/>
+              <strong>{s.name}</strong><span style={{color:ELEMENT_COLOR[s.element]}}>{ELEMENT_LABEL[s.element]}</span>
+              <small>{s.description}</small>
+            </button>;
+          })}
+        </div>
+        <label className="seed-label">Semente do mundo (opcional)<input type="number" value={seed} onChange={event=>setSeed(event.target.value)} placeholder="Aleatória"/></label>
+        <button className="subtle-link" onClick={()=>setChoosing(false)}>Voltar</button>
+      </>:<div className="start-actions">
+        <button className="primary" onClick={()=>setChoosing(true)}>Nova aventura <span>→</span></button>
+        {hasSave()?<button className="secondary" onClick={()=>game.continueGame()}>Continuar jornada</button>:null}
+      </div>}
+      <div className="start-foot">Um RPG de exploração, cartas e encontros visíveis • Desktop e celular</div>
+    </div>
+  </div>;
+}

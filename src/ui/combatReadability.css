@@ -1,0 +1,50 @@
+.combatant.enemy{min-width:250px}
+.battle-finish-label{position:absolute;top:max(56px,calc(env(safe-area-inset-top) + 50px));left:50%;transform:translateX(-50%);min-width:190px;padding:7px 20px 9px;text-align:center;border:1px solid #eac27c;border-radius:11px;background:rgba(19,43,53,.89);box-shadow:0 9px 27px #08182066;opacity:0;animation:battleVictoryIn .3s .55s forwards}
+.battle-finish-label span,.battle-finish-label small{display:block;font-family:Consolas,monospace;font-size:10px;font-weight:800;letter-spacing:.12em;color:#f9d58d}
+.battle-finish-label strong{display:block;margin:2px 0;font-family:Georgia,serif;font-size:17px;color:#fff2d4;white-space:nowrap}
+.battle-finish-label small{font-size:9px;letter-spacing:.04em;color:#e5e4bf}
+@keyframes battleVictoryIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(max-width:950px) and (orientation:landscape){
+  .battle-finish-label{left:auto;right:max(10px,env(safe-area-inset-right));top:max(48px,calc(env(safe-area-inset-top) + 43px));min-width:0;padding:6px 11px 7px;transform:none;animation:battleVictoryMobile .3s .55s forwards}
+  .battle-finish-label strong{font-size:13px}
+  .battle-finish-label span,.battle-finish-label small{font-size:8px}
+}
+@keyframes battleVictoryMobile{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.enemy-attack-meter{display:block;margin-top:6px;padding-top:5px;border-top:1px solid rgba(174,207,194,.24)}
+.enemy-attack-meter>span:first-child{display:block;color:#ffe2ad;font-size:10px;font-weight:800;white-space:nowrap}
+.enemy-attack-meter .enemy-attack-track{display:block;height:6px;margin:4px 0 2px;border-radius:8px;overflow:hidden;background:#142b39}
+.enemy-attack-track i{display:block;height:100%;width:0;background:#73d6d1;border-radius:8px;transition:background .12s}
+.enemy-attack-track i.winding{background:#ff765e;box-shadow:0 0 8px #ff765e}
+.enemy-attack-track i.recovering{background:#d6bd70;box-shadow:0 0 6px #d6bd7080}
+.enemy-attack-meter small{font-size:9px;color:#b9cfca}
+
+.collection-panel .creature-list{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}
+.collection-panel .creature-card{display:block;padding:10px;text-align:left}
+.collection-panel .creature-card-select{display:block;width:100%;padding:0;border:0;background:none;color:inherit;text-align:left}
+.collection-panel .creature-card-details{display:block;width:100%;margin-top:7px;padding:6px;border:1px solid #8eae9a;border-radius:6px;background:#1c4250;color:#f0d7a8;font-size:10px;font-weight:800}
+.collection-panel .creature-card-details:hover,.collection-panel .creature-card-details:focus-visible{border-color:#f2c681;background:#2b5660}
+.collection-panel .creature-card-head{display:flex;align-items:center;gap:9px}
+.collection-panel .creature-card-head img{display:block;flex:none;width:72px;height:72px;object-fit:contain;background:#32545b;border-radius:8px}
+.collection-panel .creature-card-head>span{display:block;min-width:0}
+.collection-panel .creature-card-head strong{display:block;font-size:15px}
+.collection-panel .creature-card-head em{display:block;font-size:10px;font-style:normal;font-weight:800;text-transform:uppercase;letter-spacing:.09em}
+.collection-panel .creature-card-head small{display:block;color:#c3d3c8;font-size:10px}
+.collection-panel .creature-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:9px}
+.collection-panel .creature-stats span{display:block;padding:5px 1px;border-radius:5px;background:#1a3948;color:#a8c9c6;text-align:center;font-size:9px;font-weight:800}
+.collection-panel .creature-stats b{display:block;color:#fff0cb;font-size:13px}
+.collection-panel .creature-xp-label{display:flex;justify-content:space-between;margin-top:9px;color:#bdd4cf;font-size:10px;font-weight:800}
+.collection-panel .creature-xp-label b{color:#f4c586}
+.collection-panel .creature-xp-track{display:block;height:6px;margin-top:4px;background:#17303d;border-radius:6px;overflow:hidden}
+.collection-panel .creature-xp-track i{display:block;height:100%;background:#f0ba75;border-radius:6px}
+.collection-panel .creature-card-action{display:block;margin-top:7px;color:#e6d0a9;font-size:10px;text-align:right}
+@media(max-width:650px){.combatant.enemy{min-width:0}.enemy-attack-meter>span:first-child{font-size:9px}.collection-panel .creature-list{grid-template-columns:1fr}}
+@media(max-width:950px) and (max-height:500px) and (orientation:landscape){
+  .game-app .battle-top .combatant.enemy{width:218px;min-width:0;padding:4px 8px 4px 4px}
+  .game-app .battle-bottom{top:190px}
+  .game-app .battle-bottom .combatant.ally{width:218px;min-width:0}
+  .game-app .battle-party{position:fixed;top:113px;right:11px;left:auto}
+  .enemy-attack-meter{margin-top:3px;padding-top:3px}
+  .enemy-attack-meter small{display:none}
+}
+.battle-statuses{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.battle-status{display:inline-flex;align-items:center;gap:3px;background:#102933e8;border:1px solid var(--status-color);border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800;color:var(--status-color);white-space:nowrap}.battle-status img{width:16px;height:16px;object-fit:contain;image-rendering:pixelated}.battle-status b{color:#e9e2c9;margin-left:3px}
+.combatant .battle-statuses{display:flex;flex:none;gap:3px;margin-top:4px}.combatant .battle-status{line-height:1;padding:2px 4px}.combatant .battle-status img{width:18px;height:18px;background:none;border-radius:0}.combatant .battle-status b{font-size:9px}

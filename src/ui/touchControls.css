@@ -1,0 +1,5 @@
+.touch-controls .touch-jump{position:absolute;right:17px;bottom:16px;display:grid;place-items:center;width:83px;height:62px;border:2px solid #efd39d;border-radius:50%;background:#d09c62;color:#203d4a;font-size:13px;font-weight:900;box-shadow:0 5px 13px #07192370}
+.touch-controls .touch-jump:active{background:#f4c481;transform:scale(.95)}
+.touch-controls .battle-jump{left:112px;right:auto;bottom:10px;width:65px;height:52px}
+@media(max-width:950px) and (max-height:500px) and (orientation:landscape){.touch-controls .touch-jump{right:15px;bottom:10px;width:77px;height:57px;font-size:12px}}
+@media(max-width:950px) and (max-height:500px) and (orientation:landscape){.touch-controls .battle-jump{left:112px;right:auto;bottom:10px;width:65px;height:52px}}

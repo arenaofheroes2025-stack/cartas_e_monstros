@@ -1,0 +1,91 @@
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import { type Camera, Vector3 } from 'three';
+import { Game, type InteractionTarget } from '../game/game';
+import { DIALOG_CHOICE_KEYS } from '../input/dialogChoices';
+import './worldInteraction.css';
+
+const projected=new Vector3();
+
+function placeAt(
+  element:HTMLElement,camera:Camera,rect:DOMRect,x:number,y:number,z:number,
+  offsetX:number,offsetY:number,centered:boolean
+):void {
+  projected.set(x,y,z).project(camera);
+  const visible=projected.z>=-1&&projected.z<=1&&Math.abs(projected.x)<1.4&&Math.abs(projected.y)<1.4;
+  element.style.visibility=visible?'visible':'hidden';
+  if(!visible)return;
+  const screenX=(projected.x+1)*0.5*rect.width+offsetX;
+  const screenY=(1-projected.y)*0.5*rect.height+offsetY;
+  const halfWidth=centered?element.offsetWidth*0.5:0;
+  element.style.left=`${Math.max(halfWidth+10,Math.min(rect.width-halfWidth-10,screenX))}px`;
+  const minY=centered?element.offsetHeight+12:50;
+  element.style.top=`${Math.max(minY,Math.min(rect.height-15,screenY))}px`;
+}
+
+export function WorldInteraction({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera|null>}) {
+  const layer=useRef<HTMLDivElement>(null);
+  const action=useRef<HTMLButtonElement>(null);
+  const speech=useRef<HTMLDivElement>(null);
+  const [nearby,setNearby]=useState<InteractionTarget|null>(null);
+
+  useEffect(()=>{
+    let frame=0;
+    let shown='';
+    let lastCheck=-Infinity;
+    const update=(time:number)=>{
+      if(time-lastCheck>90){
+        lastCheck=time;
+        const target=game.nearbyInteraction();
+        const key=target?`${target.kind}:${target.id}`:'';
+        if(key!==shown){shown=key;setNearby(target);}
+      }
+      const camera=cameraRef.current;
+      const rect=layer.current?.getBoundingClientRect();
+      if(camera&&rect){
+        if(action.current){
+          const player=game.player;
+          placeAt(action.current,camera,rect,player.x,
+            game.getGroundHeight(player.x,player.z)+1.45+game.playerVisualLift,
+            player.z,36,-20,false);
+        }
+        if(speech.current&&game.dialog){
+          const {x,z}=game.dialog.anchor;
+          placeAt(speech.current,camera,rect,x,game.getGroundHeight(x,z)+2.35,
+            z,0,-12,true);
+          if(action.current){
+            const buttonBox=action.current.getBoundingClientRect();
+            const speechBox=speech.current.getBoundingClientRect();
+            if(buttonBox.left<speechBox.right&&buttonBox.right>speechBox.left&&
+               buttonBox.top<speechBox.bottom&&buttonBox.bottom>speechBox.top){
+              action.current.style.top=`${Math.min(rect.height-buttonBox.height/2-10,
+                speechBox.bottom-rect.top+buttonBox.height/2+12)}px`;
+            }
+          }
+        }
+      }
+      frame=requestAnimationFrame(update);
+    };
+    frame=requestAnimationFrame(update);
+    return()=>cancelAnimationFrame(frame);
+  },[game,cameraRef]);
+
+  if(game.mode!=='explore'&&game.mode!=='dialog')return null;
+  const talking=game.mode==='dialog'&&!!game.dialog;
+  const simpleDialog=talking&&(game.dialog?.actions.length??0)<=1;
+  return <div className="world-interaction-layer" ref={layer}>
+    {simpleDialog||(game.mode==='explore'&&nearby)?<button ref={action} className="world-action"
+      onClick={()=>simpleDialog&&game.dialog?.actions.length===1?game.chooseDialogAction(0):game.interact()}
+      aria-label={simpleDialog?'Terminar fala':`${nearby?.verb}: ${nearby?.name}`}>
+      <kbd>Z</kbd><span><strong>{talking?'Terminar fala':nearby?.verb}</strong>
+        {!talking?<small>{nearby?.name}</small>:null}</span>
+    </button>:null}
+    {talking&&game.dialog?<div ref={speech} className="world-speech" role="dialog" aria-label={game.dialog.title}>
+      <strong className="world-speech-name">{game.dialog.title}</strong>
+      <p>{game.dialog.text}</p>
+      {game.dialog.actions.length>1?<div className="world-speech-actions">{game.dialog.actions.map((option,index)=><button
+        key={`${option.label}-${index}`} onClick={()=>game.chooseDialogAction(index)}>
+        <kbd>{DIALOG_CHOICE_KEYS[index]?.toUpperCase()??index+1}</kbd><span>{option.label}</span>
+      </button>)}</div>:null}
+    </div>:null}
+  </div>;
+}

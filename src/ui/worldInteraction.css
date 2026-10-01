@@ -1,0 +1,18 @@
+.world-interaction-layer{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:hidden}
+.world-action{position:absolute;visibility:hidden;display:flex;align-items:center;gap:8px;max-width:min(190px,40vw);padding:5px 10px 5px 5px;transform:translateY(-50%);border:1px solid #f5cf92;border-radius:12px;background:rgba(24,47,57,.94);color:#fff0d1;box-shadow:0 5px 0 #102934bb,0 11px 24px #091f2c77;pointer-events:auto;text-align:left;touch-action:manipulation;animation:world-action-in .18s ease-out}
+.world-action:hover,.world-action:focus-visible{background:#315d65;outline:2px solid #ffda99;outline-offset:2px}
+.world-action kbd{display:grid;place-items:center;flex:none;width:29px;height:29px;border-radius:8px;background:#eeb673;color:#253b43;font:900 15px 'Trebuchet MS',sans-serif;box-shadow:inset 0 -3px #af784b}
+.world-action strong,.world-action small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.world-action strong{font-size:12px;line-height:1.1}.world-action small{max-width:130px;margin-top:2px;font-size:9px;color:#c4d4c7}
+.world-speech{position:absolute;visibility:hidden;width:max-content;max-width:min(340px,calc(100vw - 24px));padding:12px 14px 11px;transform:translate(-50%,-100%);border:2px solid #d6a96c;border-radius:15px;background:#163744f2;color:#f8eed5;box-shadow:0 12px 30px #0619238c;pointer-events:auto;touch-action:auto;animation:world-speech-in .2s ease-out}
+.world-speech:after{content:'';position:absolute;left:calc(50% - 8px);bottom:-10px;width:14px;height:14px;transform:rotate(45deg);border-right:2px solid #d6a96c;border-bottom:2px solid #d6a96c;background:#163744}
+.world-speech-name{display:block;color:#f4c783;font-family:Georgia,serif;font-size:15px;line-height:1.15}
+.world-speech p{margin:7px 0 10px;font-size:12px;line-height:1.4;color:#f3ecda}
+.world-speech-actions{display:flex;flex-wrap:wrap;gap:5px}
+.world-speech-actions button{display:inline-flex;align-items:center;gap:5px;min-height:28px;border:1px solid #dfbd83;border-radius:7px;background:#e8b675;color:#263e45;padding:4px 8px 4px 4px;font-size:10px;font-weight:800;touch-action:manipulation}
+.world-speech-actions kbd{display:inline-grid;place-items:center;min-width:20px;height:19px;border-radius:4px;background:#193a46;color:#fff0ce;font:900 10px 'Trebuchet MS',sans-serif}
+.world-speech-actions button:hover,.world-speech-actions button:focus-visible{background:#ffcf88;outline:2px solid #fff0c0;outline-offset:1px}
+@keyframes world-action-in{from{opacity:0;transform:translateY(-44%) scale(.9)}to{opacity:1;transform:translateY(-50%) scale(1)}}
+@keyframes world-speech-in{from{opacity:0;transform:translate(-50%,-94%) scale(.96)}to{opacity:1;transform:translate(-50%,-100%) scale(1)}}
+@media(max-width:700px){.world-action{gap:5px;max-width:145px;padding:4px 7px 4px 4px}.world-action kbd{width:25px;height:25px;font-size:12px}.world-action strong{font-size:11px}.world-action small{max-width:100px;font-size:8px}.world-speech{max-width:min(300px,calc(100vw - 20px));padding:9px 11px}.world-speech-name{font-size:13px}.world-speech p{font-size:11px;margin:5px 0 7px}.world-speech-actions button{font-size:9px;min-height:32px;padding:5px 8px}}
+@media(pointer:coarse){.world-action kbd,.world-speech-actions kbd{display:none}.world-action{padding:8px 10px}}
