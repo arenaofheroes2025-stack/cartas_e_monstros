@@ -1,4 +1,4 @@
-/** NippleJS uses an upward-positive Y axis; game controls use downward-positive Y. */
+/** Joystick input uses upward-positive Y; game controls use downward-positive Y. */
 export function joystickMovement(vector:{x:number;y:number}|undefined):{x:number;y:number} {
   if(!vector)return {x:0,y:0};
   const x=Number.isFinite(vector.x)?vector.x:0;
