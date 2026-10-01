@@ -40,7 +40,7 @@ if (!portIsFree) {
 const url = `http://${host}:${port}/`;
 console.log(`\nJogo na rede local: ${url}`);
 console.log('Conecte o celular ao mesmo Wi-Fi e abra esse endereço no navegador.\n');
-const child = spawn(process.execPath, [viteCli, 'preview', '--host', host, '--port', String(port), '--strictPort'], {
+const child = spawn(process.execPath, [viteCli, 'preview', '--configLoader', 'runner', '--host', host, '--port', String(port), '--strictPort'], {
   cwd: root, stdio: 'inherit', windowsHide: true
 });
 
