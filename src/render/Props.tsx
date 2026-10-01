@@ -63,11 +63,12 @@ function InstancedProp({tiles,asset,size,game,world,fading=false}:{tiles:Tile[];
         ghostRef.current.setMatrixAt(i,dummy.matrix);
       }
       ghostRef.current.instanceMatrix.needsUpdate=true;
+      ghostRef.current.visible=false;
     }
     faded.current.clear();
   },[tiles,visualHeight,ghostLimit,footV]);
   useFrame(({clock})=>{
-    if(!ref.current||!ghostRef.current||!canFade||clock.elapsedTime-lastCheck.current<0.12)return;
+    if(!ref.current||!ghostRef.current||!canFade||!ref.current.parent?.visible||clock.elapsedTime-lastCheck.current<0.12)return;
     lastCheck.current=clock.elapsedTime;
     const player=game.player;
     const candidates=(game.mode==='explore'||(game.mode==='pause'&&!game.battle))?tiles.map((tile,i)=>{
@@ -97,6 +98,7 @@ function InstancedProp({tiles,asset,size,game,world,fading=false}:{tiles:Tile[];
       ghostRef.current.setMatrixAt(slot,dummy.matrix);
     }
     ghostRef.current.instanceMatrix.needsUpdate=true;
+    ghostRef.current.visible=candidates.length>0;
     faded.current=next;
   });
   if(!tiles.length)return null;

@@ -36,6 +36,12 @@ O comando compila o jogo, encontra o IPv4 do adaptador Wi-Fi e serve a prévia n
 
 No celular, jogue com a tela na horizontal. Se o aparelho estiver na vertical, o jogo mostra um aviso e pausa a simulação até a rotação; o progresso da batalha continua do mesmo ponto.
 
+### Desempenho no celular
+
+Toda alteração de renderização ou efeitos deve ser conferida também no perfil móvel horizontal. O modo **Leve** limita a resolução do WebGL, reduz o mapa de sombras e ajusta a resolução gradualmente quando há lentidão persistente; a interface HTML continua na resolução da tela e as texturas de pixel art mantêm filtragem por pixels. O cenário desenha apenas blocos próximos da câmera, mantém um conjunto fixo de luzes e prepara aos poucos as texturas das áreas vizinhas durante a ociosidade do navegador.
+
+Para uma verificação automatizada de travessia, execute `node scripts/qa-render-performance.mjs` com o servidor de desenvolvimento aberto e defina `QA_URL` se necessário. O script registra capturas e tempos de quadros em desktop e celular horizontal. Ele usa WebGL por software no navegador automatizado: os tempos medidos nele não substituem uma medição em um aparelho físico.
+
 ### Laboratório de sombras
 
 Abra `/qa-sombras.html` no mesmo endereço do jogo (por exemplo, `http://127.0.0.1:5182/qa-sombras.html`). A página separada mostra três casas, três árvores, quatro pedras, cinco plantas, postes, poço, banco, caixotes, herói, três NPCs e três monstros sobre o chão da cidade. Ajuste a direção e elevação do sol, altura física geral dos sprites, comprimento, escuridão, contato, borda e zoom. A seção **Sombras por grupo** oferece controles independentes de posição e altura para personagens, casas, árvores, pedras, plantas e objetos gerais. Os filtros isolam cada grupo na cena. Ative as âncoras para comparar a base dourada da imagem com o início azul da sombra deslocada. **Copiar parâmetros** gera os valores e um link que reabre a mesma configuração. O preset **Jogo atual** usa a calibração aprovada em `src/render/shadowCalibration.ts`; novos ajustes no laboratório permanecem locais até serem incorporados ao jogo.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Game } from '../game/game';
@@ -38,7 +38,10 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   const lightSlots=useRef<(SceneLightSource|null)[]>(Array(LIGHT_POOL_SIZE).fill(null));
   const assignments=useRef(new Map<string,number>());
   const active=useRef(new Set<string>());
-  const [activeIds,setActiveIds]=useState<string[]>([]);
+  const glowMeshes=useRef<(THREE.Mesh|null)[]>([]);
+  const glowGeometry=useMemo(()=>new THREE.PlaneGeometry(1,1),[]);
+  const glowMaterials=useMemo(()=>Array.from({length:LIGHT_POOL_SIZE},()=>glowMaterial()),[]);
+  const sky=useMemo(()=>new THREE.Color(),[]);
   const {scene,gl}=useThree();
   const lastCull=useRef(-1);
   const lastShadow=useRef(0);
@@ -55,14 +58,12 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   },[game.world,opened]);
   const allSources=useMemo(()=>[...sources,...cards],[sources,cards]);
   const sourceById=useMemo(()=>new Map(allSources.map(source=>[source.id,source])),[allSources]);
-  const glows=useMemo(()=>new Map(allSources.map(source=>[source.id,glowMaterial()])),[allSources]);
-  useEffect(()=>()=>{for(const material of glows.values())material.dispose();},[glows]);
+  useEffect(()=>()=>{glowGeometry.dispose();glowMaterials.forEach(material=>material.dispose());},[glowGeometry,glowMaterials]);
   useEffect(()=>{
     assignments.current.clear();
     lightSlots.current.fill(null);
     active.current.clear();
     lastCull.current=-1;
-    setActiveIds([]);
   },[game.world]);
 
   useFrame(({clock,camera})=>{
@@ -81,7 +82,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     ambient.current.intensity=0.64+daylight*0.26;
     ambient.current.color.set('#9bb8dc').lerp(daylightAmbient,daylight);
     hemisphere.current.intensity=0.36+daylight*0.16;
-    const sky=nightSky.clone().lerp(daySky,daylight);
+    sky.copy(nightSky).lerp(daySky,daylight);
     scene.background=sky;
     if(scene.fog instanceof THREE.Fog){
       scene.fog.color.copy(sky);
@@ -111,30 +112,25 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
         assignments.current.set(id,slot);
         lightSlots.current[slot]=sourceById.get(id)!;
       }
-      if(selected.size!==active.current.size||next.some(id=>!active.current.has(id))){
-        active.current=selected;
-        setActiveIds(next);
-      }
+      active.current=selected;
     }
     for(let slot=0;slot<LIGHT_POOL_SIZE;slot++){
       const light=lights.current[slot];
-      if(!light)continue;
+      const glow=glowMeshes.current[slot];
+      if(!light||!glow)continue;
       const source=lightSlots.current[slot];
-      if(!source){light.intensity=0;continue;}
+      if(!source){light.intensity=0;glow.visible=false;continue;}
       const card=source.id.startsWith('card-');
       light.position.set(source.x,source.y,source.z);
       light.color.set(source.color);
       light.distance=source.reach;
       light.intensity=card?0.5+night*0.55:0.25+night*2.05;
-    }
-    for(const source of allSources){
-      if(!active.current.has(source.id))continue;
-      const card=source.id.startsWith('card-');
-      const glow=glows.get(source.id);
-      if(glow){
-        glow.uniforms.uColor.value.set(source.color);
-        glow.uniforms.uOpacity.value=card?0.1+night*0.28:0.035+night*0.32;
-      }
+      glow.visible=true;
+      glow.position.set(source.x,source.groundY,source.z);
+      glow.scale.setScalar(card?2.4:5.8);
+      const material=glowMaterials[slot];
+      material.uniforms.uColor.value.set(source.color);
+      material.uniforms.uOpacity.value=card?0.1+night*0.28:0.035+night*0.32;
     }
     if(clock.elapsedTime-lastShadow.current>0.35){gl.shadowMap.needsUpdate=true;lastShadow.current=clock.elapsedTime;}
   });
@@ -148,14 +144,8 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       shadow-camera-near={0.5} shadow-camera-far={135} shadow-bias={-0.00025} shadow-normalBias={0.006}/>
     <pointLight ref={village} position={[48,3,48]} color="#f1ad69" distance={14} decay={2} intensity={1}/>
     {lightPool}
-    {allSources.filter(source=>activeIds.includes(source.id)).map(source=>{
-      const card=source.id.startsWith('card-');
-      return <group key={source.id}>
-        <mesh material={glows.get(source.id)} position={[source.x,source.groundY,source.z]}
-          rotation={[-Math.PI/2,0,0]} renderOrder={5}>
-          <planeGeometry args={[card?2.4:5.8,card?2.4:5.8]}/>
-        </mesh>
-      </group>;
-    })}
+    {glowMaterials.map((material,slot)=><mesh key={slot} ref={mesh=>{glowMeshes.current[slot]=mesh;}}
+      geometry={glowGeometry} material={material} visible={false}
+      rotation={[-Math.PI/2,0,0]} renderOrder={5}/>)}
   </group>;
 }

@@ -22,6 +22,7 @@ import { WaterSurface } from './WaterSurface';
 import { cameraZoom, captureCameraZoom, victoryCameraZoom } from './cameraZoom';
 import { RenderResolution } from './RenderResolution';
 import { preferredRenderDpr } from './resolutionBudget';
+import { NearbyTextureWarmup } from './NearbyTextureWarmup';
 
 function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:boolean}) {
   const accumulated=useRef(0);
@@ -108,6 +109,7 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Gam
     <CameraRig game={game} cameraRef={cameraRef}/>
     <CloudShadows game={game} world={world}/>
     <Lighting game={game} quality={quality}/>
+    <NearbyTextureWarmup game={game} world={world}/>
     <group onPointerDown={event=>{
       if(game.mode==='battle') {
         event.stopPropagation();
