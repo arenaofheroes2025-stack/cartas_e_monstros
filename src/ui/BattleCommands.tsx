@@ -41,7 +41,8 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           if(touchLayout.matches){
             const width=element.offsetWidth,height=element.offsetHeight;
             const choosing=game.battleMenu==='items'||game.battleMenu==='cards';
-            const y=choosing?(parent.height-height)/2:Math.max(66,Math.min(72,parent.height-height-100));
+            const bottomReserve=parent.height<=350?60:70;
+            const y=choosing?(parent.height-height)/2:Math.max(95,Math.min(126,parent.height-height-bottomReserve));
             element.style.left=choosing?`${Math.max(8,(parent.width-width)/2)}px`:'auto';
             element.style.right=choosing?'auto':'max(10px, env(safe-area-inset-right))';
             element.style.top=`${Math.max(8,y)}px`;
