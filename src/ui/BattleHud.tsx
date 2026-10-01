@@ -25,6 +25,17 @@ function StatusPills({statuses}:{statuses:TimedStatus[]}) {
 }
 
 export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera|null>}) {
+  const lastTouchAction=useRef(0);
+  const menuOpenedAt=useRef(0);
+  const previousMenu=useRef(game.battleMenu);
+  if(game.battleMenu!==previousMenu.current){
+    if(game.battleMenu==='items'||game.battleMenu==='cards')menuOpenedAt.current=Date.now();
+    previousMenu.current=game.battleMenu;
+  }
+  const press=(action:()=>void)=>({
+    onPointerDown:(event:React.PointerEvent)=>{if(event.pointerType==='touch'){lastTouchAction.current=Date.now();action();}},
+    onClick:(event:React.MouseEvent)=>{if((event.nativeEvent as PointerEvent).pointerType==='touch'||Date.now()-lastTouchAction.current<2000)return;action();}
+  });
   const battle=game.battle,save=game.save,ally=game.activeMonster;
   if(!battle||!save||!ally)return null;
   const friend=SPECIES[ally.species],foe=SPECIES[battle.enemy.species];
@@ -38,7 +49,9 @@ export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera
     </div>
   </div>;
   return <div className="battle-ui">
-    {game.battleMenu==='items'||game.battleMenu==='cards'?<button type="button" className="quick-bag-backdrop" onClick={()=>game.closeBattleMenu()} aria-label="Fechar seleção e voltar à batalha"/>:null}
+    {game.battleMenu==='items'||game.battleMenu==='cards'?<button type="button" className="quick-bag-backdrop"
+      onClick={()=>{if(Date.now()-menuOpenedAt.current>500)game.closeBattleMenu();}}
+      aria-label="Fechar seleção e voltar à batalha"/>:null}
     <BattleActorBars game={game} cameraRef={cameraRef}/>
     <BattleCommands game={game} cameraRef={cameraRef}/>
     {game.battleMenu!=='items'&&game.battleMenu!=='cards'?<BattleCommandCallout game={game} cameraRef={cameraRef}/>:null}
@@ -49,8 +62,8 @@ export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera
     <div className="battle-bottom">
       <div className="combatant ally"><img src={monsterPortrait(friend.id)} alt=""/><div><small>SEU MONSTRO · {ELEMENT_LABEL[friend.element]}</small><strong>{friend.name} <span>Nv. {ally.level}</span></strong><small className="combatant-details">{Math.ceil(battle.ally.hp)} / {maxHp(ally)} PV · Especial {Math.floor(battle.ally.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div></div>
       <div className="battle-utility">
-        <button onClick={()=>game.toggleBattleBag()} aria-label={game.battleMenu==='items'?'Fechar mochila':'Abrir mochila'}><img src="/art/ui/hero-satchel.png" alt=""/><span>Mochila<small>{save.battleBag.filter(Boolean).length}/6 · Q</small></span></button>
-        <button onClick={()=>game.openBattleMenu('party')} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>
+        <button {...press(()=>game.toggleBattleBag())} aria-label={game.battleMenu==='items'?'Fechar mochila':'Abrir mochila'}><img src="/art/ui/hero-satchel.png" alt=""/><span>Mochila<small>{save.battleBag.filter(Boolean).length}/6 · Q</small></span></button>
+        <button {...press(()=>game.openBattleMenu('party'))} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>
       </div>
     </div>
   </div>;

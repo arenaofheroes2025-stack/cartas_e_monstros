@@ -19,7 +19,7 @@ export const CAPTURE_ZOOM_OUT_END_SECONDS = 4.1;
 export const CAPTURE_FINISH_SECONDS = 4.35;
 export const CAPTURE_FAIL_SECONDS = 1.7;
 export type Mode = 'title' | 'explore' | 'battle' | 'dialog' | 'pause';
-export type BattleCommand = 'attack' | 'dodge' | 'follow' | 'return' | 'move';
+export type BattleCommand = 'attack' | 'special' | 'dodge' | 'follow' | 'return' | 'move';
 export type BattleMenu = 'cards' | 'party' | 'items';
 export interface CommandCue {
   sequence: number;
@@ -33,6 +33,7 @@ export interface CommandCue {
 
 const COMMAND_CUES:Record<Exclude<BattleCommand,'move'>,Pick<CommandCue,'label'|'icon'|'color'>>={
   attack:{label:'Atacar!',icon:'⚔',color:'#ef665e'},
+  special:{label:'Especial!',icon:'✦',color:'#c49aff'},
   dodge:{label:'Esquivar!',icon:'◇',color:'#68c6ee'},
   follow:{label:'Perseguir!',icon:'➤',color:'#f4d36a'},
   return:{label:'Volte!',icon:'↶',color:'#a4db8d'}
@@ -784,6 +785,7 @@ export class Game {
     if (this.mode!=='battle'||!battle||battle.intro>0||battle.finisher||battle.captureSequence||this.battleMenu) return;
     if(command==='return'&&battle.command!=='follow')return;
     if(command==='follow'&&battle.command==='follow')return;
+    if(command==='special'&&battle.ally.charge<100)return;
     if (command==='dodge') {
       if (battle.ally.dodgeCooldown>0) {this.notify('A esquiva ainda está recarregando.');return;}
       const ally=battle.ally;
@@ -1001,15 +1003,15 @@ export class Game {
         source.strikeOrigin=undefined;
         source.strikeRadius=0;
         source.recovery=isAlly?0.25:enemyRecovery(attacker,this.statusBonus(attacker.uid,'speed'));
-        if(isAlly&&this.battle.command==='attack')this.battle.command='return';
+        if(isAlly&&(this.battle.command==='attack'||(this.battle.command==='special'&&skill)))this.battle.command='return';
         this.battle.messageTime=1.7;
         this.onChange?.();
       }
       return;
     }
-    if (isAlly&&this.battle.command!=='attack'&&this.battle.command!=='follow')return;
+    if (isAlly&&this.battle.command!=='attack'&&this.battle.command!=='special'&&this.battle.command!=='follow')return;
     if (source.attackTimer<=0&&source.recovery<=0&&distance(source,target)<=attackRadius(attacker)+0.05) {
-      source.skillWindup=source.charge>=100;
+      source.skillWindup=source.charge>=100&&(!isAlly||this.battle.command==='special');
       if (source.skillWindup) source.charge=0;
       source.strikeOrigin={x:source.x,z:source.z};
       source.strikeRadius=attackRadius(attacker,source.skillWindup);

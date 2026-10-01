@@ -26,7 +26,12 @@ export function WorldInteraction({game,cameraRef}:{game:Game;cameraRef:RefObject
   const layer=useRef<HTMLDivElement>(null);
   const action=useRef<HTMLButtonElement>(null);
   const speech=useRef<HTMLDivElement>(null);
+  const lastTouchAction=useRef(0);
   const [nearby,setNearby]=useState<InteractionTarget|null>(null);
+  const press=(action:()=>void)=>({
+    onPointerDown:(event:React.PointerEvent)=>{if(event.pointerType==='touch'){lastTouchAction.current=Date.now();action();}},
+    onClick:(event:React.MouseEvent)=>{if((event.nativeEvent as PointerEvent).pointerType==='touch'||Date.now()-lastTouchAction.current<2000)return;action();}
+  });
 
   useEffect(()=>{
     let frame=0;
@@ -72,18 +77,25 @@ export function WorldInteraction({game,cameraRef}:{game:Game;cameraRef:RefObject
   if(game.mode!=='explore'&&game.mode!=='dialog')return null;
   const talking=game.mode==='dialog'&&!!game.dialog;
   const simpleDialog=talking&&(game.dialog?.actions.length??0)<=1;
+  const canAct=!!(simpleDialog||(game.mode==='explore'&&nearby));
+  const performAction=()=>simpleDialog&&game.dialog?.actions.length===1?game.chooseDialogAction(0):game.interact();
   return <div className="world-interaction-layer" ref={layer}>
-    {simpleDialog||(game.mode==='explore'&&nearby)?<button ref={action} className="world-action"
-      onClick={()=>simpleDialog&&game.dialog?.actions.length===1?game.chooseDialogAction(0):game.interact()}
+    {canAct?<button ref={action} className="world-action"
+      {...press(performAction)}
       aria-label={simpleDialog?'Terminar fala':`${nearby?.verb}: ${nearby?.name}`}>
       <kbd>Z</kbd><span><strong>{talking?'Terminar fala':nearby?.verb}</strong>
         {!talking?<small>{nearby?.name}</small>:null}</span>
     </button>:null}
+    {(canAct||(talking&&game.dialog?.actions.length))?<div className={`world-touch-actions ${talking?'dialog':''}`} role="group" aria-label="Ações disponíveis">
+      {canAct?<button type="button" {...press(performAction)}><span className="world-touch-symbol">✦</span><span>{talking?'Terminar fala':nearby?.verb}<small>{talking?'Continuar':nearby?.name}</small></span></button>:null}
+      {talking&&(game.dialog?.actions.length??0)>1?game.dialog!.actions.map((option,index)=><button type="button" key={`${option.label}-${index}`}
+        {...press(()=>game.chooseDialogAction(index))}><span className="world-touch-symbol">{index+1}</span><span>{option.label}</span></button>):null}
+    </div>:null}
     {talking&&game.dialog?<div ref={speech} className="world-speech" role="dialog" aria-label={game.dialog.title}>
       <strong className="world-speech-name">{game.dialog.title}</strong>
       <p>{game.dialog.text}</p>
       {game.dialog.actions.length>1?<div className="world-speech-actions">{game.dialog.actions.map((option,index)=><button
-        key={`${option.label}-${index}`} onClick={()=>game.chooseDialogAction(index)}>
+        key={`${option.label}-${index}`} {...press(()=>game.chooseDialogAction(index))}>
         <kbd>{DIALOG_CHOICE_KEYS[index]?.toUpperCase()??index+1}</kbd><span>{option.label}</span>
       </button>)}</div>:null}
     </div>:null}

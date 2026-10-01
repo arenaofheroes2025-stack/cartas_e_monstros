@@ -15,6 +15,8 @@ export function TouchControls({game,controls}:{game:Game;controls:Controls}) {
     const manager=nipplejs.create({
       zone:zoneRef.current,
       mode:'dynamic',
+      multitouch:true,
+      maxNumberOfJoysticks:1,
       size:104,
       threshold:0.12,
       fadeTime:100,
@@ -42,7 +44,7 @@ export function TouchControls({game,controls}:{game:Game;controls:Controls}) {
     <div className="touch-controls">
       <button type="button" className={`touch-jump ${game.mode==='battle'?'battle-jump':''}`}
         onPointerDown={event=>{if(event.pointerType==='touch'){lastTouchJump.current=Date.now();game.jumpForward();}}}
-        onClick={()=>{if(Date.now()-lastTouchJump.current>500)game.jumpForward();}}
+        onClick={event=>{if((event.nativeEvent as PointerEvent).pointerType!=='touch'&&Date.now()-lastTouchJump.current>2000)game.jumpForward();}}
         aria-label="Pular">Pular</button>
     </div>
   </>;

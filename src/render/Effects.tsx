@@ -8,6 +8,7 @@ import { ITEMS, itemArt, type BattleStat } from '../game/items';
 
 interface Particle { mesh:THREE.Mesh; vx:number; vy:number; vz:number; life:number; maxLife:number }
 interface Burst { mesh:THREE.Mesh; life:number; maxLife:number }
+interface Strike { group:THREE.Group; materials:THREE.MeshBasicMaterial[]; life:number; maxLife:number }
 interface Evolution { mesh:THREE.Mesh; species:string; life:number }
 interface DamagePopup { sprite:THREE.Sprite; life:number; maxLife:number; rise:number }
 interface ItemFlight { mesh:THREE.Mesh; from:THREE.Vector3; to:THREE.Vector3; elapsed:number; duration:number; color:string; targetUid?:string; itemEffect?:'heal'|'status'; amount?:number; stat?:BattleStat; autoItem?:boolean }
@@ -71,6 +72,7 @@ export function Effects({game}:{game:Game}) {
   const light=useRef<THREE.PointLight>(null);
   const particles=useRef<Particle[]>([]);
   const bursts=useRef<Burst[]>([]);
+  const strikes=useRef<Strike[]>([]);
   const evolutions=useRef<Evolution[]>([]);
   const damagePopups=useRef<DamagePopup[]>([]);
   const itemFlights=useRef<ItemFlight[]>([]);
@@ -107,6 +109,21 @@ export function Effects({game}:{game:Game}) {
         continue;
       }
       const color=event.element?ELEMENT_COLOR[event.element]:'#fff2c7';
+      if(event.kind==='hit'){
+        const slash=new THREE.Group();
+        const materials:THREE.MeshBasicMaterial[]=[];
+        for(const angle of [-0.63,0.63]){
+          const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.92,depthTest:false,depthWrite:false,toneMapped:false});
+          const mesh=new THREE.Mesh(new THREE.PlaneGeometry(0.78,0.09),material);
+          mesh.rotation.z=angle;
+          mesh.renderOrder=14;
+          slash.add(mesh);materials.push(material);
+        }
+        slash.position.set(event.x,game.getGroundHeight(event.x,event.z)+1.05,event.z);
+        slash.quaternion.copy(camera.quaternion);
+        group.current.add(slash);
+        strikes.current.push({group:slash,materials,life:0.3,maxLife:0.3});
+      }
       const art=event.kind==='capture'||event.kind==='summon'?'capture':event.kind==='evolve'?'evolve':event.kind==='seal'?'seal':event.kind==='dodge'?null:event.element==='fogo'?'fire-hit':event.element==='agua'?'water-hit':'nature-hit';
       if(art){
         const material=new THREE.MeshBasicMaterial({map:imageTexture(`/art/effects/${art}.png`),transparent:true,depthWrite:false,side:THREE.DoubleSide});
@@ -181,6 +198,19 @@ export function Effects({game}:{game:Game}) {
       b.mesh.scale.multiplyScalar(1+dt*0.45);
       (b.mesh.material as THREE.MeshBasicMaterial).opacity=Math.max(0,b.life/b.maxLife);
       if(b.life<=0){group.current?.remove(b.mesh);(b.mesh.material as THREE.Material).dispose();return false;}
+      return true;
+    });
+    strikes.current=strikes.current.filter(strike=>{
+      strike.life-=dt;
+      const progress=1-Math.max(0,strike.life)/strike.maxLife;
+      strike.group.scale.setScalar(0.72+progress*0.54);
+      for(const material of strike.materials)material.opacity=Math.max(0,1-progress);
+      if(strike.life<=0){
+        group.current?.remove(strike.group);
+        for(const child of strike.group.children){const mesh=child as THREE.Mesh;mesh.geometry.dispose();}
+        for(const material of strike.materials)material.dispose();
+        return false;
+      }
       return true;
     });
     evolutions.current=evolutions.current.filter(e=>{

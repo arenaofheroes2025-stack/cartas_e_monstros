@@ -137,7 +137,9 @@ function BattleCreature({game,side}:{game:Game;side:'ally'|'foe'}) {
         1-THREE.MathUtils.smoothstep(capturedFoe.elapsed,0.74,1.16)+THREE.MathUtils.smoothstep(capturedFoe.elapsed,1.23,1.59)):
       captureRecall?1-THREE.MathUtils.smoothstep(captureRecall.elapsed,2.48,2.86):1;
     const cheerHop=cheering?Math.abs(Math.sin((recalling!.elapsed-1.05)*Math.PI*3))*0.16:0;
-    return {x:actor.x,z:actor.z,visible:(game.mode==='battle'||game.mode==='pause')&&(!summon||battle.intro<=1.05)&&(!finishing||finishing.elapsed<0.68)&&(!recalling||recalling.elapsed<1.72)&&(!capturedFoe||vanish>0.02)&&(!captureRecall||captureRecall.elapsed<2.86),
+    const recoil=actor.flash>0&&actor.flash<=0.32?Math.sin((1-actor.flash/0.32)*Math.PI)*0.13:0;
+    const awayX=actor.x-target.x,awayZ=actor.z-target.z,awayLength=Math.hypot(awayX,awayZ)||1;
+    return {x:actor.x+awayX/awayLength*recoil,z:actor.z+awayZ/awayLength*recoil,visible:(game.mode==='battle'||game.mode==='pause')&&(!summon||battle.intro<=1.05)&&(!finishing||finishing.elapsed<0.68)&&(!recalling||recalling.elapsed<1.72)&&(!capturedFoe||vanish>0.02)&&(!captureRecall||captureRecall.elapsed<2.86),
       texture:monsterTexture(species,frame),flash:finishing&&finishing.elapsed<0.61?1:recalling&&recalling.elapsed>=1.32&&recalling.elapsed<1.67?0.8:capturedFoe&&capturedFoe.elapsed>=0.7&&capturedFoe.elapsed<1.2?0.9:captureRecall&&captureRecall.elapsed>=2.48&&captureRecall.elapsed<2.82?0.8:actor.flash,
       scale:(SPECIES[species].evolved?1.2:0.93)*growth*Math.max(0.06,vanish),facing:facingToward(actor,target,side==='ally'?1:-1),
       lift:summon?(1-growth)*0.75:finishing?THREE.MathUtils.smoothstep(finishing.elapsed,0.22,0.68)*0.35:recalling?THREE.MathUtils.smoothstep(recalling.elapsed,1.32,1.72)*0.28+cheerHop:

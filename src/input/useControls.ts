@@ -3,7 +3,7 @@ import { Game, type BattleCommand } from '../game/game';
 import { dialogChoiceIndex } from './dialogChoices';
 import { ELEMENTS } from '../game/content';
 
-const battleKeys:Record<string,BattleCommand>={z:'attack',x:'dodge',c:'follow',v:'return','1':'attack','2':'dodge','3':'follow','4':'return'};
+const battleKeys:Record<string,BattleCommand>={z:'attack',r:'special',x:'dodge',c:'follow',v:'return','1':'attack','2':'dodge','3':'follow','4':'return','5':'special'};
 
 export interface Controls { touch: (x:number,y:number)=>void; release:()=>void }
 

@@ -22,7 +22,14 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
   const dodgeLabel=useRef<HTMLElement>(null);
   const attack=useRef<HTMLButtonElement>(null);
   const attackLabel=useRef<HTMLElement>(null);
+  const special=useRef<HTMLButtonElement>(null);
+  const specialLabel=useRef<HTMLElement>(null);
+  const lastTouchAction=useRef(0);
   const preferredSide=useRef<'left'|'right'|null>(null);
+  const press=(action:()=>void)=>({
+    onPointerDown:(event:React.PointerEvent)=>{if(event.pointerType==='touch'){lastTouchAction.current=Date.now();action();}},
+    onClick:(event:React.MouseEvent)=>{if((event.nativeEvent as PointerEvent).pointerType==='touch'||Date.now()-lastTouchAction.current<2000)return;action();}
+  });
   useEffect(()=>{
     let frame=0;
     const touchLayout=window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 600px)');
@@ -122,6 +129,12 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           dodge.current.style.setProperty('--cooldown',`${Math.min(100,cooldown/total*100)}%`);
           dodgeLabel.current.textContent=cooldown>0?cooldown.toFixed(1)+'s':'';
         }
+        if(special.current&&specialLabel.current){
+          const charge=battle.ally.charge;
+          special.current.disabled=charge<100;
+          special.current.style.setProperty('--special-charge',`${Math.min(100,charge)}%`);
+          specialLabel.current.textContent=charge>=100?'Pronto':`${Math.floor(charge)}%`;
+        }
       }
       frame=requestAnimationFrame(update);
     };
@@ -141,7 +154,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
         const item=entry?ITEMS[entry.itemId]:null;
         return <button key={slot} type="button" className={`quick-bag-slot ${slot===selected?'selected':''} ${item?'filled':''}`}
           style={item?{'--accent':item.color} as React.CSSProperties:undefined}
-          onClick={()=>{game.selectBattleBagSlot(slot);if(entry)game.useBattleItem(entry.uid);}}
+          {...press(()=>{game.selectBattleBagSlot(slot);if(entry)game.useBattleItem(entry.uid);})}
           title={item?.description} aria-label={`${slot+1}: ${item?.name??'vazio'}${item?', usar item':''}`}>
           <kbd>{slot+1}</kbd>{item?<img src={itemArt(item.id)} alt=""/>:<span className="quick-bag-empty">—</span>}
           <strong>{item?.name??'Vazio'}</strong>
@@ -166,7 +179,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
         const count=game.save?.cards[element]??0;
         return <button type="button" key={element} className={`quick-card-option ${selected===element?'selected':''}`}
           style={{'--accent':ELEMENT_COLOR[element]} as React.CSSProperties}
-          onClick={()=>{game.selectBattleCard(element);if(element===foe.element&&count&&chance&&!battle.guardian)game.capture(element);}}
+          {...press(()=>{game.selectBattleCard(element);if(element===foe.element&&count&&chance&&!battle.guardian)game.capture(element);})}
           aria-label={`${index+1}: carta de ${ELEMENT_LABEL[element]}, ${count} disponíveis${element===foe.element&&chance?`, ${chance}% de chance`:''}`}>
           <kbd>{index+1}</kbd><img src={`/art/cards/${element}.png`} alt=""/>
           <span><strong>{ELEMENT_LABEL[element]}</strong><small>{element===foe.element&&chance?`${chance}% de chance`:element===foe.element?'Alvo acima de 50%':'Outro elemento'}</small></span><b>×{count}</b>
@@ -177,23 +190,24 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     </div>;
   }
   const command=game.battle?.command;
-  return <div className="battle-command-cluster" ref={cluster} role="group" aria-label="Comandos do monstro">
+  return <div className="battle-command-cluster battle-actions-cluster" ref={cluster} role="group" aria-label="Comandos do monstro">
     <div className="battle-command-title">COMANDOS <span>MONSTRO</span></div>
-    <button ref={attack} className={`command-attack ${command==='attack'?'selected':''}`} onClick={()=>game.battleCommand('attack')} title="Dar um golpe e voltar · Z ou 1" aria-label="Atacar">
+    <button ref={attack} className={`command-attack ${command==='attack'?'selected':''}`} {...press(()=>game.battleCommand('attack'))} title="Dar um golpe comum e voltar · Z ou 1" aria-label="Atacar">
       <kbd>Z</kbd><span className="command-icon">⚔</span><strong>Atacar</strong><small ref={attackLabel} className="command-cooldown">Pronto</small>
     </button>
-    <button ref={dodge} className="command-dodge" onClick={()=>game.battleCommand('dodge')} title="Sair da área do golpe · X ou 2" aria-label="Esquivar">
+    <button ref={special} className={`command-special ${command==='special'?'selected':''}`} {...press(()=>game.battleCommand('special'))}
+      title={`${SPECIES[game.activeMonster!.species].skill.name} · R ou 5`} aria-label={`Especial: ${SPECIES[game.activeMonster!.species].skill.name}`}>
+      <kbd>R</kbd><span className="command-icon">✦</span><strong>Especial</strong><small ref={specialLabel} className="command-cooldown">0%</small>
+    </button>
+    <button ref={dodge} className="command-dodge" {...press(()=>game.battleCommand('dodge'))} title="Sair da área do golpe · X ou 2" aria-label="Esquivar">
       <kbd>X</kbd><span className="command-icon">◇</span><strong>Esquivar</strong><small ref={dodgeLabel} className="command-cooldown"/>
     </button>
-    {command==='follow'?<button className="command-return" onClick={()=>game.battleCommand('return')} title="Voltar para perto do herói · V ou 4" aria-label="Voltar">
+    {command==='follow'?<button className="command-return" {...press(()=>game.battleCommand('return'))} title="Voltar para perto do herói · V ou 4" aria-label="Voltar">
       <kbd>V</kbd><span className="command-icon">↶</span><strong>Voltar</strong>
-    </button>:<button className="command-follow" onClick={()=>game.battleCommand('follow')} title="Perseguir e atacar continuamente · C ou 3" aria-label="Perseguir">
+    </button>:<button className="command-follow" {...press(()=>game.battleCommand('follow'))} title="Perseguir e atacar continuamente · C ou 3" aria-label="Perseguir">
       <kbd>C</kbd><span className="command-icon">➤</span><strong>Perseguir</strong>
     </button>}
-    <button className="command-bag" onClick={()=>game.openBattleMenu('items')} title="Abrir mochila de batalha · Q" aria-label="Abrir mochila de batalha">
-      <kbd>Q</kbd><img className="command-bag-icon" src="/art/ui/hero-satchel.png" alt=""/><strong>Mochila</strong><small>{game.save?.battleBag.filter(Boolean).length??0}/6</small>
-    </button>
-    <button className="command-cards" onClick={()=>game.openBattleMenu('cards')} title="Abrir cartas de captura · B" aria-label="Abrir cartas de captura">
+    <button className="command-cards" {...press(()=>game.openBattleMenu('cards'))} title="Abrir cartas de captura · B" aria-label="Abrir cartas de captura">
       <kbd>B</kbd><span className="command-icon">✦</span><strong>Cartas</strong><small>{game.save?.cards[SPECIES[game.battle!.enemy.species].element]??0}</small>
     </button>
   </div>;

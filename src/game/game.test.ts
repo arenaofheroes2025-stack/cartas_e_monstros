@@ -479,6 +479,35 @@ describe('progressão e captura',()=>{
       expect(battle.foe.hp).toBeLessThan(firstHit);
     }
   });
+  it('reserva a carga para o especial e mantém o ataque comum separado',()=>{
+    const game=new Game();game.newGame('brasito',346);
+    game.beginBattle(game.wildActors.find(w=>!w.night)!);
+    const battle=game.battle!;
+    battle.intro=0;
+    battle.foe.hp=500;
+    battle.foe.attackTimer=999;
+    battle.ally.x=battle.foe.x;battle.ally.z=battle.foe.z;
+    battle.ally.attackTimer=0;
+    vi.spyOn(Math,'random').mockReturnValue(0.5);
+    game.battleCommand('special');
+    expect(battle.command).toBe('return');
+    battle.ally.charge=100;
+    game.battleCommand('attack');
+    game.update(0.05);
+    expect(battle.ally.skillWindup).toBe(false);
+    expect(battle.ally.charge).toBe(100);
+    for(let i=0;i<12;i++)game.update(0.05);
+    expect(game.effects.some(effect=>effect.kind==='hit')).toBe(true);
+    expect(battle.command).toBe('return');
+    battle.ally.attackTimer=0;battle.ally.recovery=0;
+    game.battleCommand('special');
+    game.update(0.05);
+    expect(battle.ally.skillWindup).toBe(true);
+    expect(battle.ally.charge).toBeLessThan(1);
+    for(let i=0;i<20;i++)game.update(0.05);
+    expect(game.effects.some(effect=>effect.kind==='skill')).toBe(true);
+    expect(battle.command).toBe('return');
+  });
   it('consome uma carta também quando a captura falha e respeita o horário',()=>{
     const game=new Game();game.newGame('brasito',445);
     const nightWild=game.wildActors.find(w=>w.night)!;

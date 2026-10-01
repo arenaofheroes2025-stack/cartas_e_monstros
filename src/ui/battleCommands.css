@@ -4,6 +4,7 @@
 .battle-command-cluster button{--accent:#ffc27b;--wash:rgba(255,194,123,.19);pointer-events:auto;touch-action:manipulation;position:relative;width:100%;height:32px;padding:2px 5px;border:1px solid #54717a;border-radius:7px;background:linear-gradient(90deg,var(--wash),rgba(23,48,60,.95) 85%);color:#f7eddf;display:flex;align-items:center;gap:4px;overflow:hidden;text-align:left}
 .battle-command-cluster button:before{content:'';position:absolute;inset:4px auto 4px 0;width:3px;border-radius:3px;background:var(--accent)}
 .battle-command-cluster .command-attack{--accent:#ef665e;--wash:rgba(239,102,94,.23)}
+.battle-command-cluster .command-special{--accent:#c49aff;--wash:rgba(196,154,255,.22)}
 .battle-command-cluster .command-dodge{--accent:#68c6ee;--wash:rgba(104,198,238,.21)}
 .battle-command-cluster .command-follow{--accent:#f4d36a;--wash:rgba(244,211,106,.21)}
 .battle-command-cluster .command-return{--accent:#a4db8d;--wash:rgba(124,199,112,.22)}
@@ -16,7 +17,13 @@
 .battle-command-cluster .command-dodge:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,#081b2b99 var(--cooldown,0%),transparent var(--cooldown,0%))}
 .battle-command-cluster .command-attack:after{content:'';position:absolute;left:0;bottom:0;width:var(--attack-ready,0%);height:3px;background:#ef665e;box-shadow:0 0 6px #ef665e99;pointer-events:none}
 .battle-command-cluster .command-attack.winding:after{background:#ffaaa2;box-shadow:0 0 10px #ffaaa2}
+.battle-command-cluster .command-special:after{content:'';position:absolute;left:0;bottom:0;width:var(--special-charge,0%);height:3px;background:#c49aff;box-shadow:0 0 6px #c49affaa;pointer-events:none}
+.battle-command-cluster .command-special:disabled{opacity:.58}
 .battle-command-cluster .command-cooldown{z-index:1;margin-left:auto;color:#ddf5f3;font:700 9px Consolas,monospace}
+.battle-actions-cluster{padding:0;border:0;border-radius:0;background:none;box-shadow:none;gap:5px}
+.battle-actions-cluster .battle-command-title{padding:0 4px;color:#fff0d1;text-shadow:0 2px 4px #071c27}
+.battle-actions-cluster button{box-shadow:0 4px 11px #07162299}
+.battle-actions-cluster button:hover,.battle-actions-cluster button.selected{box-shadow:inset 0 0 0 1px var(--accent),0 4px 11px #07162299}
 .battle-utility{display:flex;gap:5px;align-items:end;margin-left:auto}
 .battle-utility button{display:flex;align-items:center;gap:5px;height:43px;border:1px solid #658478;border-radius:9px;background:#1b3b4b;color:#f4e4c8;padding:4px 9px;font-size:11px;font-weight:700}
 .battle-utility .capture-button{background:#d6a267;color:#213948;border-color:#f6d59c}

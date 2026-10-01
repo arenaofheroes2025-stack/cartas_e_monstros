@@ -44,7 +44,7 @@
   .game-app .companion-stat b{font-size:7px}
   .game-app .companion-track{height:4px}
   .game-app .desktop-hint,.game-app .minimap-wrap,.game-app .interact-button{display:none}
-  .game-app .hud-bottom-right{right:max(8px,env(safe-area-inset-right));bottom:max(78px,calc(env(safe-area-inset-bottom) + 72px));gap:4px}
+  .game-app .hud-bottom-right{left:max(8px,env(safe-area-inset-left));right:auto;top:max(71px,calc(env(safe-area-inset-top) + 65px));bottom:auto;flex-direction:row;align-items:center;gap:4px}
   .game-app .collection-button{padding:5px 7px;font-size:9px}
   .game-app .collection-button img{width:15px!important;height:15px!important}
   .game-app .collection-button span{margin-left:3px;padding:1px 4px}
@@ -59,12 +59,13 @@
   .game-app .battle-ui .battle-bottom{position:absolute;top:auto;left:auto;right:max(78px,calc(env(safe-area-inset-right) + 72px));bottom:max(9px,env(safe-area-inset-bottom));width:90px;display:flex;flex-direction:column;align-items:center;gap:3px}
   .game-app .battle-utility{position:static;display:flex;gap:3px;max-width:90px;margin:0}
   .game-app .battle-utility button{display:grid;place-items:center;min-width:40px;width:40px;height:30px;padding:2px}
-  .game-app .battle-utility button:first-child{display:none}
+  .game-app .battle-utility button:first-child{display:grid}
   .game-app .battle-utility button img{width:22px;height:22px}
   .game-app .battle-utility button span{display:none}
   .game-app .flee-button{margin-left:auto;padding:5px 7px;font-size:9px}
   .game-app .battle-tip{display:none}
   .game-app .battle-command-cluster{width:146px;gap:3px;padding:5px;box-shadow:0 6px 18px #071622a8}
+  .game-app .battle-actions-cluster{padding:0;border:0;background:none;box-shadow:none;gap:4px}
   .game-app .battle-command-cluster button{height:30px;padding:2px 6px;gap:5px}
   .game-app .battle-command-cluster kbd,.game-app .battle-command-cluster .keyboard-key{display:none}
   .game-app .battle-command-cluster .command-icon{width:19px;font-size:16px}
@@ -72,9 +73,11 @@
   .game-app .battle-command-cluster strong{font-size:10px}
   .game-app .battle-command-title{font-size:7px}
   .game-app .battle-command-cluster .quick-bag-actions>span,.game-app .battle-command-cluster .quick-cards-actions>span{display:none}
-  .game-app .quick-bag-cluster,.game-app .quick-cards-cluster{width:min(340px,calc(100vw - 28px));max-height:calc(100dvh - 24px);overflow-y:auto;gap:5px;padding:9px}
+  .game-app .quick-bag-cluster,.game-app .quick-cards-cluster{left:50%!important;right:auto!important;top:50%!important;translate:-50% -50%;width:min(410px,calc(100vw - 28px));max-height:calc(100dvh - 24px);overflow-y:auto;gap:5px;padding:9px}
   .game-app .quick-bag-heading,.game-app .quick-cards-heading{height:27px;font-size:12px}
   .game-app .battle-command-cluster .quick-bag-heading button,.game-app .battle-command-cluster .quick-cards-heading button{height:26px;min-width:30px;justify-content:center;font-size:14px}
+  .game-app .battle-command-cluster .quick-bag-heading button,.game-app .battle-command-cluster .quick-cards-heading button{display:none}
+  .game-app .quick-bag-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .game-app .quick-bag-grid,.game-app .quick-cards-list{gap:5px}
   .game-app .battle-command-cluster .quick-bag-slot{height:43px;gap:6px}
   .game-app .quick-bag-slot img,.game-app .quick-bag-slot .quick-bag-empty{width:30px;height:30px}
