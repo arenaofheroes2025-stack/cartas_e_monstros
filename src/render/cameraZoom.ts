@@ -3,10 +3,10 @@ import { BATTLE_RECALL_END_SECONDS, BATTLE_ZOOM_OUT_END_SECONDS, CAPTURE_RECALL_
 /** Orthographic pixels per world unit for each playable viewport. */
 export function cameraZoom(width:number,height:number,inBattle:boolean):number {
   const portrait=height>width;
-  if(width>=1000)return inBattle?82:60;
-  if(portrait)return inBattle?78:60;
-  if(height<=500)return inBattle?60:48;
-  return inBattle?76:56;
+  if(width>=1000)return inBattle?82:64;
+  if(portrait)return inBattle?78:66;
+  if(height<=500)return inBattle?60:55;
+  return inBattle?76:63;
 }
 
 /** Hold the close framing until the ally's card reaches the hero, then ease out. */

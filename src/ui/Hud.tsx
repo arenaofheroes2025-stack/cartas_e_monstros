@@ -36,6 +36,6 @@ export function Hud({game,revision,onCollection,onBag,onCompanion}:{game:Game;re
       </button><div className="desktop-hint">WASD para andar · Espaço para pular · Z para interagir</div></div>
       <div className="hud-bottom-right"><div className="minimap-wrap"><Minimap game={game} revision={revision}/><span>REGIÃO DESCOBERTA</span></div><button onClick={onBag} className="collection-button" aria-label="Abrir inventário e mochila"><img src="/art/ui/hero-satchel.png" alt="" style={{width:20,height:20,objectFit:'contain',verticalAlign:'middle',imageRendering:'pixelated'}}/> Mochila <span>{save.battleBag.filter(Boolean).length}/6</span></button><button onClick={onCollection} className="collection-button">Coleção <span>{save.party.length+save.collection.length}</span></button></div>
     </>:null}
-    {game.message&&game.messageTime>0?<div className="toast" key={game.message}>{game.message}</div>:null}
+    {game.mode!=='battle'&&game.message&&game.messageTime>0?<div className="toast" key={game.message}>{game.message}</div>:null}
   </>;
 }

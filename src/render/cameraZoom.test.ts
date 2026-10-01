@@ -7,8 +7,10 @@ describe('enquadramento da câmera',()=>{
     expect(cameraZoom(1280,800,true)).toBeGreaterThan(cameraZoom(1280,800,false));
     expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));
   });
-  it('aproxima o enquadramento em celular vertical ao tamanho aparente de desktop',()=>{
-    expect(cameraZoom(390,844,false)).toBe(cameraZoom(1280,800,false));
+  it('aproxima a exploração um pouco mais no celular',()=>{
+    expect(cameraZoom(390,844,false)).toBeGreaterThan(cameraZoom(1280,800,false));
+    expect(cameraZoom(844,390,false)).toBeGreaterThan(48);
+    expect(cameraZoom(1280,800,false)).toBeGreaterThan(60);
   });
   it.each([[1280,800],[844,390]])('espera a carta voltar antes de afastar do herói em %ix%i',(width,height)=>{
     const close=victoryCameraZoom(width,height,BATTLE_RECALL_END_SECONDS);

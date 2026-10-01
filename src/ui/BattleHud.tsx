@@ -44,7 +44,6 @@ export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera
     {game.battleMenu!=='items'&&game.battleMenu!=='cards'?<BattleCommandCallout game={game} cameraRef={cameraRef}/>:null}
     <div className="battle-top">
       <div className="combatant enemy"><img src={monsterPortrait(foe.id)} alt=""/><div><small>{battle.guardian?'GUARDIÃO':'SELVAGEM'} · {ELEMENT_LABEL[foe.element]}</small><strong>{foe.name} <span>Nv. {battle.enemy.level}</span></strong><small className="combatant-details">{Math.ceil(battle.foe.hp)} / {maxHp(battle.enemy)} PV · Especial {Math.floor(battle.foe.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===battle.enemy.uid)}/></div></div>
-      <div className="battle-caption"><span>ARENA</span><strong>{battle.messageTime>0?battle.message:'Comande seu monstro e mova-se pela arena.'}</strong></div>
       <button className="flee-button" onClick={()=>game.flee()}>Sair da arena</button>
     </div>
     <div className="battle-bottom">
@@ -54,6 +53,5 @@ export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera
         <button onClick={()=>game.openBattleMenu('party')} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>
       </div>
     </div>
-    <div className="battle-tip">Clique no chão para posicionar · Espaço pula · Z/X/C/V comandam · Q mochila · B cartas</div>
   </div>;
 }

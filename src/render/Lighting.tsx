@@ -14,6 +14,8 @@ const nightSky=new THREE.Color('#142a42');
 const daySun=new THREE.Color('#fff2d2');
 const nightMoon=new THREE.Color('#9ab8e3');
 const daylightAmbient=new THREE.Color('#e6efe2');
+// Keep the WebGL light count fixed: changing it recompiles every lit material.
+const LIGHT_POOL_SIZE=20;
 
 function glowMaterial():THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -29,7 +31,12 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   const ambient=useRef<THREE.AmbientLight>(null);
   const hemisphere=useRef<THREE.HemisphereLight>(null);
   const village=useRef<THREE.PointLight>(null);
-  const lights=useRef(new Map<string,THREE.PointLight>());
+  const lights=useRef<(THREE.PointLight|null)[]>([]);
+  const lightPool=useMemo(()=>Array.from({length:LIGHT_POOL_SIZE},(_,slot)=><pointLight key={slot}
+    ref={light=>{lights.current[slot]=light;}} position={[0,-100,0]}
+    color="#ffc27b" distance={0.01} decay={2} intensity={0}/>),[]);
+  const lightSlots=useRef<(SceneLightSource|null)[]>(Array(LIGHT_POOL_SIZE).fill(null));
+  const assignments=useRef(new Map<string,number>());
   const active=useRef(new Set<string>());
   const [activeIds,setActiveIds]=useState<string[]>([]);
   const {scene,gl}=useThree();
@@ -47,8 +54,16 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     });
   },[game.world,opened]);
   const allSources=useMemo(()=>[...sources,...cards],[sources,cards]);
+  const sourceById=useMemo(()=>new Map(allSources.map(source=>[source.id,source])),[allSources]);
   const glows=useMemo(()=>new Map(allSources.map(source=>[source.id,glowMaterial()])),[allSources]);
   useEffect(()=>()=>{for(const material of glows.values())material.dispose();},[glows]);
+  useEffect(()=>{
+    assignments.current.clear();
+    lightSlots.current.fill(null);
+    active.current.clear();
+    lastCull.current=-1;
+    setActiveIds([]);
+  },[game.world]);
 
   useFrame(({clock,camera})=>{
     if(!main.current||!ambient.current||!hemisphere.current||!village.current)return;
@@ -77,17 +92,44 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
 
     if(clock.elapsedTime-lastCull.current>0.2){
       lastCull.current=clock.elapsedTime;
-      const next=visibleLightIds(camera,allSources,active.current,3.5,7);
-      if(next.length!==active.current.size||next.some(id=>!active.current.has(id))){
-        active.current=new Set(next);
+      const visible=visibleLightIds(camera,allSources,active.current,3.5,7);
+      const next=visible.length<=LIGHT_POOL_SIZE?visible:visible
+        .sort((a,b)=>{
+          const first=sourceById.get(a)!,second=sourceById.get(b)!;
+          const distance=(source:SceneLightSource)=>
+            (source.x-camera.position.x)**2+(source.z-camera.position.z)**2;
+          return distance(first)-distance(second);
+        }).slice(0,LIGHT_POOL_SIZE);
+      const selected=new Set(next);
+      for(const [id,slot] of assignments.current)if(!selected.has(id)){
+        assignments.current.delete(id);
+        lightSlots.current[slot]=null;
+      }
+      for(const id of next)if(!assignments.current.has(id)){
+        const slot=lightSlots.current.findIndex(source=>source===null);
+        if(slot<0)continue;
+        assignments.current.set(id,slot);
+        lightSlots.current[slot]=sourceById.get(id)!;
+      }
+      if(selected.size!==active.current.size||next.some(id=>!active.current.has(id))){
+        active.current=selected;
         setActiveIds(next);
       }
     }
+    for(let slot=0;slot<LIGHT_POOL_SIZE;slot++){
+      const light=lights.current[slot];
+      if(!light)continue;
+      const source=lightSlots.current[slot];
+      if(!source){light.intensity=0;continue;}
+      const card=source.id.startsWith('card-');
+      light.position.set(source.x,source.y,source.z);
+      light.color.set(source.color);
+      light.distance=source.reach;
+      light.intensity=card?0.5+night*0.55:0.25+night*2.05;
+    }
     for(const source of allSources){
       if(!active.current.has(source.id))continue;
-      const light=lights.current.get(source.id);
       const card=source.id.startsWith('card-');
-      if(light)light.intensity=card?0.5+night*0.55:0.25+night*2.05;
       const glow=glows.get(source.id);
       if(glow){
         glow.uniforms.uColor.value.set(source.color);
@@ -105,11 +147,10 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       shadow-camera-left={-22} shadow-camera-right={22} shadow-camera-top={22} shadow-camera-bottom={-22}
       shadow-camera-near={0.5} shadow-camera-far={135} shadow-bias={-0.00025} shadow-normalBias={0.006}/>
     <pointLight ref={village} position={[48,3,48]} color="#f1ad69" distance={14} decay={2} intensity={1}/>
+    {lightPool}
     {allSources.filter(source=>activeIds.includes(source.id)).map(source=>{
       const card=source.id.startsWith('card-');
       return <group key={source.id}>
-        <pointLight ref={light=>{if(light)lights.current.set(source.id,light);else lights.current.delete(source.id);}}
-          position={[source.x,source.y,source.z]} color={source.color} distance={source.reach} decay={2} intensity={0}/>
         <mesh material={glows.get(source.id)} position={[source.x,source.groundY,source.z]}
           rotation={[-Math.PI/2,0,0]} renderOrder={5}>
           <planeGeometry args={[card?2.4:5.8,card?2.4:5.8]}/>
