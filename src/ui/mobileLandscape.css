@@ -1,0 +1,119 @@
+/* The game stays in landscape on touch devices; the playfield keeps most of the screen. */
+@media (pointer:coarse) and (orientation:landscape) {
+  .game-app .mobile-joystick-zone{position:absolute;z-index:2;display:block;top:0;bottom:0;left:0;width:43%;touch-action:none;user-select:none;-webkit-user-select:none}
+  .game-app .touch-controls{display:block;position:absolute;z-index:6;inset:0;width:100%;height:100%;pointer-events:none}
+  .game-app .touch-controls .touch-jump,.game-app .touch-controls .battle-jump{left:auto;right:max(12px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));width:60px;height:60px;font-size:11px}
+  .mobile-joystick-zone .nipple{opacity:.75!important;pointer-events:none}
+}
+
+@media (pointer:coarse) and (orientation:landscape) and (max-height:600px) {
+  .game-app .start-screen{padding:8px max(12px,env(safe-area-inset-left));justify-content:flex-start}
+  .game-app .start-card{width:min(540px,78vw);max-height:calc(100dvh - 16px);overflow:auto;padding:13px 18px;border-radius:14px}
+  .game-app .start-card h1{font-size:clamp(28px,4vw,43px);margin:5px 0 3px}
+  .game-app .start-card .eyebrow{font-size:8px}
+  .game-app .subtitle{font-size:11px;line-height:1.35;margin:8px 0 12px}
+  .game-app .start-actions{gap:7px}
+  .game-app .start-actions button{padding:8px 12px;font-size:11px}
+  .game-app .start-foot{margin-top:10px;font-size:9px}
+  .game-app .starter-grid{gap:6px;margin:7px 0}
+  .game-app .starter-card img{height:55px}
+  .game-app .starter-card strong{font-size:11px}
+  .game-app .starter-card span{font-size:8px}
+  .game-app .starter-card small{display:none}
+  .game-app .seed-label{font-size:9px}
+  .game-app .seed-label input{margin-top:2px;padding:5px;width:150px}
+
+  .game-app .hud-top-left{top:max(7px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));gap:3px}
+  .game-app .hud-top-right{top:max(7px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));gap:4px}
+  .game-app .brand-chip{padding:4px 7px;font-size:12px}
+  .game-app .brand-mark{width:18px;height:18px;margin-right:3px}
+  .game-app .objective-chip{padding:4px 7px;font-size:9px}
+  .game-app .time-chip{padding:4px 6px;font-size:11px}
+  .game-app .time-chip span{font-size:13px}
+  .game-app .time-chip small{display:none}
+  .game-app .seals-chip{padding:3px;gap:2px}
+  .game-app .seals-chip span{width:20px;height:20px;font-size:14px}
+  .game-app .icon-button{padding:3px 7px;font-size:15px}
+  .game-app .hud-bottom-left{left:max(8px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom))}
+  .game-app .companion-chip{width:190px;min-height:59px;padding:3px 6px 3px 2px;gap:3px}
+  .game-app .companion-sprite{width:34px;height:34px}
+  .game-app .companion-info>strong{font-size:10px;margin:0 0 2px}
+  .game-app .companion-info>strong span{font-size:8px}
+  .game-app .companion-heading small{font-size:6px}
+  .game-app .companion-stat{grid-template-columns:12px minmax(0,1fr) 36px;gap:2px;margin-top:1px;font-size:7px}
+  .game-app .companion-stat b{font-size:7px}
+  .game-app .companion-track{height:4px}
+  .game-app .desktop-hint,.game-app .minimap-wrap,.game-app .interact-button{display:none}
+  .game-app .hud-bottom-right{right:max(8px,env(safe-area-inset-right));bottom:max(78px,calc(env(safe-area-inset-bottom) + 72px));gap:4px}
+  .game-app .collection-button{padding:5px 7px;font-size:9px}
+  .game-app .collection-button img{width:15px!important;height:15px!important}
+  .game-app .collection-button span{margin-left:3px;padding:1px 4px}
+
+  .game-app .battle-top{top:max(43px,calc(env(safe-area-inset-top) + 40px));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));align-items:flex-start}
+  .game-app .battle-top .combatant.enemy,.game-app .battle-bottom .combatant.ally{display:flex;flex-direction:column;align-items:center;gap:1px;width:86px;min-width:0;min-height:0;padding:3px 4px 4px;border-radius:8px;text-align:center}
+  .game-app .combatant.enemy img,.game-app .combatant.ally img{width:36px;height:33px;object-fit:contain;background:transparent}
+  .game-app .combatant.enemy>div,.game-app .combatant.ally>div{width:100%;min-width:0}
+  .game-app .combatant.enemy strong,.game-app .combatant.ally strong{display:flex;flex-direction:column;align-items:center;font-size:10px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game-app .combatant.enemy strong span,.game-app .combatant.ally strong span{font-size:8px}
+  .game-app .combatant.enemy small,.game-app .combatant.ally small,.game-app .combatant .battle-statuses{display:none}
+  .game-app .battle-ui .battle-bottom{position:absolute;top:auto;left:auto;right:max(78px,calc(env(safe-area-inset-right) + 72px));bottom:max(9px,env(safe-area-inset-bottom));width:90px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .game-app .battle-utility{position:static;display:flex;gap:3px;max-width:90px;margin:0}
+  .game-app .battle-utility button{display:grid;place-items:center;min-width:40px;width:40px;height:30px;padding:2px}
+  .game-app .battle-utility button:first-child{display:none}
+  .game-app .battle-utility button img{width:22px;height:22px}
+  .game-app .battle-utility button span{display:none}
+  .game-app .flee-button{margin-left:auto;padding:5px 7px;font-size:9px}
+  .game-app .battle-tip{display:none}
+  .game-app .battle-command-cluster{width:146px;gap:3px;padding:5px;box-shadow:0 6px 18px #071622a8}
+  .game-app .battle-command-cluster button{height:30px;padding:2px 6px;gap:5px}
+  .game-app .battle-command-cluster kbd,.game-app .battle-command-cluster .keyboard-key{display:none}
+  .game-app .battle-command-cluster .command-icon{width:19px;font-size:16px}
+  .game-app .battle-command-cluster .command-bag-icon{width:21px;height:21px}
+  .game-app .battle-command-cluster strong{font-size:10px}
+  .game-app .battle-command-title{font-size:7px}
+  .game-app .battle-command-cluster .quick-bag-actions>span,.game-app .battle-command-cluster .quick-cards-actions>span{display:none}
+  .game-app .quick-bag-cluster,.game-app .quick-cards-cluster{width:min(340px,calc(100vw - 28px));max-height:calc(100dvh - 24px);overflow-y:auto;gap:5px;padding:9px}
+  .game-app .quick-bag-heading,.game-app .quick-cards-heading{height:27px;font-size:12px}
+  .game-app .battle-command-cluster .quick-bag-heading button,.game-app .battle-command-cluster .quick-cards-heading button{height:26px;min-width:30px;justify-content:center;font-size:14px}
+  .game-app .quick-bag-grid,.game-app .quick-cards-list{gap:5px}
+  .game-app .battle-command-cluster .quick-bag-slot{height:43px;gap:6px}
+  .game-app .quick-bag-slot img,.game-app .quick-bag-slot .quick-bag-empty{width:30px;height:30px}
+  .game-app .battle-command-cluster .quick-bag-slot strong{font-size:10px}
+  .game-app .quick-bag-detail{min-height:36px;padding:5px 7px}
+  .game-app .quick-bag-detail span{font-size:9px}
+  .game-app .battle-command-cluster .quick-card-option{height:43px;gap:7px}
+  .game-app .quick-card-option img{width:27px;height:34px}
+  .game-app .quick-card-option span small{font-size:9px}
+  .game-app .quick-cards-hint{font-size:9px;padding:5px 7px}
+  .game-app .quick-bag-actions,.game-app .quick-cards-actions{justify-content:flex-end}
+  .game-app .battle-command-cluster .quick-bag-actions button,.game-app .battle-command-cluster .quick-cards-actions button{height:29px;padding:0 13px;font-size:11px}
+
+  .game-app .world-action{padding:5px 7px;max-width:135px}
+  .game-app .world-action strong{font-size:10px}
+  .game-app .world-action small{font-size:8px}
+  .game-app .world-speech{max-width:min(290px,45vw);padding:8px 10px}
+  .game-app .world-speech-name{font-size:13px}
+  .game-app .world-speech p{font-size:10px;margin:4px 0 7px}
+  .game-app .world-speech-actions button{min-height:29px;padding:4px 7px;font-size:9px}
+
+  .game-app .overlay{padding:8px}
+  .game-app .modal-panel{max-height:calc(100dvh - 16px);padding:12px 16px}
+  .game-app .modal-panel h2{font-size:21px}
+  .game-app .modal-panel p{font-size:11px}
+  .game-app .inventory-panel{width:min(790px,calc(100vw - 16px));padding:9px 13px}
+  .game-app .inventory-heading{margin-bottom:4px}
+  .game-app .inventory-section-title{margin:6px 0 4px}
+  .game-app .loadout-slot{height:54px}
+  .game-app .inventory-grid{max-height:128px}
+  .game-app .inventory-panel .inventory-detail{min-height:106px}
+  .game-app .inventory-panel .inventory-footer{margin-top:5px}
+  .game-app .pause-panel{gap:7px}
+  .game-app .pause-panel .primary,.game-app .pause-panel .secondary{padding:9px 12px}
+  .game-app .pause-panel .setting-row{margin-top:3px;padding-top:9px}
+  .game-app .pause-panel .controls-copy{font-size:10px;line-height:1.35}
+}
+
+@media (pointer:coarse) and (orientation:landscape) and (max-height:350px) {
+  .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){width:136px}
+  .game-app .battle-ui .battle-bottom{right:max(166px,calc(env(safe-area-inset-right) + 160px))}
+}

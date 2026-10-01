@@ -1,0 +1,18 @@
+.pwa-install-button{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.pwa-install-button span{font-size:16px;line-height:1}
+.pwa-install-overlay{z-index:40}
+.pwa-install-panel{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:9px;width:min(420px,100%)}
+.pwa-install-panel h2,.pwa-install-panel p{margin:0}
+.pwa-install-panel h2{font-size:26px}
+.pwa-install-panel p{font-size:14px}
+.pwa-install-panel small{color:#b5cec4;font-size:11px;line-height:1.45}
+.pwa-install-panel .primary{align-self:flex-end;margin-top:5px}
+.pwa-install-icon{width:54px;height:54px;border-radius:13px;object-fit:cover}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:600px){
+  .game-app .pwa-install-panel{width:min(520px,calc(100vw - 20px));max-height:calc(100dvh - 20px);padding:13px 16px;gap:6px}
+  .game-app .pwa-install-panel h2{font-size:20px}
+  .game-app .pwa-install-panel p{font-size:11px}
+  .game-app .pwa-install-panel small{font-size:9px}
+  .game-app .pwa-install-icon{width:40px;height:40px}
+  .game-app .pwa-install-panel .primary{padding:7px 11px;font-size:10px}
+}

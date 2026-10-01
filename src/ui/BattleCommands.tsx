@@ -25,11 +25,21 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
   const preferredSide=useRef<'left'|'right'|null>(null);
   useEffect(()=>{
     let frame=0;
+    const touchLayout=window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 600px)');
     const update=()=>{
       const battle=game.battle,camera=cameraRef.current,element=cluster.current;
       if(battle&&camera&&element){
         const parent=element.parentElement?.getBoundingClientRect();
         if(parent){
+          if(touchLayout.matches){
+            const width=element.offsetWidth,height=element.offsetHeight;
+            const choosing=game.battleMenu==='items'||game.battleMenu==='cards';
+            const y=choosing?(parent.height-height)/2:Math.max(66,Math.min(72,parent.height-height-100));
+            element.style.left=choosing?`${Math.max(8,(parent.width-width)/2)}px`:'auto';
+            element.style.right=choosing?'auto':'max(10px, env(safe-area-inset-right))';
+            element.style.top=`${Math.max(8,y)}px`;
+            element.style.visibility='visible';
+          }else{
           const player=game.player;
           projected.set(player.x,game.getGroundHeight(player.x,player.z)+1.05,player.z).project(camera);
           const playerX=(projected.x+1)*parent.width*0.5;
@@ -90,8 +100,10 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
             }
           }
           element.style.left=`${x}px`;
+          element.style.right='auto';
           element.style.top=`${y}px`;
           element.style.visibility=Math.abs(projected.x)<1.3&&Math.abs(projected.y)<1.3?'visible':'hidden';
+          }
         }
         if(attack.current&&attackLabel.current&&game.activeMonster){
           const ally=battle.ally,monster=game.activeMonster;
@@ -123,7 +135,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     const selectedEntry=inventory.find(item=>item.uid===bag[selected]);
     const selectedItem=selectedEntry?ITEMS[selectedEntry.itemId]:null;
     return <div className="battle-command-cluster quick-bag-cluster" ref={cluster} role="group" aria-label="Mochila de batalha">
-      <div className="quick-bag-heading"><span><img src="/art/ui/hero-satchel.png" alt=""/> MOCHILA</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar mochila">Q ✕</button></div>
+      <div className="quick-bag-heading"><span><img src="/art/ui/hero-satchel.png" alt=""/> MOCHILA</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar mochila"><span className="keyboard-key">Q </span>✕</button></div>
       <div className="quick-bag-grid">{Array.from({length:BAG_CAPACITY},(_,slot)=>{
         const entry=inventory.find(item=>item.uid===bag[slot]);
         const item=entry?ITEMS[entry.itemId]:null;
@@ -138,7 +150,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
       <div className="quick-bag-detail" style={selectedItem?{'--accent':selectedItem.color} as React.CSSProperties:undefined}>
         <strong>{selectedItem?.name??'Espaço vazio'}</strong><span>{selectedItem?.description??'Coloque itens na mochila antes da batalha.'}</span>
       </div>
-      <div className="quick-bag-actions"><span>1–6 / setas · Q fecha</span><button type="button" disabled={!selectedItem} onClick={()=>game.useSelectedBattleItem()}>Z Usar</button></div>
+      <div className="quick-bag-actions"><span>1–6 / setas · Q fecha</span><button type="button" disabled={!selectedItem} onClick={()=>game.useSelectedBattleItem()}><span className="keyboard-key">Z </span>Usar</button></div>
     </div>;
   }
   if(game.battleMenu==='cards'){
@@ -149,7 +161,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     const available=game.save?.cards[selected]??0;
     const valid=!battle.guardian&&selected===foe.element&&chance>0&&available>0;
     return <div className="battle-command-cluster quick-cards-cluster" ref={cluster} role="group" aria-label="Cartas de captura">
-      <div className="quick-cards-heading"><span>✦ CARTAS</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar cartas">B ✕</button></div>
+      <div className="quick-cards-heading"><span>✦ CARTAS</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar cartas"><span className="keyboard-key">B </span>✕</button></div>
       <div className="quick-cards-list">{ELEMENTS.map((element,index)=>{
         const count=game.save?.cards[element]??0;
         return <button type="button" key={element} className={`quick-card-option ${selected===element?'selected':''}`}
@@ -161,7 +173,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
         </button>;
       })}</div>
       <p className="quick-cards-hint">{battle.guardian?'Guardiões não podem ser capturados.':chance===0?`Reduza ${foe.name} a 50% de PV.`:`${foe.name} exige carta de ${ELEMENT_LABEL[foe.element]}.`}</p>
-      <div className="quick-cards-actions"><span>1–3 / setas · B fecha</span><button type="button" disabled={!valid} onClick={()=>game.useSelectedBattleCard()}>Z Usar</button></div>
+      <div className="quick-cards-actions"><span>1–3 / setas · B fecha</span><button type="button" disabled={!valid} onClick={()=>game.useSelectedBattleCard()}><span className="keyboard-key">Z </span>Usar</button></div>
     </div>;
   }
   const command=game.battle?.command;

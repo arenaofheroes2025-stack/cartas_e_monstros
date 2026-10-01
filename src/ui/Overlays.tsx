@@ -4,6 +4,7 @@ import { attack, defense, ELEMENT_COLOR, ELEMENT_LABEL, experienceNeeded, luck, 
 import { monsterPortrait } from '../render/art';
 import { attackRadius } from '../game/battle/rules';
 import './combatReadability.css';
+import { PwaInstallButton, type PwaInstallState } from './PwaInstall';
 
 export function BattleMenuPanel({game}:{game:Game}) {
   const battle=game.battle,save=game.save;
@@ -40,10 +41,11 @@ export function CollectionPanel({game,onClose,onDetails}:{game:Game;onClose:()=>
   </div></div>;
 }
 
-export function PausePanel({game,quality,setQuality}:{game:Game;quality:'high'|'low';setQuality:(v:'high'|'low')=>void}) {
+export function PausePanel({game,quality,setQuality,pwa}:{game:Game;quality:'high'|'low';setQuality:(v:'high'|'low')=>void;pwa:PwaInstallState}) {
   return <div className="overlay"><div className="modal-panel pause-panel"><div className="eyebrow">PAUSA</div><h2>A aventura espera</h2><p>O mundo e o relógio param enquanto este menu está aberto.</p>
     <button className="primary" onClick={()=>game.togglePause()}>Continuar</button>
     <button className="secondary" onClick={()=>{game.persist();game.notify('Jogo salvo neste dispositivo.');game.togglePause();}}>Salvar agora</button>
+    <PwaInstallButton pwa={pwa}/>
     <div className="setting-row"><span>Qualidade gráfica</span><div className="segment"><button className={quality==='high'?'selected':''} onClick={()=>setQuality('high')}>Alta</button><button className={quality==='low'?'selected':''} onClick={()=>setQuality('low')}>Leve</button></div></div>
     <div className="controls-copy">WASD/setas: andar · Espaço: pular também na batalha · Z: interagir/atacar · X: esquivar · C: perseguir · V: voltar · B: cartas · Q: mochila rápida · I: inventário fora da batalha · Esc: pausa</div>
     <button className="subtle-link" onClick={()=>{game.persist();window.location.reload();}}>Voltar ao início</button>

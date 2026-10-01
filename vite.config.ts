@@ -12,7 +12,11 @@ export default defineConfig({
       theme_color: '#111d2a',
       background_color: '#111d2a',
       display: 'standalone',
-      orientation: 'any',
+      id: '/',
+      start_url: '/',
+      scope: '/',
+      lang: 'pt-BR',
+      orientation: 'landscape',
       icons: [
         { src: '/art/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
         { src: '/art/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }

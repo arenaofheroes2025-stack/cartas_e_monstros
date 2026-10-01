@@ -1,0 +1,11 @@
+.battle-actor-bars{position:absolute;z-index:3;width:94px;display:flex;flex-direction:column;gap:3px;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 3px #07151dbc)}
+.battle-actor-bars .actor-meter{display:block;width:100%;height:8px;padding:1px;border:1px solid #d1e1c0a8;border-radius:5px;background:#102b39e8;overflow:hidden}
+.battle-actor-bars .actor-meter>span{display:block;width:0;height:100%;border-radius:3px;transition:width .12s linear}
+.battle-actor-bars.ally .health>span{background:#8fdb9f}
+.battle-actor-bars.foe .health>span{background:#ed8b76}
+.battle-actor-bars .attack{height:6px;border-color:#73959ab5}
+.battle-actor-bars .attack:before{content:'⚔';position:absolute;left:-11px;margin-top:-4px;color:#f0d6a2;font-size:10px;text-shadow:0 1px 2px #06151d}
+.battle-actor-bars .attack>span{background:#83d9dc}
+.battle-actor-bars.winding .attack>span{background:#ffcf74;box-shadow:0 0 5px #ffcf74}
+.battle-actor-bars.recovering .attack>span{background:#c9a76e}
+@media(pointer:coarse) and (orientation:landscape){.battle-actor-bars{width:74px;gap:2px}.battle-actor-bars .actor-meter{height:7px}.battle-actor-bars .attack{height:5px}}

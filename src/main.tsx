@@ -13,8 +13,10 @@ import { TouchControls } from './ui/TouchControls';
 import { WorldInteraction } from './ui/WorldInteraction';
 import { RotateDevicePrompt } from './ui/RotateDevicePrompt';
 import { usePortraitLock } from './input/usePortraitLock';
+import { PwaInstallHelp, usePwaInstall } from './ui/PwaInstall';
 import { BattleMenuPanel, CollectionPanel, PausePanel } from './ui/Overlays';
 import './style.css';
+import './ui/mobileLandscape.css';
 
 function App() {
   const [game]=useState(()=>new Game());
@@ -29,6 +31,7 @@ function App() {
     return window.matchMedia('(pointer: coarse)').matches||window.innerWidth<700?'low':'high';
   });
   const orientationPaused=usePortraitLock();
+  const pwa=usePwaInstall();
   const overlayOpen=collection||detailsUid!==null||bagOpen;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
@@ -44,18 +47,19 @@ function App() {
     game.save?.collection.find(monster=>monster.uid===detailsUid):undefined;
   return <main className="game-app">
     <div className="scene"><WorldScene game={game} quality={quality} orientationPaused={orientationPaused||overlayOpen} cameraRef={cameraRef}/></div>
-    {game.mode==='title'?<StartMenu game={game}/>:null}
+    {game.mode==='title'?<StartMenu game={game} pwa={pwa}/>:null}
     {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} revision={revision} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onCompanion={setDetailsUid}/>:null}
     {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
     {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)}/>:null}
     {inGame&&!orientationPaused?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
-    {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality}/>:null}
+    {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}/>:null}
     {collection?<CollectionPanel game={game} onClose={()=>setCollection(false)} onDetails={uid=>{setCollection(false);setDetailsUid(uid);}}/>:null}
     {detailedMonster?<CompanionDetails game={game} monster={detailedMonster} onClose={closeDetails}
       onCollection={()=>{setDetailsUid(null);setCollection(true);}}/>:null}
-    {game.mode==='explore'||(game.mode==='battle'&&game.battle?.intro===0&&!game.battle.finisher&&!game.battle.captureSequence&&!game.battleMenu)?<TouchControls game={game} controls={controls}/>:null}
+    {!orientationPaused&&(game.mode==='explore'||(game.mode==='battle'&&game.battle?.intro===0&&!game.battle.finisher&&!game.battle.captureSequence&&!game.battleMenu))?<TouchControls game={game} controls={controls}/>:null}
     {orientationPaused?<RotateDevicePrompt/>:null}
+    <PwaInstallHelp pwa={pwa}/>
   </main>;
 }
 

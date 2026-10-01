@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Game, hasSave } from '../game/game';
 import { ELEMENT_COLOR, ELEMENT_LABEL, SPECIES, STARTERS } from '../game/content';
 import { monsterPortrait } from '../render/art';
+import { PwaInstallButton, type PwaInstallState } from './PwaInstall';
 
-export function StartMenu({game}:{game:Game}) {
+export function StartMenu({game,pwa}:{game:Game;pwa:PwaInstallState}) {
   const [choosing,setChoosing]=useState(false);
   const [seed,setSeed]=useState('');
   return <div className="start-screen">
@@ -28,6 +29,7 @@ export function StartMenu({game}:{game:Game}) {
       </>:<div className="start-actions">
         <button className="primary" onClick={()=>setChoosing(true)}>Nova aventura <span>→</span></button>
         {hasSave()?<button className="secondary" onClick={()=>game.continueGame()}>Continuar jornada</button>:null}
+        <PwaInstallButton pwa={pwa}/>
       </div>}
       <div className="start-foot">Um RPG de exploração, cartas e encontros visíveis • Desktop e celular</div>
     </div>

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-const PORTRAIT_PHONE='(pointer: coarse) and (orientation: portrait) and (max-width: 700px)';
+const PORTRAIT_PHONE='(pointer: coarse) and (orientation: portrait)';
 
 function subscribe(listener:()=>void):()=>void {
   const query=window.matchMedia(PORTRAIT_PHONE);

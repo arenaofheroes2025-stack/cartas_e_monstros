@@ -1,45 +1,13 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import type { Camera } from 'three';
 import { Game } from '../game/game';
-import { ELEMENT_COLOR, ELEMENT_LABEL, maxHp, SPECIES } from '../game/content';
-import { enemyAttackInterval } from '../game/battle/rules';
+import { ELEMENT_LABEL, maxHp, SPECIES } from '../game/content';
 import { monsterPortrait } from '../render/art';
 import { ITEMS, type TimedStatus } from '../game/items';
 import { BattleCommands } from './BattleCommands';
 import { BattleCommandCallout } from './BattleCommandCallout';
+import { BattleActorBars } from './BattleActorBars';
 import './combatReadability.css';
-
-function Meter({value,max,color}:{value:number;max:number;color:string}) {
-  return <div className="meter"><div style={{width:Math.max(0,Math.min(100,value/max*100))+'%',background:color}}/></div>;
-}
-
-function EnemyAttackMeter({game}:{game:Game}) {
-  const label=useRef<HTMLSpanElement>(null);
-  const fill=useRef<HTMLElement>(null);
-  const special=useRef<HTMLElement>(null);
-  useEffect(()=>{
-    let frame=0;
-    const update=()=>{
-      const battle=game.battle;
-      if(battle&&label.current&&fill.current&&special.current){
-        const foe=battle.foe;
-        const progress=foe.windup>0?1:Math.max(0,Math.min(1,1-foe.attackTimer/enemyAttackInterval(battle.enemy,game.statusBonus(battle.enemy.uid,'speed'))));
-        fill.current.style.width=`${progress*100}%`;
-        fill.current.classList.toggle('winding',foe.windup>0);
-        fill.current.classList.toggle('recovering',foe.recovery>0&&foe.windup<=0);
-        label.current.textContent=foe.windup>0?(foe.skillWindup?'⚠ Habilidade sendo preparada':'⚠ Golpe sendo preparado'):
-          foe.recovery>0?`Contra-ataque · ${foe.recovery.toFixed(1)}s`:
-          foe.attackTimer>0?`Próximo ataque em ${foe.attackTimer.toFixed(1)}s`:'Ataque pronto';
-        special.current.textContent=`Especial ${Math.floor(foe.charge)}%`;
-      }
-      frame=requestAnimationFrame(update);
-    };
-    update();return()=>cancelAnimationFrame(frame);
-  },[game]);
-  return <section className="enemy-attack-meter" aria-label="Preparação do ataque inimigo">
-    <span ref={label}>Próximo ataque</span><span className="enemy-attack-track"><i ref={fill}/></span><small ref={special}>Especial 0%</small>
-  </section>;
-}
 
 function StatusPills({statuses}:{statuses:TimedStatus[]}) {
   const refs=useRef<Record<string,HTMLElement|null>>({});
@@ -71,15 +39,16 @@ export function BattleHud({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera
   </div>;
   return <div className="battle-ui">
     {game.battleMenu==='items'||game.battleMenu==='cards'?<button type="button" className="quick-bag-backdrop" onClick={()=>game.closeBattleMenu()} aria-label="Fechar seleção e voltar à batalha"/>:null}
+    <BattleActorBars game={game} cameraRef={cameraRef}/>
     <BattleCommands game={game} cameraRef={cameraRef}/>
     {game.battleMenu!=='items'&&game.battleMenu!=='cards'?<BattleCommandCallout game={game} cameraRef={cameraRef}/>:null}
     <div className="battle-top">
-      <div className="combatant enemy"><img src={monsterPortrait(foe.id)} alt=""/><div><small>{battle.guardian?'GUARDIÃO':'SELVAGEM'} · {ELEMENT_LABEL[foe.element]}</small><strong>{foe.name} <span>Nv. {battle.enemy.level}</span></strong><Meter value={battle.foe.hp} max={maxHp(battle.enemy)} color={ELEMENT_COLOR[foe.element]}/><small>{Math.ceil(battle.foe.hp)} / {maxHp(battle.enemy)} PV</small><EnemyAttackMeter game={game}/><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===battle.enemy.uid)}/></div></div>
+      <div className="combatant enemy"><img src={monsterPortrait(foe.id)} alt=""/><div><small>{battle.guardian?'GUARDIÃO':'SELVAGEM'} · {ELEMENT_LABEL[foe.element]}</small><strong>{foe.name} <span>Nv. {battle.enemy.level}</span></strong><small className="combatant-details">{Math.ceil(battle.foe.hp)} / {maxHp(battle.enemy)} PV · Especial {Math.floor(battle.foe.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===battle.enemy.uid)}/></div></div>
       <div className="battle-caption"><span>ARENA</span><strong>{battle.messageTime>0?battle.message:'Comande seu monstro e mova-se pela arena.'}</strong></div>
       <button className="flee-button" onClick={()=>game.flee()}>Sair da arena</button>
     </div>
     <div className="battle-bottom">
-      <div className="combatant ally"><img src={monsterPortrait(friend.id)} alt=""/><div><small>SEU MONSTRO · {ELEMENT_LABEL[friend.element]}</small><strong>{friend.name} <span>Nv. {ally.level}</span></strong><Meter value={battle.ally.hp} max={maxHp(ally)} color="#9ad9aa"/><small>{Math.ceil(battle.ally.hp)} / {maxHp(ally)} PV · Habilidade {Math.floor(battle.ally.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div></div>
+      <div className="combatant ally"><img src={monsterPortrait(friend.id)} alt=""/><div><small>SEU MONSTRO · {ELEMENT_LABEL[friend.element]}</small><strong>{friend.name} <span>Nv. {ally.level}</span></strong><small className="combatant-details">{Math.ceil(battle.ally.hp)} / {maxHp(ally)} PV · Especial {Math.floor(battle.ally.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div></div>
       <div className="battle-utility">
         <button onClick={()=>game.toggleBattleBag()} aria-label={game.battleMenu==='items'?'Fechar mochila':'Abrir mochila'}><img src="/art/ui/hero-satchel.png" alt=""/><span>Mochila<small>{save.battleBag.filter(Boolean).length}/6 · Q</small></span></button>
         <button onClick={()=>game.openBattleMenu('party')} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>

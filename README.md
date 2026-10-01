@@ -20,6 +20,12 @@ npm run preview
 
 O aplicativo funciona offline depois de abrir a versão de produção uma vez com conexão. O progresso fica no armazenamento local do navegador.
 
+### Instalar como aplicativo (PWA)
+
+A versão de produção inclui manifesto, ícones para Android/iOS, orientação horizontal e service worker com os arquivos do jogo. Abra o jogo por **HTTPS** no celular. Na tela inicial ou na pausa, toque em **Instalar jogo** quando o navegador oferecer a instalação. Se o convite automático não aparecer, use **Como instalar**: no Android, procure **Instalar app** no menu do navegador; no iPhone/iPad, use **Compartilhar → Adicionar à Tela de Início** no Safari. Depois, abra o jogo pelo ícone criado.
+
+O endereço `http://127.0.0.1` permite testar a instalação no próprio computador. A prévia `npm run lan` usa HTTP no IP do Wi-Fi e serve para jogar no celular, mas não para instalar o PWA ou testar o cache offline nele. Para instalar no aparelho, publique o conteúdo de `dist/` em uma origem HTTPS ou use um servidor HTTPS cujo certificado seja confiável para o aparelho. O progresso salvo pertence à origem usada; mudar de endereço cria outro armazenamento local.
+
 ### Teste no celular pelo Wi-Fi
 
 ```sh
@@ -38,7 +44,7 @@ Abra `/qa-sombras.html` no mesmo endereço do jogo (por exemplo, `http://127.0.0
 
 | Ação | Desktop | Celular |
 | --- | --- | --- |
-| Andar | WASD ou setas | Direcional na tela |
+| Andar | WASD ou setas | Toque e arraste na lateral esquerda para abrir o joystick transparente |
 | Interagir e confirmar | Z | Botão Interagir |
 | Pular, inclusive na arena | Espaço | Botão Pular |
 | Pausar | Esc ou menu | Menu |
