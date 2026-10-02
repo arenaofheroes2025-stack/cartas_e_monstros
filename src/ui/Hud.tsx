@@ -2,6 +2,7 @@ import { Game } from '../game/game';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_LABEL, experienceNeeded, maxHp, SPECIES } from '../game/content';
 import { CompanionPortrait } from './CompanionPortrait';
 import { MapGlyph } from './WorldMapPanel';
+import { monsterPortrait } from '../render/art';
 import './companionHud.css';
 
 export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCollection:()=>void;onBag:()=>void;onMap:()=>void;onCompanion:(uid:string)=>void}) {
@@ -34,7 +35,11 @@ export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCol
           <span className="companion-stat"><span>XP</span><span className="companion-track companion-xp"><i style={{width:`${xpPercent}%`}}/></span><b>{current.xp}/{xpMax}</b></span>
         </span>
       </button><div className="desktop-hint">WASD para andar · Espaço para pular · Z para interagir</div></div>
-      <div className="hud-bottom-right"><button type="button" className="map-open-button" onClick={onMap} aria-label="Abrir mapa da região" title="Abrir mapa da região"><MapGlyph/></button><button onClick={onBag} className="collection-button" aria-label="Abrir inventário e mochila"><img src="/art/ui/hero-satchel.png" alt="" style={{width:20,height:20,objectFit:'contain',verticalAlign:'middle',imageRendering:'pixelated'}}/> Mochila <span>{save.battleBag.filter(Boolean).length}/6</span></button><button onClick={onCollection} className="collection-button">Coleção <span>{save.party.length+save.collection.length}</span></button></div>
+      <div className="hud-bottom-right">
+        <button type="button" className="map-open-button" onClick={onMap} aria-label="Abrir mapa da região" title="Abrir mapa da região"><MapGlyph/></button>
+        <button type="button" onClick={onBag} className="hud-menu-button" aria-label={`Abrir mochila, ${save.battleBag.filter(Boolean).length} de 6 itens para batalha`}><span className="hud-menu-icon"><img src="/art/ui/hero-satchel.png" alt=""/></span><strong>Mochila</strong><span className="hud-menu-count">{save.battleBag.filter(Boolean).length}/6</span></button>
+        <button type="button" onClick={onCollection} className="hud-menu-button" aria-label={`Abrir equipe, ${save.party.length} de 3 criaturas em campo`}><span className="hud-menu-icon hud-team-icon"><img src={monsterPortrait(current.species)} alt=""/></span><strong>Equipe</strong><span className="hud-menu-count">{save.party.length}/3</span></button>
+      </div>
     </>:null}
     {game.mode!=='battle'&&game.message&&game.messageTime>0?<div className="toast" key={game.message}>{game.message}</div>:null}
   </>;

@@ -101,7 +101,7 @@ export function CompanionDetails({game,monster,onClose,onCollection,onSelect}:{g
               <i className="companion-details-track"><i style={{width:`${experience}%`,background:'#efc37e'}}/></i></div>
           </div>
           {species.evolvesTo?<p className="companion-details-evolution">Evolui para {SPECIES[species.evolvesTo].name} no nível 6.</p>:null}
-          <button className="secondary companion-details-collection" onClick={onCollection}>Ver equipe e coleção</button>
+          <button className="secondary companion-details-collection" onClick={onCollection}>Ver equipe</button>
         </div>
         <div className="companion-summary-detail-column">
           <section className="companion-summary-stats" aria-labelledby="companion-stats-heading">

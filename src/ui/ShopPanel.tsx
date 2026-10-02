@@ -77,7 +77,7 @@ export function ShopPanel({game}:{game:Game}) {
             <div className="shop-total"><small>TOTAL</small><strong>◈ {total}</strong></div>
             <button type="button" className="shop-buy" disabled={!affordable} onClick={buy}>{affordable?'Comprar':'Sem moedas'} <span>➜</span></button>
           </div>
-          <p className={`shop-feedback ${message?'visible':''}`} aria-live="polite">{message||'Os itens comprados vão para o inventário. Cartas ficam na coleção.'}</p>
+          <p className={`shop-feedback ${message?'visible':''}`} aria-live="polite">{message||'Itens comprados vão para o inventário. Cartas ficam guardadas.'}</p>
         </div>
       </div>
     </section>

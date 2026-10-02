@@ -913,7 +913,7 @@ export class Game {
       if(sequence.elapsed>=sequence.duration){
         if(sequence.success){
           this.endBattle('capture');
-          this.notify(`${sequence.speciesName} foi capturado! ${sequence.destination==='equipe'?'Entrou na equipe.':'Foi para a coleção.'}`,5);
+          this.notify(`${sequence.speciesName} foi capturado! ${sequence.destination==='equipe'?'Entrou na equipe.':'Foi para a reserva da equipe.'}`,5);
         } else {
           battle.captureSequence=undefined;
           battle.message=`${sequence.speciesName} escapou da carta!`;

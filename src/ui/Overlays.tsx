@@ -30,7 +30,6 @@ function MonsterCard({monster,chosen=false,action,onClick,onDetails}:{monster:Mo
       <strong className="creature-card-name">{species.name}</strong>
       <span className="creature-card-vitals"><span className="creature-card-level">Nv. {monster.level}</span><span className="creature-card-health"><span className="creature-health-track"><i style={{width:`${health}%`}}/></span><small>{monster.hp}/{maxHp(monster)}</small></span></span>
       <span className="creature-card-xp" title={`${monster.xp}/${needed} EXP`}><small>EXP</small><span><i style={{width:`${experience}%`}}/></span></span>
-      <span className="creature-card-action">{action}</span>
     </button>
     <button type="button" className="creature-card-details" onClick={onDetails} aria-label={`Ver ficha e itens de ${species.name}`} title={`Ficha e itens de ${species.name}`}>i</button>
   </div>;
@@ -53,13 +52,26 @@ export function BattleInspection({monster,hp,opponent,onClose}:{monster:Monster;
 }
 
 export function CollectionPanel({game,covered=false,onClose,onDetails}:{game:Game;covered?:boolean;onClose:()=>void;onDetails:(uid:string)=>void}) {
-  const [target,setTarget]=useState<number|undefined>();
+  const [selected,setSelected]=useState<{side:'party'|'reserve';index:number}|null>(null);
   const save=game.save;
   if(!save)return null;
-  return <div className="overlay" inert={covered} aria-hidden={covered}><div className="modal-panel collection-panel" role="dialog" aria-modal={!covered} aria-labelledby="collection-title"><button className="close-button" onClick={onClose}>✕</button><div className="eyebrow">SUA JORNADA</div><h2 id="collection-title">Equipe & coleção</h2><p>Leve até três monstros. Capturas extras aguardam na coleção.</p>
-    <h3>Equipe ativa</h3><div className="creature-list team">{save.party.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={target===i} action={target===i?'Vaga selecionada':'Selecionar vaga'} onClick={()=>setTarget(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div>
-    <h3>Reserva <small>{save.collection.length}</small></h3>{save.collection.length?<div className="creature-list reserve">{save.collection.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} action={save.party.length<3?'Adicionar à equipe':'Trocar com vaga'} onClick={()=>{game.swapCollection(i,target);setTarget(undefined);}} onDetails={()=>onDetails(monster.uid)}/>)}</div>:<p className="empty-note">Encontre monstros pelo mapa e capture com cartas elementais.</p>}
-    <div className="collection-foot">Selecione uma vaga da equipe e depois um monstro da reserva para trocar.</div>
+  const chooseParty=(index:number)=>{
+    if(selected?.side==='reserve') {game.swapCollection(selected.index,index);setSelected(null);return;}
+    setSelected(selected?.side==='party'&&selected.index===index?null:{side:'party',index});
+  };
+  const chooseReserve=(index:number)=>{
+    if(save.party.length<3||selected?.side==='party') {game.swapCollection(index,selected?.side==='party'?selected.index:undefined);setSelected(null);return;}
+    setSelected(selected?.side==='reserve'&&selected.index===index?null:{side:'reserve',index});
+  };
+  const hint=save.party.length<3?'Toque em uma criatura da reserva para entrar na equipe.':selected?.side==='party'?'Agora escolha uma criatura da reserva.':selected?.side==='reserve'?'Agora escolha uma vaga da equipe.':'Escolha uma criatura em cada coluna para trocar.';
+  return <div className="overlay" inert={covered} aria-hidden={covered}><div className={`modal-panel collection-panel${save.collection.length?'':` is-empty-reserve team-size-${save.party.length}`}`} role="dialog" aria-modal={!covered} aria-labelledby="team-title">
+    <button type="button" className="close-button" onClick={onClose} aria-label="Fechar equipe">✕</button>
+    <header className="team-panel-header"><div><div className="eyebrow">SUAS CRIATURAS</div><h2 id="team-title">Equipe</h2></div></header>
+    <div className="team-panel-layout">
+      <section className="team-panel-section"><h3>Equipe ativa <small>{save.party.length}/3</small></h3><div className="creature-list team">{save.party.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={selected?.side==='party'&&selected.index===i} action={selected?.side==='reserve'?'Trocar por esta vaga':'Selecionar vaga para trocar'} onClick={()=>chooseParty(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div></section>
+      <section className="team-panel-section"><h3>Reserva <small>{save.collection.length}</small></h3>{save.collection.length?<div className="creature-list reserve">{save.collection.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={selected?.side==='reserve'&&selected.index===i} action={save.party.length<3?'Adicionar à equipe':selected?.side==='party'?'Trocar com a vaga escolhida':'Selecionar para troca'} onClick={()=>chooseReserve(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div>:<p className="empty-note">Criaturas capturadas ficam aqui.</p>}</section>
+    </div>
+    {save.collection.length>0?<p className="collection-foot" aria-live="polite">{hint}</p>:null}
   </div></div>;
 }
 
