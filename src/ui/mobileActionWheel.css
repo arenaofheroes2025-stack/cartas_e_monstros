@@ -2,7 +2,12 @@
 @media (pointer:coarse) and (orientation:landscape) and (max-height:600px){
   .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){
     --action-size:58px;
+    --jump-size:60px;
     position:absolute;
+    right:calc(max(12px,env(safe-area-inset-right)) + var(--jump-size) + 8px);
+    bottom:calc(max(10px,env(safe-area-inset-bottom)) + var(--jump-size) - 12px);
+    left:auto;
+    top:auto;
     display:grid;
     grid-template-columns:repeat(2,var(--action-size));
     grid-template-rows:repeat(2,var(--action-size));
@@ -137,9 +142,15 @@
   }
 }
 @media (pointer:coarse) and (orientation:landscape) and (max-height:350px){
-  .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){--action-size:52px;gap:5px}
+  .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){--action-size:52px;--jump-size:50px;gap:5px}
   .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) .command-icon{height:21px;font-size:19px;line-height:21px}
   .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) strong{font-size:7px;line-height:7px}
   .game-app .battle-actions-cluster button.command-special strong{font-size:6.5px;line-height:7px}
   .game-app .touch-controls .touch-jump .touch-jump-icon{width:24px;height:24px}
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:300px){
+  .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){
+    --action-size:46px;gap:4px;
+    right:calc(max(12px,env(safe-area-inset-right)) + var(--jump-size) + 32px);
+  }
 }

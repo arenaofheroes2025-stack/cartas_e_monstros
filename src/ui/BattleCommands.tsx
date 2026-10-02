@@ -39,13 +39,10 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
         const parent=element.parentElement?.getBoundingClientRect();
         if(parent){
           if(touchLayout.matches){
-            const width=element.offsetWidth,height=element.offsetHeight;
-            const choosing=game.battleMenu==='items'||game.battleMenu==='cards';
-            const bottomReserve=parent.height<=350?42:58;
-            const y=choosing?(parent.height-height)/2:Math.max(104,Math.min(155,parent.height-height-bottomReserve));
-            element.style.left=choosing?`${Math.max(8,(parent.width-width)/2)}px`:'auto';
-            element.style.right=choosing?'auto':'max(100px, calc(env(safe-area-inset-right) + 96px))';
-            element.style.top=`${Math.max(8,y)}px`;
+            // Os comandos compartilham o recuo do Pular via CSS e não seguem a câmera.
+            if(element.style.left)element.style.removeProperty('left');
+            if(element.style.right)element.style.removeProperty('right');
+            if(element.style.top)element.style.removeProperty('top');
             element.style.visibility='visible';
           }else{
           const player=game.player;
