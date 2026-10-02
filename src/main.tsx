@@ -8,6 +8,7 @@ import { StartMenu } from './ui/StartMenu';
 import { Hud } from './ui/Hud';
 import { CompanionDetails } from './ui/CompanionDetails';
 import { InventoryPanel } from './ui/InventoryPanel';
+import { ShopPanel } from './ui/ShopPanel';
 import { BattleHud } from './ui/BattleHud';
 import { TouchControls } from './ui/TouchControls';
 import { WorldInteraction } from './ui/WorldInteraction';
@@ -35,7 +36,7 @@ function App() {
   });
   const orientationPaused=usePortraitLock();
   const pwa=usePwaInstall();
-  const overlayOpen=collection||detailsUid!==null||bagOpen||enemyDetails;
+  const overlayOpen=collection||detailsUid!==null||bagOpen||enemyDetails||game.shopOpen;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
   const closeDetails=useCallback(()=>setDetailsUid(null),[]);
@@ -55,13 +56,14 @@ function App() {
     {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef} onAllyDetails={setDetailsUid} onEnemyDetails={()=>setEnemyDetails(true)}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
     {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)} onCompanion={setDetailsUid}/>:null}
-    {inGame&&!orientationPaused?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
+    {game.shopOpen?<ShopPanel game={game}/>:null}
+    {inGame&&!orientationPaused&&!game.shopOpen?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
     {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}/>:null}
     {collection?<CollectionPanel game={game} onClose={()=>setCollection(false)} onDetails={uid=>{setCollection(false);setDetailsUid(uid);}}/>:null}
     {detailedMonster?<CompanionDetails game={game} monster={detailedMonster} onClose={closeDetails}
       onCollection={()=>{setDetailsUid(null);setCollection(true);}}/>:null}
     {enemyDetails&&game.battle?<BattleInspection monster={game.battle.enemy} hp={game.battle.foe.hp} opponent={game.activeMonster??undefined} onClose={()=>setEnemyDetails(false)}/>:null}
-    {!orientationPaused&&(game.mode==='explore'||(game.mode==='battle'&&game.battle?.intro===0&&!game.battle.finisher&&!game.battle.captureSequence&&!game.battleMenu))?<TouchControls game={game} controls={controls}/>:null}
+    {!orientationPaused&&!game.shopOpen&&(game.mode==='explore'||(game.mode==='battle'&&game.battle?.intro===0&&!game.battle.finisher&&!game.battle.captureSequence&&!game.battleMenu))?<TouchControls game={game} controls={controls}/>:null}
     {orientationPaused?<RotateDevicePrompt/>:null}
     <PwaInstallHelp pwa={pwa}/>
   </main>;

@@ -1,10 +1,11 @@
 import { BASE_SPECIES, createMonster, ELEMENT_LABEL, gainExperience, maxHp, type Element, type HeldItemSlot, type Monster, SPECIES, speed } from './content';
-import { canStep, findPath, generateWorld, HEIGHT_STEP, index, replacementGroundItem, tileAt, type CardCache, type ItemSpawn, type Place, type Point, type WalkingNpcSpawn, type WildSpawn, type WorldData, WORLD_SIZE } from './world';
+import { canStep, findPath, generateWorld, HEIGHT_STEP, index, replacementGroundItem, tileAt, type CardCache, type Decoration, type ItemSpawn, type Place, type Point, type WalkingNpcSpawn, type WildSpawn, type WorldData, WORLD_SIZE } from './world';
 import { WALKING_NPC_DIALOG, staticNpcAt } from './npcs';
 import { attackDamage, attackInterval, attackRadius, battleMoveSpeed, captureChance, criticalChance, dodgeCooldown, enemyAttackInterval, enemyRecovery } from './battle/rules';
 import { readSave, writeSave, type SaveData } from './save';
 import { canPlayerOccupy, collidesWithNpcAt, collidesWithNpcs } from './assetCollision';
 import { addItem, BAG_CAPACITY, ITEMS, statusBonus, type ItemId, type TimedStatus, type BattleStat } from './items';
+import { SHOP_PRODUCTS, shopProductName } from './shop';
 
 export { hasSave, readSave } from './save';
 export type { SaveData } from './save';
@@ -111,6 +112,7 @@ export type InteractionTarget =
   | {kind:'item'; id:string; name:string; verb:string; subject:ItemSpawn}
   | {kind:'walker'; id:string; name:string; verb:string; subject:WalkingNpcActor}
   | {kind:'place'; id:string; name:string; verb:string; subject:Place}
+  | {kind:'shop'; id:string; name:string; verb:string; subject:Decoration}
   | {kind:'wild'; id:string; name:string; verb:string; subject:WildActor};
 export interface EffectEvent { kind: 'hit' | 'skill' | 'dodge' | 'capture' | 'evolve' | 'seal' | 'summon' | 'damage' | 'item' | 'xp'; x: number; z: number; element?: Element; species?: string; amount?: number; critical?: boolean; itemId?: ItemId; target?: Point; targetUid?: string; itemEffect?: 'heal'|'status'; stat?: BattleStat; autoItem?: boolean }
 export interface WildActor extends WildSpawn { x: number; z: number; direction: number; moveTimer: number; target?: Point }
@@ -145,6 +147,7 @@ export class Game {
   private cueSequence = 0;
   selectedBattleBagSlot = 0;
   selectedBattleCard: Element = 'fogo';
+  shopOpen = false;
 
   get player(): Point { return this.save?.player || {x:48,z:48}; }
   get hour(): number { return this.save ? ((this.save.elapsed / DAY_SECONDS) % 1) * 24 : 9; }
@@ -159,6 +162,7 @@ export class Game {
       version: 1, seed, player: {x:48,z:48}, elapsed: DAY_SECONDS * 0.35,
       party: [createMonster(chosen, 1, 'starter')], collection: [],
       cards: { fogo: 2, agua: 2, natureza: 2 }, seals: [], openedCaches: [], collectedItems: [],
+      coins:120,nextShopSerial:0,
       groundItems:this.world.items,nextItemSerial:0,
       inventory: [{uid:'starter-pao',itemId:'pao'},{uid:'starter-bolo',itemId:'bolo'},{uid:'starter-tonico',itemId:'tonico-brasa'}],
       battleBag:['starter-pao','starter-bolo','starter-tonico',null,null,null],wildCooldown: {},
@@ -178,6 +182,7 @@ export class Game {
     const save = readSave();
     if (!save) return false;
     this.save = save;
+    this.shopOpen=false;
     this.world = generateWorld(save.seed);
     this.world.items=save.groundItems?.length?save.groundItems:this.world.items;
     save.groundItems=this.world.items;
@@ -290,7 +295,7 @@ export class Game {
   update(dt: number): void {
     dt = Math.min(dt, 0.05);
     if (this.messageTime > 0) { this.messageTime -= dt; if (this.messageTime <= 0) this.message = ''; }
-    if (!this.world || !this.save || this.mode === 'pause' || this.mode === 'dialog' || this.mode === 'title') return;
+    if (!this.world || !this.save || this.shopOpen || this.mode === 'pause' || this.mode === 'dialog' || this.mode === 'title') return;
     if (this.mode === 'explore') {
       this.save.elapsed += dt;
       const before = {...this.player};
@@ -398,10 +403,16 @@ export class Game {
   }
 
   nearbyInteraction():InteractionTarget|null {
-    if(this.mode!=='explore'||!this.world||!this.save||this.jump)return null;
+    if(this.mode!=='explore'||!this.world||!this.save||this.jump||this.shopOpen)return null;
     const cache=this.world.caches.find(c=>!this.save!.openedCaches.includes(c.id)&&distance(c,this.player)<1.9);
     if(cache)return {kind:'cache',id:cache.id,name:'Carta de '+ELEMENT_LABEL[cache.element],verb:'Pegar',subject:cache};
     const walker=this.walkingNpcs.find(npc=>distance(npc,this.player)<1.5);
+    const shop=this.world.decorations.find(building=>building.id==='casa-vila'&&
+      distance({x:building.x+0.5,z:building.z+2.5},this.player)<1.9);
+    const shopDistance=shop?distance({x:shop.x+0.5,z:shop.z+2.5},this.player):Infinity;
+    if(walker&&distance(walker,this.player)<shopDistance)
+      return {kind:'walker',id:walker.id,name:WALKING_NPC_DIALOG[walker.role].name,verb:'Falar',subject:walker};
+    if(shop)return {kind:'shop',id:shop.id,name:'Empório da Vila',verb:'Comprar',subject:shop};
     if(walker)return {kind:'walker',id:walker.id,name:WALKING_NPC_DIALOG[walker.role].name,verb:'Falar',subject:walker};
     const place=this.world.places.find(p=>distance(p,this.player)<2.8);
     if(place)return {kind:'place',id:place.id,name:place.name,verb:place.kind==='shrine'?'Conversar':'Interagir',subject:place};
@@ -424,9 +435,41 @@ export class Game {
       return;
     }
     if(target?.kind==='place'){this.interactPlace(target.subject);return;}
+    if(target?.kind==='shop'){this.openShop();return;}
     if(target?.kind==='wild'){this.beginBattle(target.subject);return;}
     if(this.mode!=='explore')return;
     this.notify('Chegue perto de uma carta, casa, santuário ou monstro para interagir.');
+  }
+
+  openShop():void {
+    if(this.mode!=='explore'||!this.save)return;
+    this.shopOpen=true;
+    this.setMove(0,0);
+    this.onChange?.();
+  }
+
+  closeShop():void {
+    if(!this.shopOpen)return;
+    this.shopOpen=false;
+    this.onChange?.();
+  }
+
+  buyFromShop(productId:string,quantity:number):boolean {
+    const save=this.save;
+    const product=SHOP_PRODUCTS.find(entry=>entry.id===productId);
+    if(!save||!this.shopOpen||!product||!Number.isSafeInteger(quantity)||quantity<1||quantity>99)return false;
+    const total=product.price*quantity;
+    if(save.coins<total)return false;
+    save.coins-=total;
+    if(product.kind==='card')save.cards[product.element]+=quantity;
+    else for(let count=0;count<quantity;count++){
+      const serial=save.nextShopSerial??0;
+      save.nextShopSerial=serial+1;
+      addItem(save.inventory,{uid:`shop-${save.seed}-${serial}`,itemId:product.itemId});
+    }
+    this.persist();
+    this.notify(`${quantity} × ${shopProductName(product)} comprado${quantity>1?'s':''}!`);
+    return true;
   }
 
   private collectCache(cache: CardCache): void {
@@ -1102,15 +1145,17 @@ export class Game {
       const active=save.party[battle.allyIndex];
       const reward=gainExperience(active,battle.finisher?.xp??20+battle.enemy.level*5);
       save.wins++;
+      const coins=18+battle.enemy.level*7+(battle.guardian?30:0);
+      save.coins+=coins;
       if (reward.evolved) {
         this.effects.push({kind:'evolve',x:battle.ally.x,z:battle.ally.z,element:SPECIES[active.species].element,species:active.species});
-        this.notify('Evolução! '+SPECIES[active.species].name+' alcançou uma nova forma!',5);
-      } else this.notify('Vitória! '+SPECIES[active.species].name+' ganhou experiência.');
+        this.notify(`Evolução! ${SPECIES[active.species].name} alcançou uma nova forma! +${coins} moedas.`,5);
+      } else this.notify(`Vitória! ${SPECIES[active.species].name} ganhou experiência e ${coins} moedas.`);
       if (battle.guardian && !save.seals.includes(battle.guardian)) {
         save.seals.push(battle.guardian);
         save.cards[battle.guardian]+=2;
         this.effects.push({kind:'seal',x:battle.center.x,z:battle.center.z,element:battle.guardian});
-        this.notify('Selo de '+ELEMENT_LABEL[battle.guardian]+' obtido! +2 cartas.',5);
+        this.notify(`Selo de ${ELEMENT_LABEL[battle.guardian]} obtido! +2 cartas e ${coins} moedas.`,5);
         if (save.seals.length===3) {save.completed=true;this.notify('Os três selos foram reunidos! A região está completa e continua aberta para explorar.',8);}
       }
     }

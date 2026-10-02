@@ -13,6 +13,40 @@ beforeEach(()=>{
 });
 
 describe('progressão e captura',()=>{
+  it('abre o empório na porta e compra para o inventário e a coleção de cartas',()=>{
+    const game=new Game();game.newGame('brasito',40732);
+    game.wildActors=[];game.walkingNpcs=[];
+    game.player.x=57.5;game.player.z=57.5;
+    expect(game.nearbyInteraction()?.kind).toBe('shop');
+    game.interact();
+    expect(game.shopOpen).toBe(true);
+    const before=game.save!.inventory.length;
+    const initialCards=game.save!.cards.fogo;
+    const initialCoins=game.save!.coins;
+    expect(game.buyFromShop('pao',2)).toBe(true);
+    expect(game.save!.inventory.length).toBe(before+2);
+    expect(game.save!.inventory.at(-1)?.uid).not.toBe(game.save!.inventory.at(-2)?.uid);
+    expect(game.save!.coins).toBe(initialCoins-36);
+    expect(game.buyFromShop('carta-fogo',1)).toBe(true);
+    expect(game.save!.cards.fogo).toBe(initialCards+1);
+    expect(game.buyFromShop('bolo',20)).toBe(false);
+    expect(game.buyFromShop('pao',0)).toBe(false);
+    game.closeShop();
+    expect(game.buyFromShop('pao',1)).toBe(false);
+    const resumed=new Game();expect(resumed.continueGame()).toBe(true);
+    expect(resumed.save!.coins).toBe(game.save!.coins);
+    expect(resumed.save!.cards.fogo).toBe(initialCards+1);
+    expect(resumed.save!.inventory.length).toBe(before+2);
+  });
+  it('concede moedas aos jogos antigos sem apagar sua coleção',()=>{
+    const original=new Game();original.newGame('gotejo',40732);
+    const stored=JSON.parse(store.get('cartas-e-monstros-save-v1')!);
+    delete stored.coins;delete stored.nextShopSerial;
+    store.set('cartas-e-monstros-save-v1',JSON.stringify(stored));
+    const resumed=new Game();expect(resumed.continueGame()).toBe(true);
+    expect(resumed.save!.coins).toBe(120);
+    expect(resumed.save!.party[0].species).toBe('gotejo');
+  });
   it('salta um nível, aterrissa e desce um degrau sem precisar de rampa',()=>{
     const game=new Game();game.newGame('brasito',40732);
     const world=game.world!;
@@ -290,6 +324,7 @@ describe('progressão e captura',()=>{
     const cards={...game.save!.cards};
     const collection=game.save!.collection.length;
     const initialXp=game.save!.party[0].xp;
+    const initialCoins=game.save!.coins;
     game.update(0.02);
     expect(battle.finisher?.elapsed).toBe(0);
     expect(battle.finisher?.enemyElement).toBe(SPECIES[battle.enemy.species].element);
@@ -315,6 +350,7 @@ describe('progressão e captura',()=>{
     for(let step=0;step<Math.ceil(BATTLE_FINISH_SECONDS/0.05)+2&&game.mode==='battle';step++)game.update(0.05);
     expect(game.mode).toBe('explore');
     expect(game.save!.wins).toBe(1);
+    expect(game.save!.coins).toBeGreaterThan(initialCoins);
     expect(game.save!.party[0].xp).toBeGreaterThan(initialXp);
     expect(game.save!.cards).toEqual(cards);
     expect(game.save!.party).toHaveLength(1);

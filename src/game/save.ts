@@ -12,6 +12,8 @@ export interface SaveData {
   party: Monster[];
   collection: Monster[];
   cards: Record<Element, number>;
+  coins: number;
+  nextShopSerial?: number;
   seals: Element[];
   openedCaches: string[];
   collectedItems: string[];
@@ -44,6 +46,8 @@ export function readSave(): SaveData | null {
       .slice(0,GROUND_ITEM_LIMIT):undefined;
     value.nextItemSerial=typeof value.nextItemSerial==='number'&&Number.isSafeInteger(value.nextItemSerial)&&
       value.nextItemSerial>=0?value.nextItemSerial:0;
+    value.coins=Number.isSafeInteger(value.coins)&&value.coins>=0?value.coins:120;
+    value.nextShopSerial=Number.isSafeInteger(value.nextShopSerial)&&(value.nextShopSerial??-1)>=0?value.nextShopSerial:0;
     value.inventory=(Array.isArray(value.inventory)?value.inventory:[])
       .filter((entry):entry is InventoryItem=>!!entry&&typeof entry.uid==='string'&&entry.itemId in ITEMS);
     const owned=new Map(value.inventory.map(item=>[item.uid,item]));
