@@ -3,6 +3,8 @@ import { BIRD_FLEE_DISTANCE, BIRD_FLUTTER_SECONDS, birdAirScale, birdCanStartFli
   birdFleePose, birdFlutterDelay, birdLookDelay, birdPresence, birdQuietHours,
   birdShadowOpacity, birdSites } from './ambientBirds';
 import { generateWorld, tileAt } from './world';
+import * as THREE from 'three';
+import { SPRITE_FACING } from '../render/camera';
 
 describe('pássaros de cenário', () => {
   it('repete os pousos para a mesma semente e escolhe solo livre ou árvores', () => {
@@ -30,15 +32,18 @@ describe('pássaros de cenário', () => {
         for(const building of [...world.places,...world.decorations])
           expect(Math.hypot(bird.x-(building.x+0.5),bird.z-(building.z+0.5)))
             .toBeGreaterThanOrEqual(9);
-      }else if(bird.perch==='tree')
+      }else if(bird.perch==='tree'){
         expect(['tree','pine','copper-tree','marsh-willow']).toContain(tile!.prop);
-      else {
+        for(const building of [...world.places,...world.decorations])
+          expect(Math.hypot(bird.x-(building.x+0.5),bird.z-(building.z+0.5)))
+            .toBeGreaterThanOrEqual(8);
+      }else {
         const building=[...world.places,...world.decorations].find(building=>
           bird.id===`bird-roof-${building.id}`);
         expect(building).toBeDefined();
         expect(Math.hypot(bird.x-(building!.x+0.5),bird.z-(building!.z+0.5)))
           .toBeLessThan(1);
-        expect(bird.perchHeight).toBeGreaterThan(4);
+        expect(bird.perchHeight).toBeGreaterThan(2);
       }
     }
     for(const birds of [first.filter(bird=>bird.perch==='ground'),
@@ -47,6 +52,18 @@ describe('pássaros de cenário', () => {
       for(let i=0;i<birds.length;i++)for(let j=i+1;j<birds.length;j++)
         expect(Math.hypot(birds[i].x-birds[j].x,birds[i].z-birds[j].z)).toBeGreaterThanOrEqual(
           birds[i].perch==='ground'?14:birds[i].perch==='high'?13:10);
+  });
+
+  it('ancora os pousos de árvores e telhados no mesmo plano dos sprites',()=>{
+    const normal=new THREE.Vector3(0,0,1).applyQuaternion(SPRITE_FACING);
+    const sites=birdSites(generateWorld(40732)).filter(site=>
+      site.perch==='tree'||site.perch==='roof');
+    expect(sites.length).toBeGreaterThan(0);
+    for(const site of sites){
+      const offset=new THREE.Vector3(site.perchOffsetX,site.perchHeight,site.perchOffsetZ);
+      expect(offset.length()).toBeGreaterThan(1);
+      expect(offset.dot(normal)).toBeCloseTo(0,5);
+    }
   });
 
   it('bate as asas antes de avançar; mantém o voo e a sombra até sair da câmera', () => {

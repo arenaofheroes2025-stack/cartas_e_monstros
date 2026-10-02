@@ -43,9 +43,10 @@ function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSi
     if(quiet&&site.perch==='ground')motion.current=null;
     const presence=birdPresence(site,hour);
     const visibleMode=game.mode==='explore'||game.mode==='dialog'||game.mode==='pause'&&!game.battle;
-    const distance=Math.hypot(site.x-game.player.x,site.z-game.player.z);
+    const homeX=site.x+site.perchOffsetX,homeZ=site.z+site.perchOffsetZ;
+    const distance=Math.hypot(homeX-game.player.x,homeZ-game.player.z);
     if(!visibleMode||presence<=0||distance>23&&!motion.current){mesh.visible=false;spot.visible=false;return;}
-    let x=site.x,z=site.z,lift=0,opacity=1,animation:'idle'|'flutter'|'takeoff'|'fly'='idle';
+    let x=homeX,z=homeZ,lift=0,opacity=1,animation:'idle'|'flutter'|'takeoff'|'fly'='idle';
     let frame=Math.floor((time.current/BIRD_SPECIES[site.species].idleSeconds+site.phase)*4)%4;
     if(!motion.current&&game.mode==='explore'&&!quiet&&time.current>=look.current.next){
       look.current.direction=look.current.direction===1?-1:1;
@@ -106,13 +107,18 @@ function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSi
     if(art.map!==texture){art.map=texture;art.needsUpdate=true;}
     art.opacity=opacity;
     const airborne=animation==='fly';
-    if(art.depthTest===airborne){art.depthTest=!airborne;art.depthWrite=!airborne;}
-    mesh.renderOrder=airborne?FLYING_RENDER_ORDER:0;
+    // Perched birds sit on the host sprite's plane, whose upper pixels receive
+    // boosted depth. Draw them after that sprite so the perch stays visible.
+    const foreground=airborne||site.perch==='tree'||site.perch==='roof';
+    if(art.depthTest===foreground){
+      art.depthTest=!foreground;
+      art.depthWrite=art.depthTest;
+    }
+    mesh.renderOrder=airborne?FLYING_RENDER_ORDER:foreground?4:0;
     const footV=(texture.userData.footV as number|undefined)??0;
-    const perched=site.perch==='tree'||site.perch==='roof';
     const altitude=site.perchHeight+lift;
     const sourceY=site.groundY+altitude;
-    mesh.position.set(x+(perched?0.1:0),sourceY,z+(perched?0.1:0))
+    mesh.position.set(x,sourceY,z)
       .addScaledVector(SPRITE_UP,height*(animation==='fly'?0.5:0.5-footV));
     mesh.quaternion.copy(SPRITE_FACING);
     const cast=birdShadowPoint(world,x,sourceY,z);

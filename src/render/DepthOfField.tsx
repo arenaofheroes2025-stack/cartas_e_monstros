@@ -20,8 +20,8 @@ const fragmentShader=`
   void main() {
     vec4 sharp=texture2D(tColor,vUv);
     float depth=sceneDistance(vUv);
-    float nearBlur=1.0-smoothstep(uFocus-8.0,uFocus-2.0,depth);
-    float farBlur=smoothstep(uFocus+3.0,uFocus+10.0,depth);
+    float nearBlur=1.0-smoothstep(uFocus-7.0,uFocus-1.5,depth);
+    float farBlur=smoothstep(uFocus+2.0,uFocus+8.0,depth);
     float amount=max(nearBlur,farBlur);
     if(amount<0.01){gl_FragColor=sharp;}
     else {
@@ -33,7 +33,7 @@ const fragmentShader=`
         vec2 uv=clamp(vUv+stepUv,vec2(0.0),vec2(1.0));
         sum+=texture2D(tColor,uv);
       }
-      gl_FragColor=mix(sharp,sum/6.0,amount*0.9);
+      gl_FragColor=mix(sharp,sum/6.0,amount*0.98);
     }
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -76,7 +76,7 @@ export function DepthOfField({game,quality}:{game:Game;quality:'high'|'low'}) {
     material.uniforms.uFocus.value=camera.position.distanceTo(focusPoint);
     material.uniforms.uNear.value=camera.near;
     material.uniforms.uFar.value=camera.far;
-    material.uniforms.uRadius.value=(quality==='high'?3.4:2.65)*gl.getPixelRatio();
+    material.uniforms.uRadius.value=(quality==='high'?5.2:4.1)*gl.getPixelRatio();
     gl.setRenderTarget(target);
     gl.clear();
     gl.render(scene,camera);

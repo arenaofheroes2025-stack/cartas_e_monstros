@@ -1,6 +1,7 @@
 import { HEIGHT_STEP, tileAt, type Point, type Tile, type WorldData } from './world';
-import { placeSize } from './assets';
-import { SPRITE_PITCH_COMPENSATION } from '../render/camera';
+import { placeSize, propAsset, PROP_SIZE } from './assets';
+import { spriteSurfaceOffset } from '../render/camera';
+import { spriteFootV } from '../render/spriteAnchors';
 
 export const BIRD_SPECIES = {
   'verde-dourado': { label: 'Pássaro verde e dourado', scale: 0.91, idleSeconds: 1.55, flySeconds: 0.54 },
@@ -20,6 +21,8 @@ export interface BirdSite extends Point {
   perch: 'ground' | 'high' | 'tree' | 'roof';
   groundY: number;
   perchHeight: number;
+  perchOffsetX: number;
+  perchOffsetZ: number;
   phase: number;
   facing: 1 | -1;
 }
@@ -29,17 +32,17 @@ const trees = new Set(['tree', 'pine', 'copper-tree', 'marsh-willow']);
 const length = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 // Feet contact pixels on the visible roof tiles of the 512px building art.
 // Placing a bird at the building's world origin puts it in front of a wall.
-const roofContacts: Record<string,{x:number;y:number;footV:number}> = {
-  'casa-vila': {x:318,y:152,footV:0.01563},
-  'casa-padaria': {x:303,y:155,footV:0.01563},
-  'casa-cartas': {x:302,y:160,footV:0.01563},
-  'casa-cura': {x:311,y:160,footV:0.01758},
-  'casa-arquivo': {x:308,y:154,footV:0.01758},
-  'casa-estalagem': {x:240,y:183,footV:0.02344},
-  'casa-pedra': {x:214,y:165,footV:0.02734},
-  'casa-caverna': {x:245,y:134,footV:0.03516},
-  'woodcutter-hut': {x:302,y:161,footV:0.01563},
-  boathouse: {x:310,y:160,footV:0.01563}
+const roofContacts: Record<string,{x:number;y:number}> = {
+  'casa-vila': {x:318,y:152},
+  'casa-padaria': {x:303,y:155},
+  'casa-cartas': {x:302,y:160},
+  'casa-cura': {x:311,y:160},
+  'casa-arquivo': {x:308,y:154},
+  'casa-estalagem': {x:240,y:183},
+  'casa-pedra': {x:214,y:165},
+  'casa-caverna': {x:245,y:134},
+  'woodcutter-hut': {x:302,y:161},
+  boathouse: {x:310,y:160}
 };
 
 function hash(x: number, z: number, seed: number): number {
@@ -72,9 +75,15 @@ function pickSites(world: WorldData, candidates: Tile[], perch: BirdSite['perch'
         existing.some(other => length(point, other) < 7)) continue;
     const choice = Math.floor(hash(tile.x + 19, tile.z - 31, world.seed + 771) * species.length);
     const phase=hash(tile.x - 17,tile.z + 13,world.seed + 81);
+    const asset=perch==='tree'?propAsset(tile):null;
+    const size=asset?PROP_SIZE[asset as keyof typeof PROP_SIZE]:0;
+    // These center pixels sit on the visible upper canopy in every tree sprite.
+    const imageV=0.34+phase*0.04;
+    const contact=asset?spriteSurfaceOffset(size,
+      spriteFootV(`/art/environment/${asset}.png`),0.5,imageV):null;
     selected.push({id:`bird-${perch}-${tile.x}-${tile.z}`,x:point.x,z:point.z,
       species:species[choice],perch,groundY:tile.height * HEIGHT_STEP + 0.1,
-      perchHeight:perch==='tree'?2.65+phase*0.25:0,phase,
+      perchHeight:contact?.y??0,perchOffsetX:contact?.x??0,perchOffsetZ:contact?.z??0,phase,
       facing:hash(tile.x + 11,tile.z - 11,world.seed + 313) > 0.5 ? 1 : -1});
     if (selected.length >= count) break;
   }
@@ -94,16 +103,21 @@ export function birdSites(world: WorldData): BirdSite[] {
     if(!tile||!contact)continue;
     const phase=hash(building.x-17,building.z+13,world.seed+81);
     const size=placeSize(building);
-    const roofOffset=(contact.x/512-0.5)*size*Math.SQRT1_2;
-    rooftops.push({id:`bird-roof-${building.id}`,x:point.x+roofOffset,z:point.z-roofOffset,
+    const offset=spriteSurfaceOffset(size,
+      spriteFootV(`/art/environment/${building.id}.png`),contact.x/512,contact.y/512);
+    rooftops.push({id:`bird-roof-${building.id}`,x:point.x,z:point.z,
       species:species[Math.floor(hash(building.x+19,building.z-31,world.seed+771)*species.length)],
       perch:'roof',groundY:tile.height*HEIGHT_STEP+0.1,
-      perchHeight:size*SPRITE_PITCH_COMPENSATION*(1-contact.footV-contact.y/512),
+      perchHeight:offset.y,perchOffsetX:offset.x,perchOffsetZ:offset.z,
       phase,facing:hash(building.x+11,building.z-11,world.seed+313)>0.5?1:-1});
     if(rooftops.length>=3)break;
   }
-  const perched=pickSites(world,world.tiles.filter(tile=>trees.has(tile.prop??'')&&
-    length({x:tile.x+0.5,z:tile.z+0.5},world.start)>9),'tree',22,10,rooftops);
+  const perched=pickSites(world,world.tiles.filter(tile=>{
+    if(!trees.has(tile.prop??''))return false;
+    const point={x:tile.x+0.5,z:tile.z+0.5};
+    return length(point,world.start)>9&&buildings.every(building=>
+      length(point,{x:building.x+0.5,z:building.z+0.5})>=8);
+  }),'tree',22,10,rooftops);
   const high=pickSites(world,world.tiles.filter(tile=>tile.height>=2&&clearGround(world,tile)),
     'high',8,13,[...rooftops,...perched]);
   const ground=pickSites(world,world.tiles.filter(tile=>tile.height<2&&clearGround(world,tile)),

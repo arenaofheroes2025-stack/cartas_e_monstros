@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build --configLoader runner",
     "art:build": "node scripts/build-art.mjs && npm run art:audit",
-    "art:audit": "node --test scripts/audit-art-bleed.test.mjs && node scripts/audit-art-bleed.mjs --strict",
+    "art:audit": "node --test scripts/audit-art-bleed.test.mjs && node scripts/audit-art-bleed.mjs --strict && node scripts/qa-sprite-grounding.mjs",
     "art:items": "node scripts/build-items.mjs",
     "art:anchors": "node scripts/build-sprite-anchors.mjs",
     "lan": "npm run build && node scripts/lan-preview.mjs",

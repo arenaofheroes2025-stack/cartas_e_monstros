@@ -3,6 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
+// Put the ground contact a few source pixels inside the opaque sprite so
+// antialiasing and the perspective view cannot leave a visible air gap.
+const GROUND_INSET_PIXELS = 4;
+
 export async function buildSpriteAnchors(root = process.cwd()) {
   const anchors = {};
   for (const folder of ['creatures', 'environment', 'people', 'birds']) {
@@ -30,14 +34,15 @@ export async function buildSpriteAnchors(root = process.cwd()) {
             }
           }
         }
-        feet.push(lastOpaqueRow < 0 ? 0 : Number(((info.height - 1 - lastOpaqueRow) / info.height).toFixed(5)));
+        feet.push(lastOpaqueRow < 0 ? 0 : Number((Math.min(1,
+          (info.height - 1 - lastOpaqueRow + GROUND_INSET_PIXELS) / info.height)).toFixed(5)));
       }
       anchors[`/art/${folder}/${name}`] = feet;
     }
   }
   const destination = path.join(root, 'src', 'render', 'spriteAnchors.ts');
   fs.writeFileSync(destination,
-    `// Generated from the last visible pixels of each PNG. Run npm run art:anchors after changing art.\n`+
+    `// Ground contact sits ${GROUND_INSET_PIXELS} source pixels above the last visible pixel of each PNG. Run npm run art:anchors after changing art.\n`+
     `export const SPRITE_FOOT_V: Record<string, readonly number[]> = ${JSON.stringify(anchors, null, 2)};\n\n`+
     `export function spriteFootV(path: string, frame = 0): number {\n`+
     `  return SPRITE_FOOT_V[path]?.[frame] ?? 0;\n}\n`);

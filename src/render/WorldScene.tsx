@@ -20,6 +20,7 @@ import { CloudShadows } from './CloudShadows';
 import { GroundShadows } from './GroundShadows';
 import { WaterSurface } from './WaterSurface';
 import { cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
+import { cameraLookAhead, smoothCameraLookAhead } from './cameraLead';
 import { RenderResolution } from './RenderResolution';
 import { preferredRenderDpr } from './resolutionBudget';
 import { NearbyTextureWarmup } from './NearbyTextureWarmup';
@@ -54,10 +55,24 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
   useEffect(()=>{if(game.mode==='dialog')invalidate();},[game.mode,invalidate]);
   const look=useMemo(()=>new THREE.Vector3(),[]);
   const target=useMemo(()=>new THREE.Vector3(),[]);
+  const previousPlayer=useRef({x:game.player.x,z:game.player.z,mode:game.mode});
+  const leadOffset=useRef({x:0,z:0});
+  const timeSinceMovement=useRef(1);
   useFrame((_,delta)=>{
     const player=game.player;
     const battle=game.battle;
     const h=game.getGroundHeight(player.x,player.z)+game.playerVisualLift*0.24;
+    const previous=previousPlayer.current;
+    const dx=player.x-previous.x,dz=player.z-previous.z;
+    const movement=Math.hypot(dx,dz);
+    const movingContinuously=game.mode==='explore'&&previous.mode==='explore'&&movement>0.003&&movement<1;
+    timeSinceMovement.current=movingContinuously?0:Math.min(1,timeSinceMovement.current+delta);
+    const walking=game.mode==='explore'&&timeSinceMovement.current<0.2&&Math.hypot(game.move.x,game.move.z)>0.1;
+    const desiredLead=walking
+      ?cameraLookAhead(game.move.x*4,game.move.z*4,size.width,size.height)
+      :{x:0,z:0};
+    leadOffset.current=smoothCameraLookAhead(leadOffset.current,desiredLead,delta);
+    previousPlayer.current={x:player.x,z:player.z,mode:game.mode};
     if(battle?.captureSequence?.success){
       const capture=battle.captureSequence;
       const recenter=THREE.MathUtils.smoothstep(capture.elapsed,1.45,3.15);
@@ -84,7 +99,10 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
         (game.getGroundHeight(battle.ally.x,battle.ally.z)+game.getGroundHeight(battle.foe.x,battle.foe.z))*0.5*monsterWeight,
         battle.center.z*centerWeight+player.z*playerWeight+monsterZ*monsterWeight);
     }
-    else target.set(player.x,h,player.z);
+    else {
+      const lead=game.mode==='explore'?leadOffset.current:{x:0,z:0};
+      target.set(player.x+lead.x,h,player.z+lead.z);
+    }
     const baseZoom=cameraZoom(size.width,size.height,!!battle);
     const introProgress=battle?1-battle.intro/BATTLE_INTRO_SECONDS:0;
     const introPush=battle&&battle.intro>0?1+0.035*Math.sin(Math.PI*introProgress):1;
