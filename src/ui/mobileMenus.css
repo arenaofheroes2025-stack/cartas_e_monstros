@@ -25,6 +25,10 @@
   .game-app .flee-button{position:fixed;top:max(43px,calc(env(safe-area-inset-top) + 40px));right:max(8px,env(safe-area-inset-right));padding:5px 7px}
   .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){width:150px;gap:3px}
   .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster) button{height:29px;border:1px solid var(--accent);border-radius:9px;background:linear-gradient(100deg,color-mix(in srgb,var(--accent),#193443 82%),#112a38f0);box-shadow:0 3px 9px #071622aa;padding:2px 6px}
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-bag{height:45px;min-height:45px;gap:8px;padding:3px 9px;border-color:#d7ae79;background:linear-gradient(100deg,#765534a8,#1a3948 82%);box-shadow:0 4px 12px #071622bb}
+  .game-app .battle-actions-cluster .command-bag-icon{width:32px;height:32px}
+  .game-app .battle-actions-cluster .command-bag strong{font-size:12px}
+  .game-app .battle-actions-cluster .command-bag small{font-size:10px}
   .game-app .battle-command-cluster .command-special strong{max-width:85px;overflow:hidden;text-overflow:ellipsis}
   .game-app .battle-command-cluster .command-special.ready{box-shadow:0 0 0 1px #d5b2ff,0 0 11px #c49aff9c}
   .game-app .battle-command-cluster .command-special:disabled{opacity:.68;filter:saturate(.62)}
@@ -99,4 +103,6 @@
   .game-app .inventory-art,.game-app .inventory-art img{width:52px;height:52px}
   .game-app .inventory-item-summary h3{font-size:13px}
   .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster) button{height:25px}
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-bag{height:36px;min-height:36px}
+  .game-app .battle-actions-cluster .command-bag-icon{width:28px;height:28px}
 }

@@ -192,8 +192,14 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     </div>;
   }
   const command=game.battle?.command;
+  const bagCount=game.save?.battleBag.filter(Boolean).length??0;
   return <div className="battle-command-cluster battle-actions-cluster" ref={cluster} role="group" aria-label="Comandos do monstro">
     <div className="battle-command-title">COMANDOS <span>SETAS: MOVER</span></div>
+    <button className="command-bag" {...press(()=>game.toggleBattleBag())} title="Abrir mochila de batalha · Q"
+      aria-label={`Abrir mochila de batalha, ${bagCount} de ${BAG_CAPACITY} itens`}>
+      <kbd>Q</kbd><img className="command-bag-icon" src="/art/ui/hero-satchel.png" alt=""/>
+      <strong>Mochila</strong><small>{bagCount}/{BAG_CAPACITY}</small>
+    </button>
     <button ref={attack} className={`command-attack ${command==='attack'?'selected':''}`} {...press(()=>game.battleCommand('attack'))} title="Dar um golpe comum e voltar · Z" aria-label="Atacar">
       <kbd>Z</kbd><span className="command-icon">⚔</span><strong>Atacar</strong><small ref={attackLabel} className="command-cooldown">Pronto</small>
     </button>

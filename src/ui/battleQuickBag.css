@@ -3,6 +3,13 @@
 .battle-command-cluster .command-cards small{z-index:1;margin-left:auto;color:#e7d6ff;font:800 9px Consolas,monospace}
 .battle-command-cluster .command-bag-icon{z-index:1;flex:none;width:21px;height:21px;object-fit:contain;image-rendering:pixelated}
 .battle-command-cluster .command-bag small{z-index:1;margin-left:auto;color:#f1d9af;font:800 9px Consolas,monospace}
+.battle-actions-cluster .command-bag{height:41px;border-color:#b69366;background:linear-gradient(100deg,#805b3670,#1d3d4a 75%)}
+.battle-actions-cluster .command-bag-icon{width:30px;height:30px}
+@media(pointer:fine){
+  .game-app .battle-actions-cluster button.command-bag{align-self:flex-start;width:43px;height:39px;padding:2px;justify-content:center;border-color:#bd9969}
+  .game-app .battle-actions-cluster .command-bag-icon{width:32px;height:32px}
+  .game-app .battle-actions-cluster .command-bag strong,.game-app .battle-actions-cluster .command-bag small{display:none}
+}
 .battle-ui .quick-bag-backdrop{position:absolute;inset:0;z-index:4;width:100%;height:100%;padding:0;border:0;border-radius:0;background:rgba(4,13,20,.68);pointer-events:auto;cursor:default}
 .quick-bag-cluster{width:232px;gap:5px;padding:8px;border-color:#d6ac72;box-shadow:0 10px 28px #071622c9,0 0 0 2px #d6ac7225;animation:quickBagIn .15s ease-out}
 .quick-bag-heading{height:24px;display:flex;justify-content:space-between;align-items:center;color:#f5d29b;font:900 11px Consolas,monospace;letter-spacing:.07em}

@@ -62,7 +62,6 @@ export function BattleHud({game,cameraRef,onAllyDetails,onEnemyDetails}:{game:Ga
     <div className="battle-bottom battle-tools-only">
       {battle.statuses.some(status=>status.targetUid===ally.uid)?<div className="battle-ally-statuses"><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div>:null}
       <div className="battle-utility">
-        <button {...press(()=>game.toggleBattleBag())} aria-label={game.battleMenu==='items'?'Fechar mochila':'Abrir mochila'}><img src="/art/ui/hero-satchel.png" alt=""/><span>Mochila<small>{save.battleBag.filter(Boolean).length}/6 · Q</small></span></button>
         <button {...press(()=>game.openBattleMenu('party'))} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>
       </div>
     </div>
