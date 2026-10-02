@@ -64,8 +64,8 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           if(foeX>playerX+55)preferredSide.current='left';
           else if(foeX<playerX-55)preferredSide.current='right';
           else if(!preferredSide.current)preferredSide.current=companionX<playerX?'right':'left';
-          const gapFor=(side:'left'|'right')=>mobileLandscape?
-            Math.max(72,side==='right'?companionX-playerX+58:playerX-companionX+58):76;
+          const gapFor=(side:'left'|'right')=>
+            Math.max(mobileLandscape?72:76,side==='right'?companionX-playerX+85:playerX-companionX+85);
           const positionFor=(side:'left'|'right')=>side==='right'?playerX+gapFor(side):playerX-gapFor(side)-width;
           const requested=preferredSide.current;
           const other=requested==='left'?'right':'left';

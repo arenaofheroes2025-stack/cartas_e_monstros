@@ -14,6 +14,8 @@
 .battle-actor-bars .special>span{background:#ad83e9}
 .battle-actor-bars.special-ready .special{border-color:#e1bdff;box-shadow:0 0 5px #d49bff88}
 .battle-actor-bars.special-windup .special{animation:actor-special-pulse .3s ease-in-out infinite alternate}
+.battle-actor-bars .actor-details-trigger{position:absolute;top:1px;left:-17px;display:grid;place-items:center;width:19px;height:22px;padding:0;border:1px solid #a9ddbb;border-radius:7px;background:#183b40ed;color:#d7f4da;font:900 italic 12px Georgia,serif;box-shadow:0 2px 5px #07151da8;pointer-events:auto;touch-action:manipulation}
+.battle-actor-bars .actor-details-trigger:focus-visible{outline:2px solid #ffe0a4;outline-offset:2px}
 @keyframes actor-special-pulse{to{box-shadow:0 0 9px #ffc67b;border-color:#ffdf9c}}
-@media(pointer:coarse) and (orientation:landscape){.battle-actor-bars{width:86px;gap:1px}.battle-actor-bars .actor-meter{height:6px}.battle-actor-bars .health{height:11px}.actor-special-warning{font-size:8px}}
+@media(pointer:coarse) and (orientation:landscape){.battle-actor-bars{width:86px;gap:1px}.battle-actor-bars .actor-meter{height:6px}.battle-actor-bars .health{height:11px}.battle-actor-bars .actor-details-trigger{left:-21px;width:22px;height:24px}.actor-special-warning{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.battle-actor-bars.special-windup .special{animation:none}}

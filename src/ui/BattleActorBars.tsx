@@ -7,8 +7,9 @@ import './battleActorBars.css';
 
 const projected=new Vector3();
 
-function ActorBars({game,cameraRef,side}:{game:Game;cameraRef:RefObject<Camera|null>;side:'ally'|'foe'}) {
+function ActorBars({game,cameraRef,side,onDetails}:{game:Game;cameraRef:RefObject<Camera|null>;side:'ally'|'foe';onDetails?:()=>void}) {
   const root=useRef<HTMLDivElement>(null);
+  const lastTouch=useRef(0);
   const health=useRef<HTMLSpanElement>(null);
   const attack=useRef<HTMLSpanElement>(null);
   const special=useRef<HTMLSpanElement>(null);
@@ -50,14 +51,17 @@ function ActorBars({game,cameraRef,side}:{game:Game;cameraRef:RefObject<Camera|n
     frame=requestAnimationFrame(update);
     return()=>cancelAnimationFrame(frame);
   },[game,cameraRef,side]);
-  return <div ref={root} className={`battle-actor-bars ${side}`} role="img" aria-label={side==='foe'?'Vida e golpes do inimigo':'Vida e golpes do aliado'}>
+  return <div ref={root} className={`battle-actor-bars ${side}`} role={side==='ally'?'group':'img'} aria-label={side==='foe'?'Vida e golpes do inimigo':'Vida e golpes do aliado'}>
     <strong ref={warning} className="actor-special-warning"/>
     <span className="actor-meter health"><span ref={health}/></span>
     <span className="actor-meter attack"><span ref={attack}/></span>
     <span className="actor-meter special"><span ref={special}/></span>
+    {side==='ally'&&onDetails?<button type="button" className="actor-details-trigger" aria-label="Ver ficha da sua criatura" title="Ver ficha da criatura"
+      onPointerDown={event=>{if(event.pointerType==='touch'){lastTouch.current=Date.now();onDetails();}}}
+      onClick={event=>{if((event.nativeEvent as PointerEvent).pointerType==='touch'||Date.now()-lastTouch.current<2000)return;onDetails();}}>i</button>:null}
   </div>;
 }
 
-export function BattleActorBars({game,cameraRef}:{game:Game;cameraRef:RefObject<Camera|null>}) {
-  return <><ActorBars game={game} cameraRef={cameraRef} side="foe"/><ActorBars game={game} cameraRef={cameraRef} side="ally"/></>;
+export function BattleActorBars({game,cameraRef,onAllyDetails}:{game:Game;cameraRef:RefObject<Camera|null>;onAllyDetails:(uid:string)=>void}) {
+  return <><ActorBars game={game} cameraRef={cameraRef} side="foe"/><ActorBars game={game} cameraRef={cameraRef} side="ally" onDetails={()=>{const uid=game.activeMonster?.uid;if(uid)onAllyDetails(uid);}}/></>;
 }

@@ -52,15 +52,15 @@ export function BattleHud({game,cameraRef,onAllyDetails,onEnemyDetails}:{game:Ga
     {game.battleMenu==='items'||game.battleMenu==='cards'?<button type="button" className="quick-bag-backdrop"
       onClick={()=>{if(Date.now()-menuOpenedAt.current>500)game.closeBattleMenu();}}
       aria-label="Fechar seleção e voltar à batalha"/>:null}
-    <BattleActorBars game={game} cameraRef={cameraRef}/>
+    <BattleActorBars game={game} cameraRef={cameraRef} onAllyDetails={onAllyDetails}/>
     <BattleCommands game={game} cameraRef={cameraRef}/>
     {game.battleMenu!=='items'&&game.battleMenu!=='cards'?<BattleCommandCallout game={game} cameraRef={cameraRef}/>:null}
     <div className="battle-top">
       <button type="button" className="combatant enemy" {...press(onEnemyDetails)} aria-label={`Ver atributos de ${foe.name}, inimigo`}><img src={monsterPortrait(foe.id)} alt=""/><div><small>{battle.guardian?'GUARDIÃO':'SELVAGEM'} · {ELEMENT_LABEL[foe.element]}</small><strong>{foe.name} <span>Nv. {battle.enemy.level}</span></strong><small className="combatant-details">{Math.ceil(battle.foe.hp)} / {maxHp(battle.enemy)} PV · Especial {Math.floor(battle.foe.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===battle.enemy.uid)}/></div></button>
       <button className="flee-button" onClick={()=>game.flee()}>Sair da arena</button>
     </div>
-    <div className="battle-bottom">
-      <button type="button" className="combatant ally" {...press(()=>onAllyDetails(ally.uid))} aria-label={`Ver atributos de ${friend.name}, seu monstro`}><img src={monsterPortrait(friend.id)} alt=""/><div><small>SEU MONSTRO · {ELEMENT_LABEL[friend.element]}</small><strong>{friend.name} <span>Nv. {ally.level}</span></strong><small className="combatant-details">{Math.ceil(battle.ally.hp)} / {maxHp(ally)} PV · Especial {Math.floor(battle.ally.charge)}%</small><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div></button>
+    <div className="battle-bottom battle-tools-only">
+      {battle.statuses.some(status=>status.targetUid===ally.uid)?<div className="battle-ally-statuses"><StatusPills statuses={battle.statuses.filter(status=>status.targetUid===ally.uid)}/></div>:null}
       <div className="battle-utility">
         <button {...press(()=>game.toggleBattleBag())} aria-label={game.battleMenu==='items'?'Fechar mochila':'Abrir mochila'}><img src="/art/ui/hero-satchel.png" alt=""/><span>Mochila<small>{save.battleBag.filter(Boolean).length}/6 · Q</small></span></button>
         <button {...press(()=>game.openBattleMenu('party'))} aria-label="Abrir equipe"><img src={monsterPortrait(ally.species)} alt=""/><span>Equipe<small>{save.party.length} monstros</small></span></button>

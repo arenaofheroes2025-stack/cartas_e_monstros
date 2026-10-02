@@ -29,6 +29,8 @@
 .battle-utility .capture-button{background:#d6a267;color:#213948;border-color:#f6d59c}
 .battle-utility button img{width:29px;height:29px;image-rendering:pixelated}
 .battle-utility button small{display:block;font-size:8px;opacity:.8}
+.battle-tools-only .battle-ally-statuses{max-width:min(280px,38vw)}
+.battle-tools-only .battle-ally-statuses .battle-statuses{margin:0}
 @media(max-width:950px) and (max-height:500px) and (orientation:landscape){.game-app .battle-utility{max-width:218px}.game-app .battle-utility button{height:34px;min-width:0;gap:2px;padding:2px 4px;font-size:9px}.game-app .battle-utility button img{width:19px;height:19px}.game-app .battle-utility button small{display:none}}
 @media(max-width:950px) and (max-height:500px) and (orientation:landscape){.battle-command-cluster{width:126px;gap:2px;padding:4px}.battle-command-cluster button{height:30px;gap:3px;padding:2px 4px}.battle-command-cluster kbd{width:21px;height:21px;font-size:14px}.battle-command-cluster .command-icon{width:15px;font-size:15px}.battle-command-cluster strong{font-size:10px}}
 @media(max-width:650px){.battle-utility button{height:34px;padding:3px 6px;font-size:9px}.battle-utility button img{width:22px;height:22px}.battle-utility button small{display:none}}

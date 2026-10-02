@@ -15,6 +15,9 @@
   .game-app .combatant.enemy:active,.game-app .combatant.ally:active{transform:scale(.96)}
   .game-app .battle-ui .battle-bottom{left:max(101px,calc(env(safe-area-inset-left) + 101px));right:auto;top:max(43px,calc(env(safe-area-inset-top) + 40px));width:88px;align-items:flex-start}
   .game-app .battle-utility{left:-93px;right:auto;top:70px;max-width:none;gap:5px}
+  .game-app .battle-ui .battle-bottom.battle-tools-only{left:max(8px,env(safe-area-inset-left));right:auto;top:max(113px,calc(env(safe-area-inset-top) + 110px));bottom:auto;width:auto;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+  .game-app .battle-bottom.battle-tools-only .battle-utility{position:static;left:auto;right:auto;top:auto;order:0;display:flex;margin:0;max-width:none}
+  .game-app .battle-bottom.battle-tools-only .battle-ally-statuses{order:1;max-width:180px}
   .game-app .battle-utility button{width:auto;min-width:86px;height:32px;display:flex;align-items:center;gap:3px;padding:2px 6px;font-size:9px}
   .game-app .battle-utility button img{width:21px;height:21px}
   .game-app .battle-utility button span{display:block}
