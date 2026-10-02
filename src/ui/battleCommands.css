@@ -41,3 +41,16 @@
   .game-app .battle-bottom .combatant.ally{width:218px;min-width:0;margin:0}
   .game-app .battle-utility{position:static;display:flex;gap:4px;margin:0;order:0}
 }
+@media(pointer:fine){
+  .game-app .battle-actions-cluster{width:128px;gap:6px;padding:2px 0 0 5px}
+  .game-app .battle-actions-cluster button{height:29px;padding:2px 4px 2px 14px;gap:3px;overflow:visible;border-color:color-mix(in srgb,var(--accent),#465a64 60%);background:linear-gradient(105deg,color-mix(in srgb,var(--accent),#173944 70%),#112d3dec 86%);box-shadow:0 4px 10px #05172099}
+  .game-app .battle-actions-cluster .command-special{height:35px}
+  .game-app .battle-actions-cluster .command-icon{width:15px;font-size:15px}
+  .game-app .battle-actions-cluster kbd{position:absolute;top:-6px;left:-6px;width:18px;height:18px;border-radius:5px;background:var(--accent);border:1px solid #ffefd2;color:#102c38;font:900 10px Consolas,monospace;box-shadow:0 2px 6px #041821b8;pointer-events:none}
+  .game-app .battle-actions-cluster strong{font-size:10px}
+  .game-app .battle-actions-cluster .command-special strong{font-size:9px;line-height:10px}
+  .game-app .battle-actions-cluster button:disabled{opacity:1;filter:grayscale(.82);background:#172a33;border-color:#536368;box-shadow:inset 0 2px 5px #020d17a0;color:#82999b}
+  .game-app .battle-actions-cluster button:disabled .command-icon,.game-app .battle-actions-cluster button:disabled .command-cooldown{color:#819498}
+  .game-app .battle-actions-cluster button:disabled kbd{border-color:#879a9b;background:#53666e;color:#d6e1dd}
+  .game-app .battle-actions-cluster button:focus-visible{outline:2px solid #ffe2aa;outline-offset:3px}
+}

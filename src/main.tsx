@@ -9,6 +9,7 @@ import { Hud } from './ui/Hud';
 import { CompanionDetails } from './ui/CompanionDetails';
 import { InventoryPanel } from './ui/InventoryPanel';
 import { ShopPanel } from './ui/ShopPanel';
+import { WorldMapPanel } from './ui/WorldMapPanel';
 import { BattleHud } from './ui/BattleHud';
 import { TouchControls } from './ui/TouchControls';
 import { WorldInteraction } from './ui/WorldInteraction';
@@ -24,9 +25,10 @@ import './ui/inventoryReference.css';
 function App() {
   const [game]=useState(()=>new Game());
   const cameraRef=useRef<Camera|null>(null);
-  const [revision,setRevision]=useState(0);
+  const [,setRevision]=useState(0);
   const [collection,setCollection]=useState(false);
   const [bagOpen,setBagOpen]=useState(false);
+  const [mapOpen,setMapOpen]=useState(false);
   const [detailsUid,setDetailsUid]=useState<string|null>(null);
   const [enemyDetails,setEnemyDetails]=useState(false);
   const [quality,setQualityState]=useState<'high'|'low'>(()=>{
@@ -36,7 +38,7 @@ function App() {
   });
   const orientationPaused=usePortraitLock();
   const pwa=usePwaInstall();
-  const overlayOpen=collection||detailsUid!==null||bagOpen||enemyDetails||game.shopOpen;
+  const overlayOpen=collection||detailsUid!==null||bagOpen||mapOpen||enemyDetails||game.shopOpen;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
   const closeDetails=useCallback(()=>setDetailsUid(null),[]);
@@ -52,10 +54,11 @@ function App() {
   return <main className="game-app">
     <div className="scene"><WorldScene game={game} quality={quality} orientationPaused={orientationPaused||overlayOpen} cameraRef={cameraRef}/></div>
     {game.mode==='title'?<StartMenu game={game} pwa={pwa}/>:null}
-    {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} revision={revision} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onCompanion={setDetailsUid}/>:null}
+    {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onMap={()=>setMapOpen(true)} onCompanion={setDetailsUid}/>:null}
     {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef} onAllyDetails={setDetailsUid} onEnemyDetails={()=>setEnemyDetails(true)}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
     {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)} onCompanion={setDetailsUid}/>:null}
+    {mapOpen?<WorldMapPanel game={game} onClose={()=>setMapOpen(false)}/>:null}
     {game.shopOpen?<ShopPanel game={game}/>:null}
     {inGame&&!orientationPaused&&!game.shopOpen?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
     {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}/>:null}

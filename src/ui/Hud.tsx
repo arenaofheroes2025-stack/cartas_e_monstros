@@ -1,10 +1,10 @@
 import { Game } from '../game/game';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_LABEL, experienceNeeded, maxHp, SPECIES } from '../game/content';
 import { CompanionPortrait } from './CompanionPortrait';
-import { Minimap } from './Minimap';
+import { MapGlyph } from './WorldMapPanel';
 import './companionHud.css';
 
-export function Hud({game,revision,onCollection,onBag,onCompanion}:{game:Game;revision:number;onCollection:()=>void;onBag:()=>void;onCompanion:(uid:string)=>void}) {
+export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCollection:()=>void;onBag:()=>void;onMap:()=>void;onCompanion:(uid:string)=>void}) {
   const save=game.save;
   if(!save)return null;
   const hour=Math.floor(game.hour),minute=Math.floor((game.hour-hour)*60);
@@ -34,7 +34,7 @@ export function Hud({game,revision,onCollection,onBag,onCompanion}:{game:Game;re
           <span className="companion-stat"><span>XP</span><span className="companion-track companion-xp"><i style={{width:`${xpPercent}%`}}/></span><b>{current.xp}/{xpMax}</b></span>
         </span>
       </button><div className="desktop-hint">WASD para andar · Espaço para pular · Z para interagir</div></div>
-      <div className="hud-bottom-right"><div className="minimap-wrap"><Minimap game={game} revision={revision}/><span>REGIÃO DESCOBERTA</span></div><button onClick={onBag} className="collection-button" aria-label="Abrir inventário e mochila"><img src="/art/ui/hero-satchel.png" alt="" style={{width:20,height:20,objectFit:'contain',verticalAlign:'middle',imageRendering:'pixelated'}}/> Mochila <span>{save.battleBag.filter(Boolean).length}/6</span></button><button onClick={onCollection} className="collection-button">Coleção <span>{save.party.length+save.collection.length}</span></button></div>
+      <div className="hud-bottom-right"><button type="button" className="map-open-button" onClick={onMap} aria-label="Abrir mapa da região" title="Abrir mapa da região"><MapGlyph/></button><button onClick={onBag} className="collection-button" aria-label="Abrir inventário e mochila"><img src="/art/ui/hero-satchel.png" alt="" style={{width:20,height:20,objectFit:'contain',verticalAlign:'middle',imageRendering:'pixelated'}}/> Mochila <span>{save.battleBag.filter(Boolean).length}/6</span></button><button onClick={onCollection} className="collection-button">Coleção <span>{save.party.length+save.collection.length}</span></button></div>
     </>:null}
     {game.mode!=='battle'&&game.message&&game.messageTime>0?<div className="toast" key={game.message}>{game.message}</div>:null}
   </>;
