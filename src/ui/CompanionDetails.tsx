@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { attack, defense, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_LABEL, experienceNeeded, luck, maxHp, SPECIES, speed, type HeldItemSlot, type Monster } from '../game/content';
 import { Game } from '../game/game';
 import { ITEMS, itemArt } from '../game/items';
-import { attackRadius } from '../game/battle/rules';
+import { attackDamage, attackRadius } from '../game/battle/rules';
 import { monsterPortrait } from '../render/art';
 import './companionDetails.css';
 
 export function CompanionDetails({game,monster,onClose,onCollection}:{game:Game;monster:Monster;onClose:()=>void;onCollection:()=>void}) {
   const closeButton=useRef<HTMLButtonElement>(null);
-  const picker=useRef<HTMLDivElement>(null);
+  const pickerClose=useRef<HTMLButtonElement>(null);
   const [choosing,setChoosing]=useState<HeldItemSlot|null>(null);
   const species=SPECIES[monster.species];
   const maximum=maxHp(monster),required=experienceNeeded(monster.level);
@@ -32,13 +32,10 @@ export function CompanionDetails({game,monster,onClose,onCollection}:{game:Game;
     window.addEventListener('keydown',onKey,true);
     return()=>window.removeEventListener('keydown',onKey,true);
   },[onClose,choosing]);
-  useEffect(()=>{
-    if(!choosing)return;
-    const frame=requestAnimationFrame(()=>picker.current?.scrollIntoView({block:'center'}));
-    return()=>cancelAnimationFrame(frame);
-  },[choosing]);
-  return <div className="overlay companion-details-overlay" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <section className="modal-panel companion-details-panel" role="dialog" aria-modal="true" aria-labelledby="companion-details-title">
+  useEffect(()=>{if(!choosing)return;const frame=requestAnimationFrame(()=>pickerClose.current?.focus());return()=>cancelAnimationFrame(frame);},[choosing]);
+  const opponent=game.battle?.enemy;
+  return <><div className="overlay companion-details-overlay" onMouseDown={event=>{if(event.target===event.currentTarget&&!choosing)onClose();}}>
+    <section className="modal-panel companion-details-panel" role="dialog" aria-modal={!choosing} inert={!!choosing} aria-labelledby="companion-details-title">
       <button ref={closeButton} className="close-button" onClick={onClose} aria-label="Fechar detalhes">✕</button>
       <div className="eyebrow">FICHA DO COMPANHEIRO</div>
       <div className="companion-details-intro">
@@ -69,10 +66,24 @@ export function CompanionDetails({game,monster,onClose,onCollection}:{game:Game;
           </button>;
         })}</div>
         {game.battle?<p className="companion-held-note">Organize estes itens fora da batalha.</p>:null}
-        {choosing&&!game.battle?<div className="companion-item-picker" ref={picker}>
+      </section>
+      <div className="companion-details-stats">
+        <span>ATQ <b>{attack(monster)}</b></span><span>DEF <b>{defense(monster)}</b></span>
+        <span>VEL <b>{speed(monster)}</b></span><span>SORTE <b>{luck(monster)}</b></span>
+        <span>ÁREA <b>{attackRadius(monster).toFixed(1)}</b></span>
+      </div>
+      <div className="companion-details-skill"><small>HABILIDADE ESPECIAL</small><strong>{species.skill.name}</strong>
+        <span>Golpe {attack(monster)} ATQ · especial +{species.skill.power} poder</span>
+        {opponent?<span>Contra {SPECIES[opponent.species].name}: golpe {attackDamage(monster,opponent,false)} PV · especial {attackDamage(monster,opponent,true)} PV</span>:<span>O elemento e a defesa do alvo alteram o dano. Mínimo: 1 PV.</span>}</div>
+      {species.evolvesTo?<p className="companion-details-evolution">Evolui para {SPECIES[species.evolvesTo].name} no nível 6.</p>:null}
+      <button className="secondary companion-details-collection" onClick={onCollection}>Ver equipe e coleção</button>
+    </section>
+  </div>
+  {choosing&&!game.battle?<div className="overlay companion-picker-overlay" onMouseDown={event=>{if(event.target===event.currentTarget)setChoosing(null);}}>
+    <section className="modal-panel companion-item-picker" role="dialog" aria-modal="true" aria-label={choosing==='food'?'Escolher comida':'Escolher poção ou artefato'}>
           <div className="companion-item-picker-heading"><strong>{choosing==='food'?'Escolher comida':'Escolher poção ou artefato'}</strong>
-            <button type="button" onClick={()=>setChoosing(null)} aria-label="Fechar escolha de item">✕</button></div>
-          <p>Itens da mochila de batalha e do inventário. Cada unidade só pode ocupar um lugar.</p>
+            <button ref={pickerClose} type="button" onClick={()=>setChoosing(null)} aria-label="Fechar escolha de item">✕</button></div>
+          <p>Escolha uma unidade disponível.</p>
           <div className="companion-item-options">{options.map(entry=>{
             const info=ITEMS[entry.itemId],bagSlot=battleBag.indexOf(entry.uid);
             return <button key={entry.uid} type="button" style={{'--held-color':info.color} as React.CSSProperties}
@@ -84,17 +95,5 @@ export function CompanionDetails({game,monster,onClose,onCollection}:{game:Game;
           {monster.heldItems[choosing]?<button type="button" className="companion-item-remove" onClick={()=>{
             game.unequipMonsterItem(monster.uid,choosing);setChoosing(null);
           }}>Retirar item da criatura</button>:null}
-        </div>:null}
-      </section>
-      <div className="companion-details-stats">
-        <span>ATQ <b>{attack(monster)}</b></span><span>DEF <b>{defense(monster)}</b></span>
-        <span>VEL <b>{speed(monster)}</b></span><span>SORTE <b>{luck(monster)}</b></span>
-        <span>ÁREA <b>{attackRadius(monster).toFixed(1)}</b></span>
-      </div>
-      <div className="companion-details-skill"><small>HABILIDADE ESPECIAL</small><strong>{species.skill.name}</strong>
-        <span>Dispara automaticamente quando a carga chega a 100%.</span></div>
-      {species.evolvesTo?<p className="companion-details-evolution">Evolui para {SPECIES[species.evolvesTo].name} no nível 6.</p>:null}
-      <button className="secondary companion-details-collection" onClick={onCollection}>Ver equipe e coleção</button>
-    </section>
-  </div>;
+    </section></div>:null}</>;
 }

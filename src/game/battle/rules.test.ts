@@ -20,4 +20,10 @@ describe('atributos em combate',()=>{
     expect(attackRadius(createMonster('coracilo',1,'wide'))).toBeGreaterThan(attackRadius(createMonster('cinzuri',1,'narrow')));
     expect(attackRadius(createMonster('brasito',1,'skill'),true)).toBeGreaterThan(attackRadius(createMonster('brasito',1,'basic')));
   });
+  it('o golpe comum sempre causa ao menos 1 PV quando acerta, mesmo contra defesa elevada',()=>{
+    const attacker=createMonster('gotejo',1,'weak');
+    const defender=createMonster('coracilo',30,'armored');
+    expect(attackDamage(attacker,defender,false)).toBe(1);
+    expect(attackDamage(attacker,defender,true)).toBeGreaterThanOrEqual(1);
+  });
 });

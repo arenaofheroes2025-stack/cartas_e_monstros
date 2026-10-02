@@ -808,7 +808,7 @@ export class Game {
       this.notify(SPECIES[this.activeMonster!.species].name+' saltou para fora do golpe!');
     } else { battle.command=command; battle.waypoint=undefined;battle.moveTime=0; }
     const cue=COMMAND_CUES[command as Exclude<BattleCommand,'move'>];
-    if(cue)this.showCommandCue(cue.label,cue.icon,cue.color);
+    if(cue)this.showCommandCue(command==='special'?SPECIES[this.activeMonster!.species].skill.name+'!':cue.label,cue.icon,cue.color);
     this.onChange?.();
   }
 
@@ -999,7 +999,10 @@ export class Game {
           this.effects.push({kind:skill?'skill':'hit',x:target.x,z:target.z,element:species.element});
           this.effects.push({kind:'damage',x:target.x,z:target.z,amount:damage,critical});
           this.battle.message=(isAlly?'Seu ':'O ')+species.name+' causou '+damage+' de dano'+(critical?' crítico':'')+(skill?' com '+species.skill.name:'')+'!';
-        } else this.battle.message=isAlly?'Seu golpe errou!':'Esquivou!';
+        } else {
+          this.effects.push({kind:'damage',x:target.x,z:target.z,amount:0,critical:false});
+          this.battle.message=isAlly?'Seu golpe errou!':'Esquivou!';
+        }
         source.strikeOrigin=undefined;
         source.strikeRadius=0;
         source.recovery=isAlly?0.25:enemyRecovery(attacker,this.statusBonus(attacker.uid,'speed'));
@@ -1014,8 +1017,8 @@ export class Game {
       source.skillWindup=source.charge>=100&&(!isAlly||this.battle.command==='special');
       if (source.skillWindup) source.charge=0;
       source.strikeOrigin={x:source.x,z:source.z};
-      source.strikeRadius=attackRadius(attacker,source.skillWindup);
-      source.windup=source.skillWindup?(isAlly?0.72:1.02):(isAlly?0.4:0.7);
+      source.strikeRadius=attackRadius(attacker,source.skillWindup)+(source.skillWindup?0:0.22);
+      source.windup=source.skillWindup?(isAlly?0.72:1.02):(isAlly?0.32:0.58);
       const speedBonus=this.statusBonus(attacker.uid,'speed');
       source.attackTimer=(isAlly?attackInterval(attacker,speedBonus):enemyAttackInterval(attacker,speedBonus))+
         (source.skillWindup?0.45:0);

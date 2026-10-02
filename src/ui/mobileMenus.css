@@ -1,0 +1,129 @@
+/* Mobile landscape: keep the whole menu visible and scroll only long item lists. */
+@media(pointer:coarse) and (orientation:landscape) and (max-height:600px){
+  .game-app button{-webkit-tap-highlight-color:transparent}
+  .game-app .hud-bottom-left{left:max(8px,env(safe-area-inset-left));right:auto}
+  .game-app .companion-chip{width:178px;min-height:54px;padding:3px 6px 3px 2px}
+  .game-app .companion-sprite{width:39px;height:39px}
+  .game-app .hud-bottom-right{left:max(8px,env(safe-area-inset-left));right:auto;top:max(103px,calc(env(safe-area-inset-top) + 100px));gap:5px}
+  .game-app .hud-bottom-right .collection-button{min-height:35px;padding:5px 8px;font-size:10px}
+  .game-app .hud-bottom-right .collection-button img{width:19px!important;height:19px!important}
+
+  .game-app .battle-top{right:auto;gap:5px}
+  .game-app .battle-top .combatant.enemy,.game-app .battle-bottom .combatant.ally{width:88px;min-height:65px;padding:3px 4px;border:1px solid #729e89;cursor:pointer;touch-action:manipulation}
+  .game-app .battle-top .combatant.enemy{border-color:#e18b79;background:#3b2d36ed}
+  .game-app .battle-bottom .combatant.ally{border-color:#91c59c;background:#163d41ed}
+  .game-app .combatant.enemy:active,.game-app .combatant.ally:active{transform:scale(.96)}
+  .game-app .battle-ui .battle-bottom{left:max(101px,calc(env(safe-area-inset-left) + 101px));right:auto;top:max(43px,calc(env(safe-area-inset-top) + 40px));width:88px;align-items:flex-start}
+  .game-app .battle-utility{left:-93px;right:auto;top:70px;max-width:none;gap:5px}
+  .game-app .battle-utility button{width:auto;min-width:86px;height:32px;display:flex;align-items:center;gap:3px;padding:2px 6px;font-size:9px}
+  .game-app .battle-utility button img{width:21px;height:21px}
+  .game-app .battle-utility button span{display:block}
+  .game-app .battle-utility button small{display:none}
+  .game-app .flee-button{position:fixed;top:max(43px,calc(env(safe-area-inset-top) + 40px));right:max(8px,env(safe-area-inset-right));padding:5px 7px}
+  .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){width:150px;gap:3px}
+  .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster) button{height:29px;border:1px solid var(--accent);border-radius:9px;background:linear-gradient(100deg,color-mix(in srgb,var(--accent),#193443 82%),#112a38f0);box-shadow:0 3px 9px #071622aa;padding:2px 6px}
+  .game-app .battle-command-cluster .command-special strong{max-width:85px;overflow:hidden;text-overflow:ellipsis}
+  .game-app .battle-command-cluster .command-special.ready{box-shadow:0 0 0 1px #d5b2ff,0 0 11px #c49aff9c}
+  .game-app .battle-command-cluster .command-special:disabled{opacity:.68;filter:saturate(.62)}
+  .game-app .battle-command-cluster .command-special:after{height:4px}
+
+  .game-app .inventory-panel{width:min(840px,calc(100vw - 16px));height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;gap:0;overflow:hidden;padding:7px 12px}
+  .game-app .inventory-panel>.eyebrow,.game-app .inventory-heading p,.game-app .inventory-footer,.game-app .inventory-bag-icon{display:none}
+  .game-app .inventory-heading{flex:none;margin:0 0 2px}
+  .game-app .inventory-heading h2{margin:0;font-size:18px}
+  .game-app .inventory-section-title{margin:3px 0 4px;padding-bottom:2px}
+  .game-app .inventory-section-title h3{font-size:13px}
+  .game-app .inventory-section-title span{font-size:8px}
+  .game-app .inventory-loadout{flex:none}
+  .game-app .loadout-grid{gap:5px}
+  .game-app .loadout-slot{height:52px;padding:2px 1px}
+  .game-app .loadout-slot img,.game-app .loadout-empty{width:29px;height:29px}
+  .game-app .loadout-slot strong{font-size:8px}
+  .game-app .loadout-help{min-height:11px;margin:2px 0 0!important;font-size:9px}
+  .game-app .inventory-stock{display:flex;flex-direction:column;flex:1;min-height:0}
+  .game-app .inventory-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(245px,1fr);gap:9px;flex:1;min-height:0}
+  .game-app .inventory-grid{max-height:none;height:100%;min-height:0;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:5px;overflow-y:auto;align-content:start}
+  .game-app .inventory-slot{min-height:48px;max-height:56px}
+  .game-app .inventory-detail{min-height:0;height:100%;padding:8px;overflow:hidden}
+  .game-app .inventory-item-summary{align-items:center;gap:8px;min-height:0}
+  .game-app .inventory-art{flex:none;width:66px;height:66px}
+  .game-app .inventory-art img{width:66px;height:66px}
+  .game-app .inventory-item-summary small{font-size:8px}
+  .game-app .inventory-item-summary h3{font-size:16px;margin:1px 0 3px}
+  .game-app .inventory-item-summary p{font-size:10px;line-height:1.2;min-height:0}
+  .game-app .inventory-actions{gap:5px;padding-top:5px}
+  .game-app .inventory-actions button{min-height:29px;padding:4px 6px;font-size:10px}
+
+  .game-app .companion-details-panel{width:min(755px,calc(100vw - 16px));max-height:calc(100dvh - 16px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:auto auto auto auto auto;column-gap:10px;row-gap:3px;overflow:hidden;padding:8px 13px}
+  .game-app .companion-details-panel>.eyebrow{grid-column:1/-1;font-size:8px}
+  .game-app .companion-details-intro{grid-column:1;grid-row:2;margin:0;gap:7px}
+  .game-app .companion-details-intro img{width:74px;height:74px}
+  .game-app .companion-details-intro h2{font-size:20px}
+  .game-app .companion-details-intro p{display:none}
+  .game-app .companion-details-meters{grid-column:1;grid-row:3;gap:4px;margin:0}
+  .game-app .companion-details-meters>div>span{font-size:9px;margin-bottom:2px}
+  .game-app .companion-details-meters b{font-size:9px}
+  .game-app .companion-details-stats{grid-column:1;grid-row:4;gap:3px}
+  .game-app .companion-details-stats span{padding:4px 1px;font-size:8px}
+  .game-app .companion-details-stats b{font-size:12px}
+  .game-app .companion-held{grid-column:2;grid-row:2/4;margin:0;padding:6px}
+  .game-app .companion-held-heading{margin-bottom:4px}
+  .game-app .companion-held-heading h3{font-size:13px}
+  .game-app .companion-held-heading span{display:none}
+  .game-app .companion-held-grid{grid-template-columns:1fr;gap:4px}
+  .game-app .companion-held-slot{min-height:44px;padding:3px 5px}
+  .game-app .companion-held-art{width:37px;height:37px}
+  .game-app .companion-held-art img{width:35px;height:35px}
+  .game-app .companion-held-slot em{display:none}
+  .game-app .companion-held-note{font-size:8px;margin:2px 0 0}
+  .game-app .companion-details-skill{grid-column:2;grid-row:4/6;margin:0;padding:6px 8px;gap:2px}
+  .game-app .companion-details-skill small{font-size:8px}
+  .game-app .companion-details-skill strong{font-size:12px}
+  .game-app .companion-details-skill span{font-size:9px;line-height:1.2}
+  .game-app .companion-details-evolution{display:none}
+  .game-app .companion-details-collection{grid-column:1;grid-row:5;justify-self:start;align-self:start;margin-top:3px;padding:5px 8px;font-size:10px}
+  .game-app .companion-picker-overlay{z-index:12;background:#07151dd9}
+  .game-app .companion-item-picker{width:min(570px,calc(100vw - 20px));max-height:calc(100dvh - 20px);margin:0;padding:11px 13px}
+  .game-app .companion-item-options{grid-template-columns:repeat(2,minmax(0,1fr));max-height:calc(100dvh - 105px);overflow:auto}
+  .game-app .companion-item-options button{min-width:0}
+
+  .game-app .collection-panel{width:min(800px,calc(100vw - 16px));height:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
+  .game-app .collection-panel>.eyebrow,.game-app .collection-panel>p,.game-app .collection-foot{display:none}
+  .game-app .collection-panel h2{margin:0 0 2px;font-size:18px}
+  .game-app .collection-panel h3{margin:4px 0;font-size:12px}
+  .game-app .collection-panel .creature-list{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:6px;overflow-x:auto;overflow-y:hidden;min-height:100px;max-height:102px;flex:none;padding:2px 1px}
+  .game-app .collection-panel .creature-card{flex:0 0 145px;min-width:0;height:96px;padding:4px 6px;overflow:hidden}
+  .game-app .collection-panel .creature-card-select{overflow:hidden}
+  .game-app .collection-panel .creature-card-head{gap:5px}
+  .game-app .collection-panel .creature-card-head img{width:39px;height:39px}
+  .game-app .collection-panel .creature-card-head strong{font-size:11px}
+  .game-app .collection-panel .creature-card-head small{font-size:8px}
+  .game-app .collection-panel .creature-card-head em,.game-app .collection-panel .creature-stats,.game-app .collection-panel .creature-xp-label,.game-app .collection-panel .creature-xp-track{display:none}
+  .game-app .collection-panel .creature-card-action{display:block;margin-top:1px;font-size:8px;text-align:center}
+  .game-app .collection-panel .creature-health-track{display:block;width:100%;height:5px;margin:4px 0 2px;border-radius:4px;background:#12303b;overflow:hidden}
+  .game-app .collection-panel .creature-health-track i{display:block;height:100%;background:#82d49a}
+  .game-app .collection-panel .creature-card-details{margin-top:3px;padding:4px;font-size:9px}
+
+  .game-app .battle-inspection-panel{width:min(485px,calc(100vw - 20px));padding:13px}
+  .game-app .battle-inspection-main{display:flex;align-items:center;gap:11px}
+  .game-app .battle-inspection-main img{width:80px;height:80px;object-fit:contain;image-rendering:pixelated}
+  .game-app .battle-inspection-main h2{margin:0;font-size:19px}
+  .game-app .battle-inspection-main h2 small{font-size:11px}
+  .game-app .battle-inspection-main span{font-size:11px}
+  .game-app .battle-inspection-stats{display:flex;gap:6px;margin-top:5px;font-size:10px}
+  .game-app .battle-inspection-skill{display:flex;justify-content:space-between;gap:10px;margin-top:7px;padding:7px;border:1px solid #856f9f;border-radius:7px;font-size:11px}
+  .game-app .battle-inspection-panel p{margin:6px 0 0;font-size:10px;line-height:1.3}
+  .game-app .battle-menu-panel{width:min(620px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:hidden;padding:10px 13px}
+  .game-app .battle-menu-panel h2{margin:2px 0;font-size:18px}
+  .game-app .battle-menu-panel p{margin:0;font-size:10px}
+  .game-app .battle-menu-grid{margin:6px 0;gap:6px}
+  .game-app .battle-menu-item{min-height:105px;padding:5px}
+  .game-app .battle-menu-item img{width:47px;height:47px}
+  .game-app .battle-menu-item small{font-size:9px}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:350px){
+  .game-app .inventory-heading h2,.game-app .collection-panel h2{font-size:16px}
+  .game-app .inventory-art,.game-app .inventory-art img{width:52px;height:52px}
+  .game-app .inventory-item-summary h3{font-size:13px}
+  .game-app .battle-command-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster) button{height:25px}
+}

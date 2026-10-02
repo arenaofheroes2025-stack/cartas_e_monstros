@@ -88,6 +88,27 @@ else{
   await dispatch('touchEnd',[interact]);
   await dispatch('touchEnd',[{...joystick,x:143,y:225}]);
 }
+
+await page.evaluate(()=>{
+  const game=window.__cartasGame;
+  game.newGame('brasito',346);
+  const wild=game.wildActors.find(actor=>!actor.night);
+  game.player.x=wild.x-1.3;game.player.z=wild.z-0.5;
+  game.beginBattle(wild);game.battle.intro=0;game.battle.foe.attackTimer=100;game.onChange();
+});
+await page.waitForTimeout(250);
+const allyCard=await page.locator('.combatant.ally').boundingBox();
+if(!allyCard)failures.push('Card do aliado não apareceu na batalha');
+else{
+  await dispatch('touchStart',[joystick]);
+  await dispatch('touchMove',[{...joystick,x:143,y:225}]);
+  const cardTouch={x:allyCard.x+allyCard.width/2,y:allyCard.y+allyCard.height/2,id:5};
+  await dispatch('touchStart',[{...joystick,x:143,y:225},cardTouch]);
+  await dispatch('touchEnd',[{...joystick,x:143,y:225}]);
+  await page.waitForTimeout(150);
+  if(!await page.locator('.companion-details-panel').isVisible())
+    failures.push('Card do aliado não abriu enquanto o joystick estava ativo');
+}
 await browser.close();
 if(failures.length){console.error(failures.join('\n'),JSON.stringify(observations,null,2));process.exitCode=1;}
-else console.log('Multitoque OK: movimento, comandos consecutivos e interação durante o toque.');
+else console.log('Multitoque OK: movimento, comandos, interação e card do aliado durante o toque.');

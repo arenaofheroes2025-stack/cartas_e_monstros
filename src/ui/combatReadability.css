@@ -37,6 +37,23 @@
 .collection-panel .creature-xp-track{display:block;height:6px;margin-top:4px;background:#17303d;border-radius:6px;overflow:hidden}
 .collection-panel .creature-xp-track i{display:block;height:100%;background:#f0ba75;border-radius:6px}
 .collection-panel .creature-card-action{display:block;margin-top:7px;color:#e6d0a9;font-size:10px;text-align:right}
+.collection-panel .creature-health-track{display:block;height:5px;margin-top:7px;border-radius:5px;background:#102a36;overflow:hidden}
+.collection-panel .creature-health-track i{display:block;height:100%;border-radius:5px;background:#83d499}
+.battle-ui .combatant{color:#f6e6c6;text-align:left;touch-action:manipulation}
+.battle-ui .combatant:focus-visible{outline:2px solid #ffdb97;outline-offset:2px}
+.battle-ui .combatant.enemy{border-color:#c47a70}
+.battle-ui .combatant.ally{border-color:#82b998}
+.battle-inspection-panel{width:min(470px,100%)}
+.battle-inspection-main{display:flex;align-items:center;gap:15px}
+.battle-inspection-main img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated}
+.battle-inspection-main h2{margin:0;font-size:25px}
+.battle-inspection-main h2 small{font:800 12px Consolas,monospace;color:#b4d0c7}
+.battle-inspection-main span{font-size:12px;color:#b6d3ca}
+.battle-inspection-stats{display:flex;gap:8px;margin-top:8px;color:#ffe0af;font:800 11px Consolas,monospace}
+.battle-inspection-skill{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding:10px;border:1px solid #9578ae;border-radius:8px;background:#2e314b;color:#eee0fb;font-size:12px}
+.battle-inspection-panel p{margin:9px 0 0;font-size:11px}
+.battle-menu-health-track{display:block;width:100%;height:6px;border-radius:5px;background:#15323e;overflow:hidden}
+.battle-menu-health-track i{display:block;height:100%;background:#86d49d}
 @media(max-width:650px){.combatant.enemy{min-width:0}.enemy-attack-meter>span:first-child{font-size:9px}.collection-panel .creature-list{grid-template-columns:1fr}}
 @media(max-width:950px) and (max-height:500px) and (orientation:landscape){
   .game-app .battle-top .combatant.enemy{width:218px;min-width:0;padding:4px 8px 4px 4px}

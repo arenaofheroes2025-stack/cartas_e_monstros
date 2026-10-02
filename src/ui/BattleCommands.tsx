@@ -134,6 +134,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           const charge=battle.ally.charge;
           special.current.disabled=charge<100;
           special.current.style.setProperty('--special-charge',`${Math.min(100,charge)}%`);
+          special.current.classList.toggle('ready',charge>=100);
           specialLabel.current.textContent=charge>=100?'Pronto':`${Math.floor(charge)}%`;
         }
       }
@@ -198,7 +199,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     </button>
     <button ref={special} className={`command-special ${command==='special'?'selected':''}`} {...press(()=>game.battleCommand('special'))}
       title={`${SPECIES[game.activeMonster!.species].skill.name} · R ou 5`} aria-label={`Especial: ${SPECIES[game.activeMonster!.species].skill.name}`}>
-      <kbd>R</kbd><span className="command-icon">✦</span><strong>Especial</strong><small ref={specialLabel} className="command-cooldown">0%</small>
+      <kbd>R</kbd><span className="command-icon">✦</span><strong>{SPECIES[game.activeMonster!.species].skill.name}</strong><small ref={specialLabel} className="command-cooldown">0%</small>
     </button>
     <button ref={dodge} className="command-dodge" {...press(()=>game.battleCommand('dodge'))} title="Sair da área do golpe · X ou 2" aria-label="Esquivar">
       <kbd>X</kbd><span className="command-icon">◇</span><strong>Esquivar</strong><small ref={dodgeLabel} className="command-cooldown"/>

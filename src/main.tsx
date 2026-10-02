@@ -14,9 +14,10 @@ import { WorldInteraction } from './ui/WorldInteraction';
 import { RotateDevicePrompt } from './ui/RotateDevicePrompt';
 import { usePortraitLock } from './input/usePortraitLock';
 import { PwaInstallHelp, usePwaInstall } from './ui/PwaInstall';
-import { BattleMenuPanel, CollectionPanel, PausePanel } from './ui/Overlays';
+import { BattleInspection, BattleMenuPanel, CollectionPanel, PausePanel } from './ui/Overlays';
 import './style.css';
 import './ui/mobileLandscape.css';
+import './ui/mobileMenus.css';
 
 function App() {
   const [game]=useState(()=>new Game());
@@ -25,6 +26,7 @@ function App() {
   const [collection,setCollection]=useState(false);
   const [bagOpen,setBagOpen]=useState(false);
   const [detailsUid,setDetailsUid]=useState<string|null>(null);
+  const [enemyDetails,setEnemyDetails]=useState(false);
   const [quality,setQualityState]=useState<'high'|'low'>(()=>{
     const stored=localStorage.getItem('cartas-quality');
     if(stored==='high'||stored==='low')return stored;
@@ -32,7 +34,7 @@ function App() {
   });
   const orientationPaused=usePortraitLock();
   const pwa=usePwaInstall();
-  const overlayOpen=collection||detailsUid!==null||bagOpen;
+  const overlayOpen=collection||detailsUid!==null||bagOpen||enemyDetails;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
   const closeDetails=useCallback(()=>setDetailsUid(null),[]);
@@ -49,7 +51,7 @@ function App() {
     <div className="scene"><WorldScene game={game} quality={quality} orientationPaused={orientationPaused||overlayOpen} cameraRef={cameraRef}/></div>
     {game.mode==='title'?<StartMenu game={game} pwa={pwa}/>:null}
     {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} revision={revision} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onCompanion={setDetailsUid}/>:null}
-    {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef}/>:null}
+    {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef} onAllyDetails={setDetailsUid} onEnemyDetails={()=>setEnemyDetails(true)}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
     {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)}/>:null}
     {inGame&&!orientationPaused?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
@@ -57,6 +59,7 @@ function App() {
     {collection?<CollectionPanel game={game} onClose={()=>setCollection(false)} onDetails={uid=>{setCollection(false);setDetailsUid(uid);}}/>:null}
     {detailedMonster?<CompanionDetails game={game} monster={detailedMonster} onClose={closeDetails}
       onCollection={()=>{setDetailsUid(null);setCollection(true);}}/>:null}
+    {enemyDetails&&game.battle?<BattleInspection monster={game.battle.enemy} hp={game.battle.foe.hp} opponent={game.activeMonster??undefined} onClose={()=>setEnemyDetails(false)}/>:null}
     {!orientationPaused&&(game.mode==='explore'||(game.mode==='battle'&&game.battle?.intro===0&&!game.battle.finisher&&!game.battle.captureSequence&&!game.battleMenu))?<TouchControls game={game} controls={controls}/>:null}
     {orientationPaused?<RotateDevicePrompt/>:null}
     <PwaInstallHelp pwa={pwa}/>

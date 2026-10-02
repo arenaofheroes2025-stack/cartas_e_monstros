@@ -23,9 +23,10 @@ function damageSprite(amount:number,critical:boolean):THREE.Sprite {
     context.lineWidth=6;context.strokeStyle='#642b22';context.strokeText('CRÍTICO!',128,24);
     context.fillStyle='#ffe78c';context.fillText('CRÍTICO!',128,24);
   }
-  context.font='900 72px Trebuchet MS, sans-serif';
-  context.lineWidth=13;context.strokeStyle='#183143';context.strokeText(`-${amount}`,128,critical?83:66);
-  context.fillStyle=critical?'#ffdf79':'#ffffff';context.fillText(`-${amount}`,128,critical?83:66);
+  context.font=amount===0?'900 42px Trebuchet MS, sans-serif':'900 72px Trebuchet MS, sans-serif';
+  const label=amount===0?'ERROU':`-${amount}`;
+  context.lineWidth=13;context.strokeStyle='#183143';context.strokeText(label,128,critical?83:66);
+  context.fillStyle=amount===0?'#b7d9df':critical?'#ffdf79':'#ffffff';context.fillText(label,128,critical?83:66);
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   const material=new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false});
   const sprite=new THREE.Sprite(material);sprite.renderOrder=12;
