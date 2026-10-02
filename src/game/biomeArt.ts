@@ -28,7 +28,7 @@ export type BiomeProp = (typeof BIOME_PROP_SHEETS)[keyof typeof BIOME_PROP_SHEET
 export const TILE_ATLAS = {
   columns: 4,
   rows: 20,
-  base: {forest:0,wet:1,dry:2,road:3,city:4,bridge:5,water:6,ramp:7,volcanic:8,volcanicWall:9,mossWall:10,waterAlt:11,earthWall:12,meadow:13,beach:14,ruins:15},
+  base: {forest:0,wet:1,dry:2,road:3,city:4,bridge:5,water:6,volcanic:8,volcanicWall:9,mossWall:10,waterAlt:11,earthWall:12,meadow:13,beach:14,ruins:15},
   variants: {forest:[16,17,18,19],wet:[20,21,22,23],volcanic:[24,25,26,27],road:[28,29,30,31]},
   biome: {forest:32,field:33,mountain:34,rocky:35,desert:36,volcanic:37,ice:38,swamp:39,riverbank:40,lakeside:41,beach:42,road:43,ruins:44,city:45,magic:46,cave:47},
   transition: {forestField:48,fieldDry:49,dryEarth:50,earthRock:51,earthDamp:52,dampMud:53,mudRiverbank:54,riverWater:55,fieldSnow:56,snowIce:57,snowMountain:58,iceLake:59,cityRoad:60,roadGrass:61,rockVolcanic:62,ruinMagic:63},
@@ -44,7 +44,6 @@ export const TERRAIN_MATERIALS = {
   road:{top:TILE_ATLAS.base.road,wall:TILE_ATLAS.walls.earth},
   city:{top:TILE_ATLAS.base.city,wall:TILE_ATLAS.walls.city},
   bridge:{top:TILE_ATLAS.base.bridge,wall:TILE_ATLAS.walls.earth},
-  ramp:{top:TILE_ATLAS.base.ramp,wall:TILE_ATLAS.walls.city},
   volcanic:{top:TILE_ATLAS.base.volcanic,wall:TILE_ATLAS.walls.redBasalt},
   mountain:{top:TILE_ATLAS.biome.mountain,wall:TILE_ATLAS.walls.slate},
   rocky:{top:TILE_ATLAS.biome.rocky,wall:TILE_ATLAS.walls.granite},
@@ -99,7 +98,7 @@ export const BIOME_PROP_KITS = {
   beach:['driftwood','shells','desert-pebbles','bank-grass'],
   road:['street-sign','market-barrel','market-crate'],
   ruins:['ruin-column','ruin-block','ruin-arch','ruin-slab'],
-  city:['town-fountain','street-sign','market-barrel','market-crate','flower-planter'],
+  city:['town-fountain','street-sign','market-barrel','market-crate'],
   magic:['magic-crystal','rune-stone','glow-mushrooms','magic-flowers'],
   cave:['stalagmites','cave-boulder','geode','cave-mushrooms']
 } as const;

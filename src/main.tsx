@@ -24,6 +24,7 @@ import './ui/inventoryReference.css';
 import './ui/screenTheme.css';
 import './ui/mobileActionWheel.css';
 import './ui/streamlinedMenus.css';
+import './ui/explorationHud.css';
 
 function App() {
   const [game]=useState(()=>new Game());
@@ -57,8 +58,13 @@ function App() {
   },[]);
   useEffect(()=>{
     game.onChange=()=>setRevision(value=>value+1);
-    if (import.meta.env.DEV) (window as Window & {__cartasGame?:Game}).__cartasGame=game;
-    return()=>{game.onChange=null;if (import.meta.env.DEV) delete (window as Window & {__cartasGame?:Game}).__cartasGame;};
+    if (import.meta.env.DEV || import.meta.env.MODE==='qa')
+      (window as Window & {__cartasGame?:Game}).__cartasGame=game;
+    return()=>{
+      game.onChange=null;
+      if (import.meta.env.DEV || import.meta.env.MODE==='qa')
+        delete (window as Window & {__cartasGame?:Game}).__cartasGame;
+    };
   },[game]);
   const setQuality=(value:'high'|'low')=>{setQualityState(value);localStorage.setItem('cartas-quality',value);};
   const inGame=game.mode!=='title';

@@ -1,36 +1,44 @@
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Game } from '../game/game';
 import { propAsset } from '../game/assets';
 import { WorldData } from '../game/world';
 import { imageTexture } from './art';
 import { CHUNK_SIZE } from './ChunkVisibility';
+import { chunkKey } from '../game/chunkWorld';
+import { WorldStore } from '../game/worldStore';
 
 // Decode happens when the world mounts; upload nearby art to the GPU during
 // browser idle time so crossing a chunk border is less likely to pause a frame.
-export const NearbyTextureWarmup=memo(function NearbyTextureWarmup({game,world}:{game:Game;world:WorldData}) {
+export const NearbyTextureWarmup=memo(function NearbyTextureWarmup({game,world,revision=0}:{game:Game;world:WorldData;revision?:number}) {
   const {gl}=useThree();
+  const warmedRef=useRef(new Set<string>());
   const assetsByChunk=useMemo(()=>{
-    const width=Math.ceil(world.size/CHUNK_SIZE);
-    const chunks=Array.from({length:width*width},()=>new Set<string>());
+    const chunks=new Map<string,Set<string>>();
     const add=(x:number,z:number,asset:string|null)=>{
-      if(asset)chunks[Math.floor(z/CHUNK_SIZE)*width+Math.floor(x/CHUNK_SIZE)].add(asset);
+      if(!asset)return;
+      const key=chunkKey(Math.floor(x/CHUNK_SIZE),Math.floor(z/CHUNK_SIZE));
+      let assets=chunks.get(key);
+      if(!assets){assets=new Set();chunks.set(key,assets);}
+      assets.add(asset);
     };
     for(const tile of world.tiles)add(tile.x,tile.z,propAsset(tile));
+    if(world instanceof WorldStore)for(const chunk of world.chunks.values())
+      for(const tile of chunk.tiles)add(tile.x,tile.z,propAsset(tile));
     for(const place of world.places)add(place.x,place.z,place.id);
     for(const decoration of world.decorations)add(decoration.x,decoration.z,decoration.id);
-    return {chunks,width};
-  },[world]);
+    return chunks;
+  },[world,revision]);
 
   useEffect(()=>{
-    const warmed=new Set<string>();
+    const warmed=warmedRef.current;
     let nearby:string[]=[];
-    let lastChunk=-1;
+    let lastChunk='';
     let pendingIdle=0;
     const refreshNearby=()=>{
       const cx=Math.floor(game.player.x/CHUNK_SIZE);
       const cz=Math.floor(game.player.z/CHUNK_SIZE);
-      const current=cz*assetsByChunk.width+cx;
+      const current=chunkKey(cx,cz);
       if(current===lastChunk)return;
       lastChunk=current;
       const found=new Set<string>();
@@ -38,8 +46,7 @@ export const NearbyTextureWarmup=memo(function NearbyTextureWarmup({game,world}:
       for(let radius=0;radius<=2;radius++)for(let dz=-radius;dz<=radius;dz++)for(let dx=-radius;dx<=radius;dx++){
         if(Math.max(Math.abs(dx),Math.abs(dz))!==radius)continue;
         const x=cx+dx,z=cz+dz;
-        if(x<0||z<0||x>=assetsByChunk.width||z>=assetsByChunk.width)continue;
-        for(const asset of assetsByChunk.chunks[z*assetsByChunk.width+x])found.add(asset);
+        for(const asset of assetsByChunk.get(chunkKey(x,z))??[])found.add(asset);
       }
       nearby=[...found];
     };

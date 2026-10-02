@@ -6,16 +6,16 @@ import { SPECIES } from '../game/content';
 import { staticNpcAt } from '../game/npcs';
 import { monsterTexture, personTexture, playerTexture } from './art';
 import { playerAnimationFrame, playerIntroCardPose, playerJumpLandingFrame, playerVictoryCardPose, type PlayerAnimation } from './playerAnimations';
-import { SPRITE_PITCH_COMPENSATION } from './camera';
+import { SPRITE_FACING, SPRITE_UP } from './camera';
 import { withCloudShadows } from './CloudShadows';
+import { withSpriteDepth } from './spriteDepth';
 import { facingForDirection, facingToward } from './facing';
 import { makeProjectedShadowGeometry, projectedShadowMaterial, writeProjectedShadow } from './ProjectedShadows';
 import { calibratedCasterHeight, shadowGroupOffset } from './shadowCalibration';
 
 interface SpriteState { x:number; z:number; visible:boolean; texture:THREE.Texture; flash?:number; scale?:number; facing?:1|-1; bob?:number; lift?:number; opacity?:number }
-const facing = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/4);
 const spriteWidth = 1.42;
-const spriteHeight = spriteWidth * SPRITE_PITCH_COMPENSATION;
+const spriteHeight = spriteWidth;
 const characterShadowOffset=shadowGroupOffset('personagens');
 
 function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>SpriteState;canFlash?:boolean}) {
@@ -23,7 +23,7 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
   const silhouette=useRef<THREE.Mesh>(null);
   const flash=useRef<THREE.Mesh>(null);
   const lastFacing=useRef<1|-1>(1);
-  const material=useMemo(()=>{const art=personTexture('player');return withCloudShadows(new THREE.MeshLambertMaterial({map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.28,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,depthWrite:true}));},[]);
+  const material=useMemo(()=>{const art=personTexture('player');return withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.28,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,depthWrite:true})));},[]);
   const shadowGeometry=useMemo(()=>makeProjectedShadowGeometry(game.world!,
     [{x:characterShadowOffset.x,z:characterShadowOffset.z,y:0.1}],spriteWidth,
     calibratedCasterHeight(spriteHeight,'personagens')),[game.world]);
@@ -34,7 +34,7 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
     uniforms:{uTexture:{value:personTexture('player')},uRepeat:{value:new THREE.Vector2(1,1)},uOffset:{value:new THREE.Vector2()},uOpacity:{value:0}},
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
     fragmentShader:'varying vec2 vUv;uniform sampler2D uTexture;uniform vec2 uRepeat;uniform vec2 uOffset;uniform float uOpacity;void main(){float a=texture2D(uTexture,vUv*uRepeat+uOffset).a;if(a<0.4)discard;gl_FragColor=vec4(1.0,1.0,1.0,a*uOpacity);}',
-    transparent:true,depthWrite:false,side:THREE.DoubleSide
+    transparent:true,depthWrite:false,depthTest:false,side:THREE.DoubleSide
   }):null,[canFlash]);
   useFrame(({clock})=>{
     if(!body.current||!silhouette.current||!game.world)return;
@@ -44,10 +44,11 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
     const h=game.getGroundHeight(state.x,state.z)+0.1;
     const scale=state.scale||1;
     const footV=(state.texture.userData.footV as number|undefined)??0;
-    body.current.position.set(state.x,h+spriteHeight*scale*(0.5-footV)+(state.bob||0)+(state.lift||0),state.z);
+    body.current.position.set(state.x,h+(state.bob||0)+(state.lift||0),state.z)
+      .addScaledVector(SPRITE_UP,spriteHeight*scale*(0.5-footV));
     lastFacing.current=state.facing||lastFacing.current;
     body.current.scale.set(lastFacing.current*scale,scale,scale);
-    body.current.quaternion.copy(facing);
+    body.current.quaternion.copy(SPRITE_FACING);
     writeProjectedShadow(shadowGeometry,game.world,
       {x:state.x+characterShadowOffset.x,z:state.z+characterShadowOffset.z,y:h},
       spriteWidth*scale,calibratedCasterHeight(spriteHeight*scale,'personagens'),

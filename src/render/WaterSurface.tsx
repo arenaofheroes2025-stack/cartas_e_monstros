@@ -6,6 +6,8 @@ import { HEIGHT_STEP, tileAt, type Tile, type WorldData, WORLD_SIZE } from '../g
 import { TILE_ATLAS } from '../game/biomeArt';
 import { imageTexture } from './art';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
+import { WorldStore } from '../game/worldStore';
+import type { WorldChunk } from '../game/chunkWorld';
 import { withCloudShadows } from './CloudShadows';
 import { daylightPhase } from './daylightPhase';
 
@@ -40,6 +42,17 @@ function cornerDepth(world:WorldData,x:number,z:number):number {
   }
   return count?total/count:0.14;
 }
+function cornerFloorDrop(world:WorldData,x:number,z:number):number {
+  let total=0,count=0;
+  for(const dz of [-1,0])for(const dx of [-1,0]){
+    const tile=tileAt(world,x+dx,z+dz);
+    if(tile?.terrain!=='water')continue;
+    total+=tile.bedHeight===undefined?0.12+tile.waterDepth*0.78:
+      Math.max(0.2,(tile.height-tile.bedHeight)*HEIGHT_STEP);
+    count++;
+  }
+  return count?total/count:0.24;
+}
 
 export function waterGeometry(tiles:Tile[],world:WorldData,floor=false):THREE.BufferGeometry {
   const positions:number[]=[],uvs:number[]=[],normals:number[]=[],localUvs:number[]=[],edges:number[]=[],depths:number[]=[],indices:number[]=[];
@@ -47,10 +60,12 @@ export function waterGeometry(tiles:Tile[],world:WorldData,floor=false):THREE.Bu
     const {x,z}=tile,y=SURFACE+tile.height*HEIGHT_STEP,vertex=positions.length/3;
     const corners=[cornerDepth(world,x,z),cornerDepth(world,x+1,z),
       cornerDepth(world,x+1,z+1),cornerDepth(world,x,z+1)];
-    positions.push(x,floor?y-0.12-corners[0]*0.78:y,z,
-      x+1,floor?y-0.12-corners[1]*0.78:y,z,
-      x+1,floor?y-0.12-corners[2]*0.78:y,z+1,
-      x,floor?y-0.12-corners[3]*0.78:y,z+1);
+    const drops=floor?[cornerFloorDrop(world,x,z),cornerFloorDrop(world,x+1,z),
+      cornerFloorDrop(world,x+1,z+1),cornerFloorDrop(world,x,z+1)]:[0,0,0,0];
+    positions.push(x,y-drops[0],z,
+      x+1,y-drops[1],z,
+      x+1,y-drops[2],z+1,
+      x,y-drops[3],z+1);
     depths.push(...corners);
     normals.push(0,1,0,0,1,0,0,1,0,0,1,0);
     localUvs.push(0,0,1,0,1,1,0,1);
@@ -200,9 +215,9 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
   return material;
 }
 
-function WaterChunk({tiles,world,x,z,material,floorMaterial}:{tiles:Tile[];world:WorldData;x:number;z:number;material:THREE.Material;floorMaterial:THREE.Material}) {
-  const geometry=useMemo(()=>waterGeometry(tiles,world),[tiles,world]);
-  const floor=useMemo(()=>waterGeometry(tiles,world,true),[tiles,world]);
+function WaterChunk({tiles,world,x,z,material,floorMaterial,revision}:{tiles:Tile[];world:WorldData;x:number;z:number;material:THREE.Material;floorMaterial:THREE.Material;revision:number}) {
+  const geometry=useMemo(()=>waterGeometry(tiles,world),[tiles,world,revision]);
+  const floor=useMemo(()=>waterGeometry(tiles,world,true),[tiles,world,revision]);
   const visible=useChunkVisibility(x,z);
   useEffect(()=>()=>{geometry.dispose();floor.dispose();},[geometry,floor]);
   return <group ref={visible}>
@@ -211,7 +226,13 @@ function WaterChunk({tiles,world,x,z,material,floorMaterial}:{tiles:Tile[];world
   </group>;
 }
 
-export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldData;game:Game}) {
+const waterTileCache=new WeakMap<WorldChunk,Tile[]>();
+function waterTiles(chunk:WorldChunk):Tile[]{
+  let tiles=waterTileCache.get(chunk);
+  if(!tiles){tiles=chunk.tiles.filter(tile=>tile.terrain==='water');waterTileCache.set(chunk,tiles);}
+  return tiles;
+}
+export const WaterSurface=memo(function WaterSurface({world,game,revision=0}:{world:WorldData;game:Game;revision?:number}) {
   const time=useMemo<THREE.IUniform<number>>(()=>({value:0}),[]);
   const artwork=useMemo<THREE.IUniform<number>>(()=>({value:0.55}),[]);
   const sunlight=useMemo<THREE.IUniform<number>>(()=>({value:1}),[]);
@@ -232,6 +253,11 @@ export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldDa
     sunlight.value=waterGlintIntensity(game.hour);
   });
   const width=WORLD_SIZE/CHUNK_SIZE;
+  const outer=world instanceof WorldStore?world.visibleChunks():[];
   return <group>{chunks.map((tiles,index)=>tiles.length>0&&
-    <WaterChunk key={index} tiles={tiles} world={world} x={index%width} z={Math.floor(index/width)} material={material} floorMaterial={floorMaterial}/>)}</group>;
+    <WaterChunk key={index} tiles={tiles} world={world} x={index%width} z={Math.floor(index/width)} material={material} floorMaterial={floorMaterial}
+      revision={world instanceof WorldStore?world.getChunkRevision(index%width,Math.floor(index/width)):revision}/>)}
+    {outer.map(chunk=>waterTiles(chunk).length>0?<WaterChunk key={`${chunk.x},${chunk.z}`}
+      tiles={waterTiles(chunk)} world={world} x={chunk.x} z={chunk.z} material={material} floorMaterial={floorMaterial}
+      revision={world instanceof WorldStore?world.getChunkRevision(chunk.x,chunk.z):revision}/>:null)}</group>;
 });

@@ -8,11 +8,10 @@ import { BIRD_FLEE_DISTANCE, BIRD_FLUTTER_SECONDS, BIRD_SPECIES, birdAirScale,
   type BirdSite, type BirdSpecies } from '../game/ambientBirds';
 import { type WorldData } from '../game/world';
 import { birdTexture } from './art';
-import { SPRITE_PITCH_COMPENSATION } from './camera';
+import { SPRITE_FACING, SPRITE_UP } from './camera';
 import { facingForDirection } from './facing';
 import { birdShadowPoint, writeBirdShadowSurface } from './birdShadows';
 
-const facing = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/4);
 const FLYING_RENDER_ORDER = 16;
 
 function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSite;time:React.RefObject<number>}) {
@@ -29,7 +28,7 @@ function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSi
     opacity:0.23,depthWrite:false}),[]);
   const shadowGeometry=useMemo(()=>new THREE.CircleGeometry(1,16).rotateX(-Math.PI/2),[]);
   const width=BIRD_SPECIES[site.species].scale;
-  const height=width*SPRITE_PITCH_COMPENSATION;
+  const height=width;
   useEffect(()=>()=>{art.dispose();shade.dispose();shadowGeometry.dispose();},[art,shade,shadowGeometry]);
   useFrame(({camera})=>{
     const mesh=body.current,spot=shadow.current;
@@ -113,9 +112,9 @@ function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSi
     const perched=site.perch==='tree'||site.perch==='roof';
     const altitude=site.perchHeight+lift;
     const sourceY=site.groundY+altitude;
-    mesh.position.set(x+(perched?0.1:0),sourceY+
-      height*(animation==='fly'?0.5:0.5-footV),z+(perched?0.1:0));
-    mesh.quaternion.copy(facing);
+    mesh.position.set(x+(perched?0.1:0),sourceY,z+(perched?0.1:0))
+      .addScaledVector(SPRITE_UP,height*(animation==='fly'?0.5:0.5-footV));
+    mesh.quaternion.copy(SPRITE_FACING);
     const cast=birdShadowPoint(world,x,sourceY,z);
     const size=airborne?birdAirScale(cast.height,Math.hypot(x-game.player.x,z-game.player.z)):1;
     mesh.scale.set(face*size,size,1);
@@ -129,7 +128,7 @@ function SceneBird({game,world,site,time}:{game:Game;world:WorldData;site:BirdSi
   return <>
     <mesh ref={shadow} geometry={shadowGeometry} material={shade} renderOrder={3} visible={false}
       frustumCulled={false}/>
-    <mesh ref={body} material={art} quaternion={facing}>
+    <mesh ref={body} material={art} quaternion={SPRITE_FACING}>
       <planeGeometry args={[width,height]}/>
     </mesh>
   </>;
@@ -213,9 +212,9 @@ function Flyovers({game,world,time}:{game:Game;world:WorldData;time:React.RefObj
   return <>{materials.map((material,index)=><group key={index}>
     <mesh ref={mesh=>{shadows.current[index]=mesh;}} geometry={shadowGeometries[index]}
       material={shadeMaterials[index]} renderOrder={3} visible={false} frustumCulled={false}/>
-    <mesh ref={mesh=>{meshes.current[index]=mesh;}} quaternion={facing}
+    <mesh ref={mesh=>{meshes.current[index]=mesh;}} quaternion={SPRITE_FACING}
       material={material} visible={false} renderOrder={FLYING_RENDER_ORDER}>
-      <planeGeometry args={[0.9,0.9*SPRITE_PITCH_COMPENSATION]}/>
+      <planeGeometry args={[0.9,0.9]}/>
     </mesh>
   </group>)}</>;
 }

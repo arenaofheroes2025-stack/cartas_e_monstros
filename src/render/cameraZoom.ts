@@ -1,12 +1,17 @@
 import { BATTLE_RECALL_END_SECONDS, BATTLE_ZOOM_OUT_END_SECONDS, CAPTURE_RECALL_END_SECONDS, CAPTURE_ZOOM_OUT_END_SECONDS } from '../game/game';
 
-/** Orthographic pixels per world unit for each playable viewport. */
+/** Desired pixels per world unit at the player's elevation. */
 export function cameraZoom(width:number,height:number,inBattle:boolean):number {
   const portrait=height>width;
-  if(width>=1000)return inBattle?82:64;
-  if(portrait)return inBattle?78:66;
-  if(height<=500)return inBattle?60:55;
-  return inBattle?76:63;
+  if(width>=1000)return inBattle?116:108;
+  if(portrait)return inBattle?104:92;
+  if(height<=500)return inBattle?92:82;
+  return inBattle?100:86;
+}
+
+/** Match the old framing at the focus plane while allowing real depth perspective. */
+export function perspectiveFovForZoom(height:number,pixelsPerUnit:number,distance:number):number {
+  return 2*Math.atan(height/(2*pixelsPerUnit*distance))*180/Math.PI;
 }
 
 /** Hold the close framing until the ally's card reaches the hero, then ease out. */

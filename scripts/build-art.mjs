@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { buildFootprints } from './build-footprints.mjs';
 import { buildSpriteAnchors } from './build-sprite-anchors.mjs';
 import { buildItemIcons } from './build-items.mjs';
+import { removeDetachedBleed } from './audit-art-bleed.mjs';
 
 const root = process.cwd();
 const source = (...parts) => path.join(root, 'assets', 'source', ...parts);
@@ -23,7 +24,7 @@ function bounds(data, width, channels, area, threshold = 150) {
   return {left, top, width: right - left + 1, height: bottom - top + 1};
 }
 
-async function loadCells(file, columns, rows) {
+async function loadCells(file, columns, rows, cleanBleed = false) {
   const image = sharp(file);
   const {data, info} = await image.ensureAlpha().raw().toBuffer({resolveWithObject:true});
   const cells = [];
@@ -33,20 +34,35 @@ async function loadCells(file, columns, rows) {
     const right = Math.round((col + 1) * info.width / columns);
     const bottom = Math.round((row + 1) * info.height / rows);
     const area = {left, top, width:right-left, height:bottom-top};
-    const core = bounds(data, info.width, info.channels, area);
+    let cellData;
+    if(cleanBleed){
+      cellData=Buffer.alloc(area.width*area.height*4);
+      for(let y=0;y<area.height;y++){
+        const from=((area.top+y)*info.width+area.left)*4;
+        data.copy(cellData,y*area.width*4,from,from+area.width*4);
+      }
+      cellData=removeDetachedBleed(cellData,area.width,area.height).pixels;
+    }
+    const core=cleanBleed?
+      bounds(cellData,area.width,4,{left:0,top:0,width:area.width,height:area.height}):
+      bounds(data,info.width,info.channels,area);
     const pad = 8;
-    const box = {
-      left:Math.max(area.left,core.left-pad),top:Math.max(area.top,core.top-pad),
-      width:Math.min(area.left+area.width,core.left+core.width+pad)-Math.max(area.left,core.left-pad),
-      height:Math.min(area.top+area.height,core.top+core.height+pad)-Math.max(area.top,core.top-pad)
+    const originX=cleanBleed?0:area.left,originY=cleanBleed?0:area.top;
+    const box={
+      left:Math.max(originX,core.left-pad),top:Math.max(originY,core.top-pad),
+      width:Math.min(originX+area.width,core.left+core.width+pad)-Math.max(originX,core.left-pad),
+      height:Math.min(originY+area.height,core.top+core.height+pad)-Math.max(originY,core.top-pad)
     };
-    cells.push({box, image:await sharp(file).extract(box).png().toBuffer()});
+    const image=cleanBleed?
+      await sharp(cellData,{raw:{width:area.width,height:area.height,channels:4}}).extract(box).png().toBuffer():
+      await sharp(file).extract(box).png().toBuffer();
+    cells.push({box,image});
   }
   return cells;
 }
 
-async function normalizeCells(file, columns, rows, size, names, folder, strip = false, kernel = 'nearest') {
-  const cells = await loadCells(file, columns, rows);
+async function normalizeCells(file, columns, rows, size, names, folder, strip = false, kernel = 'nearest', cleanBleed = false) {
+  const cells = await loadCells(file, columns, rows, cleanBleed);
   const maxWidth = Math.max(...cells.map(c=>c.box.width));
   const maxHeight = Math.max(...cells.map(c=>c.box.height));
   const scale = Math.min((size - 10) / maxWidth, (size - 8) / maxHeight);
@@ -70,7 +86,7 @@ async function normalizeCells(file, columns, rows, size, names, folder, strip = 
   }
 }
 
-for (const id of creatures) await normalizeCells(source('creatures',`${id}.png`),3,2,128,[id],'creatures',true);
+for (const id of creatures) await normalizeCells(source('creatures',`${id}.png`),3,2,128,[id],'creatures',true,'nearest',true);
 await normalizeCells(source('people','player.png'),3,2,128,['player'],'people',true);
 await normalizeCells(source('people','player-jump.png'),1,1,128,['player-jump'],'people',false,'lanczos3');
 await normalizeCells(source('people','player-summon.png'),1,1,128,['player-summon'],'people',false,'lanczos3');
@@ -216,7 +232,7 @@ await normalizeCells(source('people','courier-walk.png'),3,1,384,['courier'],'pe
 await normalizeCells(source('environment','houses.png'),3,1,512,['casa-cartas','casa-cura','casa-arquivo'],'environment',false,'lanczos3');
 await normalizeCells(source('environment','town-houses.png'),2,1,512,['casa-padaria','casa-vila'],'environment',false,'lanczos3');
 await normalizeCells(source('environment','shrines.png'),3,1,256,['selo-natureza','selo-fogo','selo-agua'],'environment');
-await normalizeCells(source('environment','props.png'),3,2,256,['tree','willow','rock','reeds','flowers','lamp'],'environment');
+await normalizeCells(source('environment','props.png'),3,2,256,['tree','willow','rock','reeds','flowers','lamp'],'environment',false,'nearest',true);
 await normalizeCells(source('environment','town-props.png'),3,2,256,['village-lamp','bloom-bush','bench','well','crates','flower-planter'],'environment',false,'lanczos3');
 const biomeProps={
   core:['forest-shrub','fallen-log','root-cluster','moss-boulder','field-flowers','grass-tuft','field-stump','fieldstone','mountain-boulder','shale-fragments','mineral-cluster','scree-pile','basalt-shard','ash-heap','obsidian-spire','lava-boulder'],
@@ -224,7 +240,7 @@ const biomeProps={
   culture:['town-fountain','street-sign','market-barrel','market-crate','ruin-column','ruin-block','ruin-arch','ruin-slab','magic-crystal','rune-stone','glow-mushrooms','magic-flowers','stalagmites','cave-boulder','geode','cave-mushrooms']
 };
 for(const [sheet,names] of Object.entries(biomeProps))
-  await normalizeCells(source('environment',`biome-props-${sheet}.png`),4,4,256,names,'environment',false,'lanczos3');
+  await normalizeCells(source('environment',`biome-props-${sheet}.png`),4,4,256,names,'environment',false,'lanczos3',true);
 for (const name of ['pine','copper-tree','marsh-willow','moss-rock','basalt-rock','flower-bush']) {
   await normalizeCells(source('environment','single',`${name}.png`),1,1,256,[name],'environment');
 }

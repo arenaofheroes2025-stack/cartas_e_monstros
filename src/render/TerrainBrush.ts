@@ -58,7 +58,7 @@ export function terrainBrushPixels(world: WorldData): Uint8Array {
   for (let z = 0; z < WORLD_SIZE; z++) for (let x = 0; x < WORLD_SIZE; x++) {
     const tile = tileAt(world, x, z)!;
     const i = (z * WORLD_SIZE + x) * 4;
-    if (tile.terrain === 'water' || tile.terrain === 'bridge' || tile.terrain === 'plaza' || tile.terrain === 'ramp') continue;
+    if (tile.terrain === 'water' || tile.terrain === 'bridge' || tile.terrain === 'plaza') continue;
     const interior = interiorWeight(world, x, z);
     // R: bare dirt road; G: broad habitat clusters; B: water/terrain edge;
     // A: smaller infrequent accents. The road is composited last.
@@ -92,7 +92,7 @@ export function urbanBrushPixels(world: WorldData): Uint8Array {
   for (let z = 0; z < WORLD_SIZE; z++) for (let x = 0; x < WORLD_SIZE; x++) {
     const tile = tileAt(world, x, z)!;
     const i = (z * WORLD_SIZE + x) * 4;
-    if (tile.terrain === 'water' || tile.terrain === 'bridge' || tile.terrain === 'ramp') continue;
+    if (tile.terrain === 'water' || tile.terrain === 'bridge') continue;
     const center = isTownStone(world, tile);
     const adjacent = !center && [[-1,0],[1,0],[0,-1],[0,1]].some(([dx,dz])=>{
       const neighbor = tileAt(world, x + dx, z + dz);

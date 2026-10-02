@@ -19,11 +19,12 @@ import { CAMERA_OFFSET } from './camera';
 import { CloudShadows } from './CloudShadows';
 import { GroundShadows } from './GroundShadows';
 import { WaterSurface } from './WaterSurface';
-import { cameraZoom, captureCameraZoom, victoryCameraZoom } from './cameraZoom';
+import { cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
 import { RenderResolution } from './RenderResolution';
 import { preferredRenderDpr } from './resolutionBudget';
 import { NearbyTextureWarmup } from './NearbyTextureWarmup';
 import { AmbientBirds } from './AmbientBirds';
+import { DepthOfField } from './DepthOfField';
 
 function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:boolean}) {
   const accumulated=useRef(0);
@@ -96,9 +97,10 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
       else if(game.mode==='explore'&&game.playerPickupTime>0)interactionPush=1.18;
     }
     const zoom=capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):finish?finishZoom:baseZoom*introPush*interactionPush;
-    if(camera instanceof THREE.OrthographicCamera&&Math.abs(camera.zoom-zoom)>0.01){
+    const desiredFov=perspectiveFovForZoom(size.height,zoom,CAMERA_OFFSET.length());
+    if(camera instanceof THREE.PerspectiveCamera&&Math.abs(camera.fov-desiredFov)>0.01){
       const zoomDamping=finish||capture?.success?6.5:battle?3.6:interactionPush>1?8:5.2;
-      camera.zoom=THREE.MathUtils.damp(camera.zoom,zoom,zoomDamping,delta);
+      camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,zoomDamping,delta);
       camera.updateProjectionMatrix();
     }
     const desired=look.copy(target).add(CAMERA_OFFSET);
@@ -106,12 +108,12 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
     camera.position.lerp(desired,1-Math.exp(-(finish||capture?.success?8.5:battle?4.2:6.2)*delta));
     // Keep the projection angle fixed while the camera glides toward the arena.
     camera.lookAt(look.copy(camera.position).sub(CAMERA_OFFSET));
-    if(game.mode==='dialog'&&(Math.abs(camera.zoom-zoom)>0.05||positionDelta>0.0004))invalidate();
+    if(game.mode==='dialog'&&(camera instanceof THREE.PerspectiveCamera&&Math.abs(camera.fov-desiredFov)>0.01||positionDelta>0.0004))invalidate();
   });
   return null;
 }
 
-function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Game;world:WorldData;quality:'high'|'low';orientationPaused:boolean;cameraRef:RefObject<THREE.Camera|null>}) {
+function SceneContent({game,world,quality,orientationPaused,cameraRef,revision}:{game:Game;world:WorldData;quality:'high'|'low';orientationPaused:boolean;cameraRef:RefObject<THREE.Camera|null>;revision:number}) {
   const {scene,gl}=useThree();
   useEffect(()=>{
     scene.fog=new THREE.Fog('#9cccd4',23,60);
@@ -123,21 +125,22 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Gam
   },[scene,gl]);
   return <>
     <RenderResolution quality={quality}/>
+    <DepthOfField game={game} quality={quality}/>
     <SimulationLoop game={game} orientationPaused={orientationPaused}/>
     <CameraRig game={game} cameraRef={cameraRef}/>
     <CloudShadows game={game} world={world}/>
     <Lighting game={game} quality={quality}/>
-    <NearbyTextureWarmup game={game} world={world}/>
+    <NearbyTextureWarmup game={game} world={world} revision={revision}/>
     <group onPointerDown={event=>{
       if(game.mode==='battle') {
         event.stopPropagation();
         game.orderMove({x:event.point.x,z:event.point.z});
       }
     }}>
-      <TerrainChunks world={world}/>
-      <WaterSurface world={world} game={game}/>
-      <GroundShadows game={game} world={world}/>
-      <Props world={world} game={game}/>
+      <TerrainChunks world={world} revision={revision}/>
+      <WaterSurface world={world} game={game} revision={revision}/>
+      <GroundShadows game={game} world={world} revision={revision}/>
+      <Props world={world} game={game} revision={revision}/>
       {game.world?<><AmbientBirds game={game} world={world}/><CardPickups game={game}/><ItemPickups game={game}/><Creatures game={game}/><BattleArena game={game}/><BattleSummon game={game}/><BattleFinish game={game}/><BattleCapture game={game}/><StatusAuras game={game}/><Effects game={game}/></>:null}
     </group>
   </>;
@@ -146,10 +149,11 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Gam
 export function WorldScene({game,quality,orientationPaused=false,cameraRef}:{game:Game;quality:'high'|'low';orientationPaused?:boolean;cameraRef:RefObject<THREE.Camera|null>}) {
   const preview=useMemo(()=>generateWorld(40732),[]);
   const world=game.world||preview;
+  useEffect(()=>{game.streamQuality=quality;game.world?.updateStreaming(game.player,game.move,quality,true);},[game,quality,game.world]);
   const framePaused=orientationPaused||game.mode==='pause'||game.mode==='dialog';
-  return <Canvas orthographic shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,powerPreference:'high-performance'}}
+  return <Canvas shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,powerPreference:'high-performance'}}
     dpr={preferredRenderDpr(window.innerWidth,window.innerHeight,window.devicePixelRatio,quality)}
-    camera={{position:[61,22,61],zoom:40,near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
-    <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef}/>
+    camera={{position:[61,22,61],fov:perspectiveFovForZoom(window.innerHeight,cameraZoom(window.innerWidth,window.innerHeight,false),CAMERA_OFFSET.length()),near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
+    <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef} revision={game.world?.revision??0}/>
   </Canvas>;
 }

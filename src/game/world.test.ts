@@ -97,10 +97,28 @@ describe('geração da região',()=>{
     }
     expect(validateWorld(world)).toBe(true);
   });
+  it('mantém salgueiros azuis, juncos e pedras arredondadas dentro da água',()=>{
+    for(const seed of [40732,82557,346]){
+      const world=generateWorld(seed);
+      const willows=world.tiles.filter(tile=>tile.prop==='tree'&&tile.biome==='lago');
+      const reeds=world.tiles.filter(tile=>tile.prop==='reeds');
+      const stones=world.tiles.filter(tile=>tile.prop==='river-stones');
+      expect(willows.length,`salgueiros na seed ${seed}`).toBeGreaterThan(0);
+      expect(reeds.length,`juncos na seed ${seed}`).toBeGreaterThan(0);
+      expect(stones.length,`pedras na seed ${seed}`).toBeGreaterThan(0);
+      expect([...willows,...reeds,...stones].every(tile=>tile.terrain==='water')).toBe(true);
+      expect(willows.every(tile=>tile.waterDepth<=0.5)).toBe(true);
+      expect(stones.every(tile=>tile.waterDepth<=0.38)).toBe(true);
+      expect(reeds.some(tile=>tile.waterDepth>0.5)).toBe(true);
+      const water=world.tiles.filter(tile=>tile.terrain==='water');
+      expect((willows.length+reeds.length+stones.length)/water.length).toBeLessThan(0.15);
+    }
+  });
   it('coloca os novos objetos da vila sem fechar caminhos principais',()=>{
     const world=generateWorld(40732);
-    for(const prop of ['village-lamp','bloom-bush','bench','well','crates','flower-planter','carroca-mercador','arco-pedra'])
+    for(const prop of ['village-lamp','bloom-bush','bench','well','crates','arco-pedra'])
       expect(world.tiles.some(tile=>tile.prop===prop),prop).toBe(true);
+    expect(world.tiles.some(tile=>tile.prop==='flower-planter'||tile.prop==='carroca-mercador')).toBe(false);
     expect(validateWorld(world)).toBe(true);
   });
   it('mantém as portas da vila alcançáveis usando a colisão real dos PNGs',()=>{

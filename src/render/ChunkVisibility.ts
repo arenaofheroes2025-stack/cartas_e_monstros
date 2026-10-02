@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { CHUNK_SIZE } from '../game/world';
 
-export const CHUNK_SIZE = 16;
+export { CHUNK_SIZE };
 
 const projection = new THREE.Matrix4();
 const frustum = new THREE.Frustum();
@@ -24,7 +25,7 @@ export function useChunkVisibility(chunkX: number, chunkZ: number, margin = 5) {
   const group = useRef<THREE.Group>(null);
   const bounds = useRef(new THREE.Box3(
     new THREE.Vector3(chunkX * CHUNK_SIZE - margin, -0.5, chunkZ * CHUNK_SIZE - margin),
-    new THREE.Vector3((chunkX + 1) * CHUNK_SIZE + margin, 8, (chunkZ + 1) * CHUNK_SIZE + margin)
+    new THREE.Vector3((chunkX + 1) * CHUNK_SIZE + margin, 16, (chunkZ + 1) * CHUNK_SIZE + margin)
   ));
   useFrame(({ camera, clock }) => {
     if (group.current) group.current.visible = cameraFrustum(camera, clock.elapsedTime).intersectsBox(bounds.current);

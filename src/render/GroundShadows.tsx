@@ -6,6 +6,7 @@ import { HEIGHT_STEP, tileAt, type WorldData, WORLD_SIZE } from '../game/world';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
 import { daylightPhase } from './daylightPhase';
 import { SHADOW_SLOPE } from './sun';
+import { WorldStore } from '../game/worldStore';
 
 const SURFACE = 0.1;
 
@@ -20,9 +21,10 @@ export function reliefGeometry(world: WorldData, chunkX: number, chunkZ: number)
     alphas.push(near, near, far, far);
     indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
   };
-  for (let z = chunkZ * CHUNK_SIZE; z < Math.min((chunkZ + 1) * CHUNK_SIZE, WORLD_SIZE); z++) {
-    for (let x = chunkX * CHUNK_SIZE; x < Math.min((chunkX + 1) * CHUNK_SIZE, WORLD_SIZE); x++) {
-      const high = tileAt(world, x, z)!;
+  for (let z = chunkZ * CHUNK_SIZE; z < (chunkZ + 1) * CHUNK_SIZE; z++) {
+    for (let x = chunkX * CHUNK_SIZE; x < (chunkX + 1) * CHUNK_SIZE; x++) {
+      const high = tileAt(world, x, z);
+      if(!high)continue;
       if (high.terrain === 'water') continue;
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const low = tileAt(world, x + dx, z + dz);
@@ -63,22 +65,17 @@ export function reliefGeometry(world: WorldData, chunkX: number, chunkZ: number)
   return geometry;
 }
 
-function ShadowChunk({geometry,x,z,material}:{geometry:THREE.BufferGeometry;x:number;z:number;material:THREE.Material}) {
+function ShadowChunk({world,x,z,material,revision}:{world:WorldData;x:number;z:number;material:THREE.Material;revision:number}) {
+  const geometry=useMemo(()=>reliefGeometry(world,x,z),[world,x,z,revision]);
   const visible = useChunkVisibility(x, z);
+  useEffect(()=>()=>geometry.dispose(),[geometry]);
   return <group ref={visible}>
     {geometry.getAttribute('position').count > 0 &&
       <mesh geometry={geometry} material={material} renderOrder={2}/>}
   </group>;
 }
 
-export const GroundShadows=memo(function GroundShadows({game,world}:{game:Game;world:WorldData}) {
-  const chunks = useMemo(() => {
-    const result: THREE.BufferGeometry[] = [];
-    for (let z = 0; z < WORLD_SIZE / CHUNK_SIZE; z++) for (let x = 0; x < WORLD_SIZE / CHUNK_SIZE; x++)
-      result.push(reliefGeometry(world, x, z));
-    return result;
-  }, [world]);
-  useEffect(() => () => {for (const geometry of chunks) geometry.dispose();}, [chunks]);
+export const GroundShadows=memo(function GroundShadows({game,world,revision=0}:{game:Game;world:WorldData;revision?:number}) {
   const material = useMemo(() => new THREE.ShaderMaterial({
     uniforms: {uStrength:{value:1}},
     vertexShader: `attribute float shadeAlpha;
@@ -96,6 +93,11 @@ export const GroundShadows=memo(function GroundShadows({game,world}:{game:Game;w
     material.uniforms.uStrength.value = 0.64 + daylight * 0.4;
   });
   const width = WORLD_SIZE / CHUNK_SIZE;
-  return <group>{chunks.map((geometry,index)=><ShadowChunk key={index} geometry={geometry}
-    x={index%width} z={Math.floor(index/width)} material={material}/>)}</group>;
+  const chunks=[];
+  for(let z=0;z<width;z++)for(let x=0;x<width;x++)chunks.push(<ShadowChunk key={`${x},${z}`} world={world}
+    x={x} z={z} material={material} revision={world instanceof WorldStore?world.getChunkRevision(x,z):revision}/>);
+  if(world instanceof WorldStore)for(const chunk of world.visibleChunks())
+    chunks.push(<ShadowChunk key={`${chunk.x},${chunk.z}`} world={world} x={chunk.x} z={chunk.z}
+      material={material} revision={world.getChunkRevision(chunk.x,chunk.z)}/>);
+  return <group>{chunks}</group>;
 });

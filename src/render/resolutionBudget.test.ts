@@ -5,8 +5,8 @@ describe('resolução da cena em janelas grandes',()=>{
   it('preserva os pixels em janelas pequenas e limita o custo em tela cheia',()=>{
     expect(preferredRenderDpr(844,600,1,'high')).toBe(1);
     const fullHd=preferredRenderDpr(1920,1080,1.5,'high');
-    expect(fullHd).toBeLessThan(0.7);
-    expect(1920*1080*fullHd*fullHd).toBeLessThanOrEqual(1_000_000);
+    expect(fullHd).toBeGreaterThan(0.8);
+    expect(1920*1080*fullHd*fullHd).toBeLessThanOrEqual(1_400_000);
     expect(preferredRenderDpr(1920,1080,1.5,'low')).toBeLessThan(fullHd);
     expect(maximumRenderDpr(1.5,'high')).toBe(1.5);
   });

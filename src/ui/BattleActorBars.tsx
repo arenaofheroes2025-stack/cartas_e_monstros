@@ -3,11 +3,11 @@ import { type Camera, Vector3 } from 'three';
 import { Game } from '../game/game';
 import { maxHp, SPECIES } from '../game/content';
 import { attackInterval, enemyAttackInterval } from '../game/battle/rules';
-import { SPRITE_PITCH_COMPENSATION } from '../render/camera';
+import { SPRITE_UP } from '../render/camera';
 import './battleActorBars.css';
 
 const projected=new Vector3();
-const spriteHeight=1.42*SPRITE_PITCH_COMPENSATION;
+const spriteHeight=1.42;
 // Tallest visible combat frame (0-4), measured in each 128px creature frame.
 // Frame 5 is the victory pose, when these battle bars are already hidden.
 const visibleCombatHeight:Record<string,number>={
@@ -34,7 +34,8 @@ function ActorBars({game,cameraRef,side,onDetails}:{game:Game;cameraRef:RefObjec
         if(monster&&bounds){
           const scale=SPECIES[monster.species].evolved?1.2:0.93;
           const visibleHeight=(visibleCombatHeight[monster.species]??128)/128*spriteHeight*scale;
-          projected.set(actor.x,game.getGroundHeight(actor.x,actor.z)+0.1+visibleHeight+0.1,actor.z).project(camera);
+          projected.set(actor.x,game.getGroundHeight(actor.x,actor.z)+0.1,actor.z)
+            .addScaledVector(SPRITE_UP,visibleHeight+0.1).project(camera);
           const x=(projected.x+1)*bounds.width*0.5;
           const y=(1-projected.y)*bounds.height*0.5;
           element.style.left=`${x}px`;

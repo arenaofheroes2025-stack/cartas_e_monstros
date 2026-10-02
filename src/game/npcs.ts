@@ -13,7 +13,7 @@ export function staticNpcAt(place:Place):{x:number;z:number;role:StaticNpcRole} 
 export const WALKING_NPC_DIALOG: Record<WalkingNpcRole,{name:string;text:string}> = {
   cartographer: {
     name: 'Nara, a cartógrafa',
-    text: 'Estou desenhando as trilhas entre os três santuários. Observe as rampas: elas são a passagem segura entre terrenos de alturas diferentes.'
+    text: 'Estou desenhando as trilhas entre os três santuários. As encostas suaves são a passagem segura entre terrenos de alturas diferentes.'
   },
   botanist: {
     name: 'Olmo, o botânico',

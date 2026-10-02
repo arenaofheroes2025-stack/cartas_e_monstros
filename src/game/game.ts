@@ -1,13 +1,16 @@
 import { BASE_SPECIES, createMonster, ELEMENT_LABEL, gainExperience, maxHp, type Element, type HeldItemSlot, type Monster, SPECIES, speed } from './content';
-import { canStep, findPath, generateWorld, HEIGHT_STEP, index, replacementGroundItem, tileAt, type CardCache, type Decoration, type ItemSpawn, type Place, type Point, type WalkingNpcSpawn, type WildSpawn, type WorldData, WORLD_SIZE } from './world';
+import { canStep, findPath, generateWorld, HEIGHT_STEP, replacementGroundItem, tileAt, type CardCache, type Decoration, type ItemSpawn, type Place, type Point, type WalkingNpcSpawn, type WildSpawn, WORLD_SIZE } from './world';
+import { WorldStore, type StreamQuality } from './worldStore';
+import { chunkKey, chunkOf, type WorldChunk } from './chunkWorld';
+import { markDiscovered } from './discovery';
 import { WALKING_NPC_DIALOG, staticNpcAt } from './npcs';
 import { attackDamage, attackInterval, attackRadius, battleMoveSpeed, captureChance, criticalChance, dodgeCooldown, enemyAttackInterval, enemyRecovery } from './battle/rules';
-import { readSave, writeSave, type SaveData } from './save';
+import { readSave, readSaveAsync, setSaveErrorHandler, writeSave, type SaveData } from './save';
 import { canPlayerOccupy, collidesWithNpcAt, collidesWithNpcs } from './assetCollision';
 import { addItem, BAG_CAPACITY, ITEMS, statusBonus, type ItemId, type TimedStatus, type BattleStat } from './items';
 import { SHOP_PRODUCTS, shopProductName } from './shop';
 
-export { hasSave, readSave } from './save';
+export { hasSave, hasSaveAsync, readSave } from './save';
 export type { SaveData } from './save';
 
 export const DAY_SECONDS = 24 * 60;
@@ -141,7 +144,8 @@ function clamp(v: number, a: number, b: number): number { return Math.max(a, Mat
 export class Game {
   mode: Mode = 'title';
   previousMode: Mode = 'explore';
-  world: WorldData | null = null;
+  world: WorldStore | null = null;
+  streamQuality:StreamQuality='low';
   save: SaveData | null = null;
   battle: BattleState | null = null;
   battleMenu: BattleMenu | null = null;
@@ -171,6 +175,20 @@ export class Game {
   get isNight(): boolean { return this.hour < 6 || this.hour >= 18; }
   get activeMonster(): Monster | undefined { return this.battle && this.save ? this.save.party[this.battle.allyIndex] : undefined; }
 
+  private attachWorld(world:WorldStore):void {
+    this.world?.dispose();
+    this.world=world;
+    world.onChunkChange=(chunk:WorldChunk,loaded:boolean)=>{
+      const ids=new Set(chunk.wild.map(item=>item.id));
+      if(loaded)this.wildActors.push(...chunk.wild.map(w=>({...w,direction:0,moveTimer:0})));
+      else this.wildActors=this.wildActors.filter(actor=>!ids.has(actor.id));
+      this.onChange?.();
+    };
+    world.onError=message=>this.notify(`Região indisponível: ${message}`,5);
+    world.onViewChange=()=>this.onChange?.();
+    setSaveErrorHandler(message=>this.notify(message,6));
+  }
+
   advanceClock(seconds:number):void {
     if(!this.save||!this.world||!Number.isFinite(seconds)||seconds<=0||this.shopOpen||this.battleMenu||
       (this.mode!=='explore'&&this.mode!=='battle'))return;
@@ -179,22 +197,26 @@ export class Game {
 
   newGame(starter: string, requestedSeed?: number): void {
     const seed = requestedSeed && Number.isInteger(requestedSeed) ? requestedSeed : randomSeed();
-    this.world = generateWorld(seed);
+    const world=new WorldStore(generateWorld(seed));
+    this.attachWorld(world);
     const chosen = BASE_SPECIES.includes(starter) ? starter : 'brasito';
     this.save = {
-      version: 1, seed, player: {x:48,z:48}, elapsed: DAY_SECONDS * 0.35,
+      version: 2, seed, player: {x:48,z:48}, elapsed: DAY_SECONDS * 0.35,
       party: [createMonster(chosen, 1, 'starter')], collection: [],
       cards: { fogo: 2, agua: 2, natureza: 2 }, seals: [], openedCaches: [], collectedItems: [],
       coins:120,nextShopSerial:0,
-      groundItems:this.world.items,nextItemSerial:0,
+      groundItems:[...world.items],nextItemSerial:0,
       inventory: [{uid:'starter-pao',itemId:'pao'},{uid:'starter-bolo',itemId:'bolo'},{uid:'starter-tonico',itemId:'tonico-brasa'}],
       battleBag:['starter-pao','starter-bolo','starter-tonico',null,null,null],wildCooldown: {},
-      wins: 0, claimedWins: { fogo: -1, agua: -1, natureza: -1 }, discovered: [], completed: false
+      wins: 0, claimedWins: { fogo: -1, agua: -1, natureza: -1 }, discovered: [],
+      discoveredChunks:{},chunkChanges:{},completed: false
     };
-    this.wildActors = this.world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
-    this.walkingNpcs = this.world.walkers.map(npc => ({...npc, moveTimer: 0}));
+    world.setChunkChanges(this.save.chunkChanges);
+    this.wildActors = world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
+    this.walkingNpcs = world.walkers.map(npc => ({...npc, moveTimer: 0}));
     this.jump=null;this.jumpLandingTime=0;this.fallTime=0;this.playerPickupTime=0;
     this.mode = 'explore';
+    world.updateStreaming(this.player,this.move,this.streamQuality,true);
     this.reveal();
     this.notify('Sua jornada começou. Converse no vilarejo e explore os caminhos.', 6);
     this.persist();
@@ -202,18 +224,36 @@ export class Game {
   }
 
   continueGame(): boolean {
-    const save = readSave();
+    return this.resumeGame(readSave());
+  }
+
+  async continueGameAsync():Promise<boolean>{
+    const save=await readSaveAsync();
+    if(!save)return false;
+    if(save.player.x>=0&&save.player.z>=0&&save.player.x<WORLD_SIZE&&save.player.z<WORLD_SIZE)
+      return this.resumeGame(save);
+    const world=new WorldStore(generateWorld(save.seed));
+    world.setChunkChanges(save.chunkChanges);
+    try{await world.prepareSpawn(save.player,this.streamQuality);}
+    catch(error){world.dispose();throw error;}
+    return this.resumeGame(save,world);
+  }
+
+  private resumeGame(save:SaveData|null,prepared?:WorldStore):boolean{
     if (!save) return false;
     this.save = save;
     this.shopOpen=false;
-    this.world = generateWorld(save.seed);
-    this.world.items=save.groundItems?.length?save.groundItems:this.world.items;
-    save.groundItems=this.world.items;
+    const world=prepared??new WorldStore(generateWorld(save.seed));
+    this.attachWorld(world);
+    world.setChunkChanges(save.chunkChanges);
+    world.items=save.groundItems?.length?[...save.groundItems]:world.items;
+    save.groundItems=[...world.items];
     save.nextItemSerial??=0;
-    this.wildActors = this.world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
-    this.walkingNpcs = this.world.walkers.map(npc => ({...npc, moveTimer: 0}));
+    this.wildActors = world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
+    this.walkingNpcs = world.walkers.map(npc => ({...npc, moveTimer: 0}));
     this.jump=null;this.jumpLandingTime=0;this.fallTime=0;this.playerPickupTime=0;
     this.mode = 'explore';
+    world.updateStreaming(this.player,this.move,this.streamQuality,true);
     this.reveal();
     this.persist();
     this.onChange?.();
@@ -311,9 +351,9 @@ export class Game {
     const steps=Math.max(1,Math.ceil(distance/0.07));
     for(let step=0;step<steps;step++){
       const x=point.x+dx*speedPerSecond*dt/steps;
-      if(this.canOccupy(point,{x,z:point.z},isPlayer))point.x=clamp(x,0.05,WORLD_SIZE-0.05);
+      if(this.canOccupy(point,{x,z:point.z},isPlayer))point.x=x;
       const z=point.z+dz*speedPerSecond*dt/steps;
-      if(this.canOccupy(point,{x:point.x,z},isPlayer))point.z=clamp(z,0.05,WORLD_SIZE-0.05);
+      if(this.canOccupy(point,{x:point.x,z},isPlayer))point.z=z;
     }
   }
 
@@ -334,6 +374,7 @@ export class Game {
       else this.fallTime=Math.max(0,this.fallTime-dt);
       this.walkDistance += distance(before, this.player);
       if (this.walkDistance > 1) { this.walkDistance = 0; this.reveal(); }
+      this.world.updateStreaming(this.player,this.move,this.streamQuality);
       this.updateWild(dt);
       this.updateWalkingNpcs(dt);
       if(!this.jump&&this.jumpLandingTime===0&&this.playerPickupTime===0)this.checkNearbyWild();
@@ -357,12 +398,11 @@ export class Game {
 
   private reveal(): void {
     if (!this.save) return;
-    const seen = new Set(this.save.discovered);
     const px = Math.floor(this.player.x), pz = Math.floor(this.player.z);
     for (let z=pz-6;z<=pz+6;z++) for (let x=px-6;x<=px+6;x++) {
-      if (x>=0 && z>=0 && x<WORLD_SIZE && z<WORLD_SIZE && Math.hypot(x-px,z-pz)<=6) seen.add(index(x,z));
+      if(Math.hypot(x-px,z-pz)>6)continue;
+      markDiscovered(this.save,x,z);
     }
-    this.save.discovered = [...seen];
   }
 
   isWildVisible(wild: WildSpawn): boolean {
@@ -373,7 +413,8 @@ export class Game {
 
   wildSpecies(wild: WildSpawn): string {
     const base = SPECIES[wild.species];
-    const number = Number(wild.id.split('-')[1]);
+    const legacy=/^wild-(\d+)$/.exec(wild.id);
+    const number=legacy?Number(legacy[1]):Math.abs(Math.imul(wild.homeX,73856093)^Math.imul(wild.homeZ,19349663));
     return this.save && this.save.seals.length > 0 && number % 11 === 0 && base.evolvesTo ? base.evolvesTo : wild.species;
   }
 
@@ -502,6 +543,11 @@ export class Game {
   private collectCache(cache: CardCache): void {
     if (!this.save) return;
     this.save.openedCaches.push(cache.id);
+    if(cache.x<0||cache.z<0||cache.x>=WORLD_SIZE||cache.z>=WORLD_SIZE){
+      const key=chunkKey(chunkOf(cache.x),chunkOf(cache.z));
+      const changes=this.save.chunkChanges[key]??={removedItems:[],openedCaches:[],removedProps:[]};
+      changes.openedCaches.push(cache.id);
+    }
     this.save.cards[cache.element]++;
     this.playerPickupTime=PLAYER_PICKUP_SECONDS;
     this.setMove(0,0);
@@ -516,13 +562,19 @@ export class Game {
     if(activeIndex<0)return;
     addItem(this.save.inventory,{uid:spawn.id,itemId:spawn.itemId});
     this.save.collectedItems.push(spawn.id);
-    if(this.save.collectedItems.length>200)this.save.collectedItems.splice(0,this.save.collectedItems.length-200);
+    const exterior=spawn.x<0||spawn.z<0||spawn.x>=WORLD_SIZE||spawn.z>=WORLD_SIZE;
+    if(exterior){
+      const key=chunkKey(chunkOf(spawn.x),chunkOf(spawn.z));
+      const changes=this.save.chunkChanges[key]??={removedItems:[],openedCaches:[],removedProps:[]};
+      changes.removedItems.push(spawn.id);
+      this.world.removeChunkItem(spawn);
+    }else if(this.save.collectedItems.length>200)this.save.collectedItems.splice(0,this.save.collectedItems.length-200);
     this.world.items.splice(activeIndex,1);
     const serial=this.save.nextItemSerial??0;
-    const replacement=replacementGroundItem(this.world,this.world.items,spawn,this.player,serial);
+    const replacement=exterior?undefined:replacementGroundItem(this.world,this.world.items,spawn,this.player,serial);
     this.save.nextItemSerial=serial+1;
     if(replacement)this.world.items.push(replacement);
-    this.save.groundItems=this.world.items;
+    this.save.groundItems=this.world.items.filter(item=>item.x>=0&&item.z>=0&&item.x<WORLD_SIZE&&item.z<WORLD_SIZE);
     this.playerPickupTime=PLAYER_PICKUP_SECONDS;
     this.setMove(0,0);
     this.effects.push({kind:'capture',x:spawn.x,z:spawn.z});
@@ -835,7 +887,7 @@ export class Game {
   private findArenaSpawn(center: Point, ally: Point): Point {
     if (!this.world) return {...center};
     const start = {x:Math.floor(ally.x),z:Math.floor(ally.z)};
-    const seen = new Set<number>([index(start.x,start.z)]);
+    const seen = new Set<string>([`${start.x},${start.z}`]);
     const queue: Point[] = [start];
     let best: Point = {x:start.x+0.5,z:start.z+0.5};
     let bestScore = -Infinity;
@@ -851,7 +903,7 @@ export class Game {
       for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
         const next={x:tile.x+dx,z:tile.z+dz};
         if (distance({x:next.x+0.5,z:next.z+0.5},center)>5.7) continue;
-        const key=index(next.x,next.z);
+        const key=`${next.x},${next.z}`;
         if (!seen.has(key) && canStep(this.world,tile,next)) {seen.add(key);queue.push(next);}
       }
     }

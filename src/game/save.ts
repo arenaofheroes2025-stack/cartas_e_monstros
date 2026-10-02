@@ -3,9 +3,44 @@ import { BAG_CAPACITY, ITEMS, type InventoryItem } from './items';
 import { GROUND_ITEM_LIMIT, WORLD_SIZE, type ItemSpawn } from './world';
 
 const SAVE_KEY = 'cartas-e-monstros-save-v1';
+const DATABASE_NAME='cartas-e-monstros-world-v2';
+let databasePromise:Promise<IDBDatabase>|null=null;
+let writeChain:Promise<void>=Promise.resolve();
+let saveErrorHandler:((message:string)=>void)|null=null;
+
+export function setSaveErrorHandler(handler:((message:string)=>void)|null):void{saveErrorHandler=handler;}
+function openDatabase():Promise<IDBDatabase>{
+  if(databasePromise)return databasePromise;
+  databasePromise=new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB indisponível'));return;}
+    const request=indexedDB.open(DATABASE_NAME,1);
+    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('saves'))request.result.createObjectStore('saves');};
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error??new Error('Falha ao abrir armazenamento'));
+  });
+  return databasePromise;
+}
+async function readDatabase():Promise<unknown>{
+  const db=await openDatabase();
+  return new Promise((resolve,reject)=>{
+    const request=db.transaction('saves','readonly').objectStore('saves').get('current');
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function writeDatabase(save:SaveData):Promise<void>{
+  const db=await openDatabase();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction('saves','readwrite');
+    transaction.objectStore('saves').put(save,'current');
+    transaction.oncomplete=()=>resolve();
+    transaction.onerror=()=>reject(transaction.error);
+    transaction.onabort=()=>reject(transaction.error);
+  });
+}
 
 export interface SaveData {
-  version: 1;
+  version: 2;
   seed: number;
   player: { x: number; z: number };
   elapsed: number;
@@ -25,19 +60,27 @@ export interface SaveData {
   wins: number;
   claimedWins: Record<Element, number>;
   discovered: number[];
+  discoveredChunks: Record<string,string>;
+  chunkChanges: Record<string,{removedItems:string[];openedCaches:string[];removedProps:string[]}>;
   completed: boolean;
 }
 
 export function hasSave(): boolean {
   try { return !!localStorage.getItem(SAVE_KEY); } catch { return false; }
 }
+export async function hasSaveAsync():Promise<boolean>{
+  try{if(await readDatabase())return true;}catch{/* local fallback */}
+  return hasSave();
+}
 
-export function readSave(): SaveData | null {
+function normalizeSave(input:unknown):SaveData|null{
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
-    const value = JSON.parse(raw) as SaveData;
-    if (value.version !== 1 || !Number.isInteger(value.seed) || !Array.isArray(value.party)) return null;
+    const value=input as SaveData;
+    if(!value||typeof value!=='object')return null;
+    if (![1,2].includes(value.version as number) || !Number.isInteger(value.seed) || !Array.isArray(value.party)) return null;
+    value.version=2;
+    value.discoveredChunks=typeof value.discoveredChunks==='object'&&value.discoveredChunks?value.discoveredChunks:{};
+    value.chunkChanges=typeof value.chunkChanges==='object'&&value.chunkChanges?value.chunkChanges:{};
     // Existing journeys predate the backpack. Keep them playable.
     value.collectedItems=Array.isArray(value.collectedItems)?value.collectedItems:[];
     value.groundItems=Array.isArray(value.groundItems)?value.groundItems.filter((item):item is ItemSpawn=>
@@ -74,8 +117,29 @@ export function readSave(): SaveData | null {
     return value;
   } catch { return null; }
 }
+export function readSave():SaveData|null{
+  try{const raw=localStorage.getItem(SAVE_KEY);return raw?normalizeSave(JSON.parse(raw)):null;}
+  catch{return null;}
+}
+export async function readSaveAsync():Promise<SaveData|null>{
+  try{const value=normalizeSave(await readDatabase());if(value)return value;}
+  catch{/* local fallback */}
+  return readSave();
+}
 
 export function writeSave(save: SaveData): boolean {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); return true; }
-  catch { return false; }
+  let local=false;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));local=true;}
+  catch{
+    try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,seed:save.seed,external:true}));}
+    catch{/* IndexedDB remains the primary store. */}
+  }
+  if(typeof indexedDB!=='undefined'){
+    const snapshot=JSON.parse(JSON.stringify(save)) as SaveData;
+    writeChain=writeChain.then(()=>writeDatabase(snapshot)).catch(error=>{
+      saveErrorHandler?.(local?'O armazenamento principal falhou; a cópia local pode ter limite de espaço.':
+        `Não foi possível salvar o mundo: ${String(error)}`);
+    });
+  }
+  return local||typeof indexedDB!=='undefined';
 }

@@ -4,7 +4,7 @@ import type { Tile, WorldData } from '../game/world';
 type BiomeProfile = (typeof BIOME_BRUSH_PROFILES)[keyof typeof BIOME_BRUSH_PROFILES];
 
 export function biomeProfile(tile: Tile): BiomeProfile {
-  return BIOME_BRUSH_PROFILES[REGION_BIOME_PROFILE[tile.biome]];
+  return BIOME_BRUSH_PROFILES[tile.landscape??REGION_BIOME_PROFILE[tile.biome]];
 }
 
 function shrineSurface(world: WorldData, tile: Tile): number | undefined {
@@ -20,7 +20,6 @@ function shrineSurface(world: WorldData, tile: Tile): number | undefined {
 export function terrainIndex(world: WorldData, tile: Tile): number {
   if (tile.terrain === 'water') return TILE_ATLAS.base.water;
   if (tile.terrain === 'bridge') return TERRAIN_MATERIALS.bridge.top;
-  if (tile.terrain === 'ramp') return TERRAIN_MATERIALS.ramp.top;
   if (tile.terrain === 'plaza') return shrineSurface(world, tile) ?? biomeProfile(tile).base;
   return biomeProfile(tile).base;
 }

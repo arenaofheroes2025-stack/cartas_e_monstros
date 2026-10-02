@@ -3,6 +3,7 @@ import type { BiomeProp } from './biomeArt';
 import { ITEM_IDS, type ItemId } from './items';
 
 export const WORLD_SIZE = 96;
+export const CHUNK_SIZE = 16;
 export const HEIGHT_STEP = 0.85;
 export const GROUND_ITEM_LIMIT = 12;
 export const GROUND_ITEM_SPACING = 12;
@@ -20,6 +21,10 @@ export interface Tile {
   terrain: Terrain;
   prop: Prop;
   blocked: boolean;
+  /** The bottom of water in height levels. Land uses its surface height. */
+  bedHeight?: number;
+  /** Visual geography; biome remains the elemental encounter habitat. */
+  landscape?: 'forest'|'field'|'mountain'|'rocky'|'desert'|'volcanic'|'ice'|'swamp'|'lake';
 }
 
 export interface Point { x: number; z: number }
@@ -42,12 +47,16 @@ export interface WorldData {
   walkers: WalkingNpcSpawn[];
   caches: CardCache[];
   items: ItemSpawn[];
+  chunks?: Map<string,{x:number;z:number;tiles:Tile[]}>;
 }
 
 export function index(x: number, z: number): number { return z * WORLD_SIZE + x; }
 export function inBounds(x: number, z: number): boolean { return x >= 0 && z >= 0 && x < WORLD_SIZE && z < WORLD_SIZE; }
 export function tileAt(world: WorldData, x: number, z: number): Tile | undefined {
-  return inBounds(x, z) ? world.tiles[index(x, z)] : undefined;
+  if(inBounds(x,z))return world.tiles[index(x,z)];
+  const cx=Math.floor(x/CHUNK_SIZE),cz=Math.floor(z/CHUNK_SIZE);
+  const chunk=world.chunks?.get(`${cx},${cz}`);
+  return chunk?.tiles[(z-cz*CHUNK_SIZE)*CHUNK_SIZE+x-cx*CHUNK_SIZE];
 }
 
 function hash(x: number, z: number, seed: number): number {
@@ -82,6 +91,7 @@ export function reachable(world: WorldData, start: Point = world.start): Set<num
     const current = queue[head];
     for (const [dx, dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const next = { x: current.x + dx, z: current.z + dz };
+      if(!inBounds(next.x,next.z))continue;
       const key = index(next.x, next.z);
       if (!found.has(key) && canStep(world, current, next)) { found.add(key); queue.push(next); }
     }
@@ -127,13 +137,15 @@ export function replacementGroundItem(world:WorldData,active:ItemSpawn[],collect
 }
 
 export function findPath(world: WorldData, start: Point, goal: Point, maxNodes = 2500): Point[] {
-  const startKey = index(start.x, start.z), goalKey = index(goal.x, goal.z);
-  const open: number[] = [startKey];
-  const came = new Map<number, number>();
-  const cost = new Map<number, number>([[startKey, 0]]);
-  const score = (key: number): number => {
-    const x = key % WORLD_SIZE, z = Math.floor(key / WORLD_SIZE);
-    return (cost.get(key) ?? Infinity) + Math.abs(x - goal.x) + Math.abs(z - goal.z);
+  const keyOf=(x:number,z:number)=>`${x},${z}`;
+  const pointOf=(key:string):Point=>{const [x,z]=key.split(',').map(Number);return {x,z};};
+  const startKey=keyOf(start.x,start.z),goalKey=keyOf(goal.x,goal.z);
+  const open:string[]=[startKey];
+  const came=new Map<string,string>();
+  const cost=new Map<string,number>([[startKey,0]]);
+  const score=(key:string):number=>{
+    const {x,z}=pointOf(key);
+    return (cost.get(key)??Infinity)+Math.abs(x-goal.x)+Math.abs(z-goal.z);
   };
   let visited = 0;
   while (open.length && visited++ < maxNodes) {
@@ -143,17 +155,17 @@ export function findPath(world: WorldData, start: Point, goal: Point, maxNodes =
       const result: Point[] = [];
       let key = currentKey;
       while (key !== startKey) {
-        result.push({ x: key % WORLD_SIZE, z: Math.floor(key / WORLD_SIZE) });
+        result.push(pointOf(key));
         key = came.get(key)!;
       }
       result.reverse();
       return result;
     }
-    const current = { x: currentKey % WORLD_SIZE, z: Math.floor(currentKey / WORLD_SIZE) };
+    const current=pointOf(currentKey);
     for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const next = { x: current.x + dx, z: current.z + dz };
       if (!canStep(world, current, next)) continue;
-      const key = index(next.x, next.z);
+      const key=keyOf(next.x,next.z);
       const tile = tileAt(world, next.x, next.z)!;
       const nextCost = (cost.get(currentKey) ?? 0) + (tile.terrain === 'path' || tile.terrain === 'bridge' ? 0.8 : 1);
       if (nextCost < (cost.get(key) ?? Infinity)) {
@@ -341,15 +353,15 @@ function addTownBuildings(world:WorldData):void {
 function addTownProps(world:WorldData):void {
   const planned:[number,number,Exclude<Prop,null>][]=[
     [48,43,'well'],[45,50,'bench'],[54,51,'bench'],[55,52,'crates'],
-    [42,51,'flower-planter'],[55,58,'flower-planter'],[43,43,'bloom-bush'],
+    [43,43,'bloom-bush'],
     [52,43,'bloom-bush'],[41,59,'bloom-bush'],[58,59,'bloom-bush'],
     [41,48,'village-lamp'],[57,48,'village-lamp'],[45,57,'village-lamp'],
-    [53,57,'village-lamp'],[46,42,'flower-planter'],[51,42,'flower-planter'],
+    [53,57,'village-lamp'],
     [42,57,'street-sign'],[56,45,'market-barrel'],[58,53,'market-crate'],
-    [58,62,'carroca-mercador'],[33,47,'arco-pedra']
+    [33,47,'arco-pedra']
   ];
   for(const [preferredX,preferredZ,prop] of planned){
-    const largeProp=prop==='carroca-mercador'||prop==='arco-pedra';
+    const largeProp=prop==='arco-pedra';
     const options:Tile[]=[];
     const search=largeProp?4:2;
     for(let dz=-search;dz<=search;dz++)for(let dx=-search;dx<=search;dx++){
@@ -485,12 +497,9 @@ export function generateWorld(seed: number): WorldData {
       else if (patch>0.72&&roll<0.078) tile.prop='ash-heap';
       else if (patch>0.75&&roll>0.984) tile.prop='obsidian-spire';
     } else {
-      if (roll < 0.011) tile.prop='tree';
-      else if (roll < 0.023) tile.prop='marsh-willow';
+      if (roll < 0.023) tile.prop='marsh-willow';
       else if (shoreline&&roll<0.055) tile.prop='swamp-reeds';
-      else if (shoreline&&roll<0.082) tile.prop='river-stones';
       else if (shoreline&&roll>0.979) tile.prop='driftwood';
-      else if (patch>0.61&&roll<0.057) tile.prop='reeds';
       else if (patch>0.64&&roll>0.979) tile.prop='wet-rock';
     }
     if(['tree','pine','copper-tree','marsh-willow'].includes(tile.prop||'')){
@@ -549,6 +558,32 @@ export function generateWorld(seed: number): WorldData {
     world.items.push({id:'item-'+i,itemId:ITEM_IDS[i%ITEM_IDS.length],x:chosen.x,z:chosen.z});
   }
   assignWaterDepth(world);
+  for(const tile of world.tiles){
+    if(tile.terrain!=='water'||tile.biome!=='lago'||
+      world.places.some(place=>distance(tile,place)<5))continue;
+    let lowShore=Infinity;
+    for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++){
+      if(!dx&&!dz)continue;
+      const bank=tileAt(world,tile.x+dx,tile.z+dz);
+      if(bank&&bank.terrain!=='water'&&bank.terrain!=='bridge'&&bank.height<=tile.height+1)
+        lowShore=Math.min(lowShore,Math.hypot(dx,dz));
+    }
+    const willow=hash(tile.x,tile.z,seed+1901);
+    const nearTree=()=>{
+      for(let dz=-5;dz<=5;dz++)for(let dx=-5;dx<=5;dx++){
+        if(Math.hypot(dx,dz)>=5)continue;
+        const neighbor=tileAt(world,tile.x+dx,tile.z+dz);
+        if(neighbor&&['tree','pine','copper-tree','marsh-willow'].includes(neighbor.prop||''))return true;
+      }
+      return false;
+    };
+    if(lowShore<=2.25&&tile.waterDepth<=0.5&&willow<0.065&&!nearTree())
+      tile.prop='tree';
+    else if(lowShore<=1.5&&tile.waterDepth<=0.38&&hash(tile.x,tile.z,seed+1903)<0.095)
+      tile.prop='river-stones';
+    else if(hash(tile.x,tile.z,seed+1905)<(lowShore<=2.25?0.035:0.012))
+      tile.prop='reeds';
+  }
   return world;
 }
 

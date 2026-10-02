@@ -7,6 +7,7 @@ import { terrainBrushTexture, urbanBrushTexture } from './TerrainBrush';
 import { terrainAtlas } from './art';
 import { withCloudShadows } from './CloudShadows';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
+import { WorldStore } from '../game/worldStore';
 
 const CHUNK = CHUNK_SIZE;
 const SURFACE = 0.1;
@@ -35,16 +36,16 @@ function shoreTone(world:WorldData,x:number,z:number):number {
 function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THREE.BufferGeometry {
   const positions: number[] = [], normals: number[] = [], uvs: number[] = [], colors:number[]=[], indices: number[] = [];
   const localUvs:number[]=[],neighbors:number[]=[],parities:number[]=[],overlays:number[]=[],brushEnabled:number[]=[];
-  const palette=new Map<number,number>();
-  const coast=new Map<number,number>();
+  const palette=new Map<string,number>();
+  const coast=new Map<string,number>();
   const wetTone=(x:number,z:number):number=>{
-    const key=z*(WORLD_SIZE+1)+x;
+    const key=`${x},${z}`;
     let value=coast.get(key);
     if(value===undefined){value=shoreTone(world,x,z);coast.set(key,value);}
     return value;
   };
   const indexFor=(tile:NonNullable<ReturnType<typeof tileAt>>):number=>{
-    const key=tile.z*WORLD_SIZE+tile.x;
+    const key=`${tile.x},${tile.z}`;
     let value=palette.get(key);
     if(value===undefined){value=terrainIndex(world,tile);palette.set(key,value);}
     return value;
@@ -67,16 +68,17 @@ function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THR
     }
     indices.push(start,start+1,start+2,start,start+2,start+3);
   };
-  for(let z=chunkZ*CHUNK;z<Math.min((chunkZ+1)*CHUNK,WORLD_SIZE);z++) {
-    for(let x=chunkX*CHUNK;x<Math.min((chunkX+1)*CHUNK,WORLD_SIZE);x++) {
-      const tile=tileAt(world,x,z)!;
+  for(let z=chunkZ*CHUNK;z<(chunkZ+1)*CHUNK;z++) {
+    for(let x=chunkX*CHUNK;x<(chunkX+1)*CHUNK;x++) {
+      const tile=tileAt(world,x,z);
+      if(!tile)continue;
       if(tile.terrain==='water')continue;
       const y=SURFACE+tile.height*HEIGHT_STEP;
       const ownIndex=indexFor(tile);
       const edgeIndices=[[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dz])=>{
         const other=tileAt(world,x+dx,z+dz);
-        if(!other||other.height!==tile.height||!['grass','stone','path'].includes(tile.terrain)||
-          !['grass','stone','path'].includes(other.terrain))return -1;
+        if(!other||other.height!==tile.height||!['grass','stone','path','ramp'].includes(tile.terrain)||
+          !['grass','stone','path','ramp'].includes(other.terrain))return -1;
         const otherIndex=indexFor(other);
         return otherIndex===ownIndex?-1:otherIndex;
       });
@@ -86,8 +88,9 @@ function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THR
         surfaceTone(x+1,z+1,world.seed)*wetTone(x+1,z+1),
         surfaceTone(x,z+1,world.seed)*wetTone(x,z+1)
       ],edgeIndices,overlayIndices(tile),
-        ['grass','stone','path'].includes(tile.terrain)||
-        (tile.terrain==='plaza'&&ownIndex===biomeProfile(tile).base)?1:0);
+        ['grass','stone','path','ramp'].includes(tile.terrain)||
+        (tile.terrain==='plaza'&&ownIndex===biomeProfile(tile).base)?
+          (x>=0&&z>=0&&x<WORLD_SIZE&&z<WORLD_SIZE?1:2):0);
       const neighbors=[
         {dx:0,dz:-1,n:[0,0,-1],a:[x,y,z],b:[x+1,y,z],c:[x+1,0,z],d:[x,0,z]},
         {dx:1,dz:0,n:[1,0,0],a:[x+1,y,z],b:[x+1,y,z+1],c:[x+1,0,z+1],d:[x+1,0,z]},
@@ -131,14 +134,14 @@ function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THR
   return geometry;
 }
 
-function TerrainChunk({world,x,z,material}:{world:WorldData;x:number;z:number;material:THREE.Material}) {
-  const geometry=useMemo(()=>geometryForChunk(world,x,z),[world,x,z]);
+function TerrainChunk({world,x,z,material,revision}:{world:WorldData;x:number;z:number;material:THREE.Material;revision:number}) {
+  const geometry=useMemo(()=>geometryForChunk(world,x,z),[world,x,z,revision]);
   const visibility=useChunkVisibility(x,z);
   useEffect(()=>()=>geometry.dispose(),[geometry]);
   return <group ref={visibility}><mesh geometry={geometry} material={material} receiveShadow castShadow /></group>;
 }
 
-export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}) {
+export const TerrainChunks=memo(function TerrainChunks({world,revision=0}:{world:WorldData;revision?:number}) {
   const brush=useMemo(()=>terrainBrushTexture(world),[world]);
   useEffect(()=>()=>brush.dispose(),[brush]);
   const urbanBrush=useMemo(()=>urbanBrushTexture(world),[world]);
@@ -151,6 +154,7 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
       cloudCompile(shader,renderer);
       shader.uniforms.uGroundBrush={value:brush};
       shader.uniforms.uUrbanBrush={value:urbanBrush};
+      shader.uniforms.uWorldSeed={value:world.seed};
       shader.vertexShader=`attribute vec2 terrainLocalUv;
         attribute vec4 terrainNeighbors;
         attribute vec2 terrainParity;
@@ -160,20 +164,30 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
         varying vec4 vTerrainNeighbors;
         varying vec2 vTerrainParity;
         varying vec4 vTerrainOverlays;
-        varying float vTerrainBrushEnabled;\n${shader.vertexShader}`.replace('#include <begin_vertex>',
+        varying float vTerrainBrushEnabled;
+        varying float vTerrainElevation;\n${shader.vertexShader}`.replace('#include <begin_vertex>',
         `#include <begin_vertex>
          vTerrainLocalUv=terrainLocalUv;
          vTerrainNeighbors=terrainNeighbors;
          vTerrainParity=terrainParity;
          vTerrainOverlays=terrainOverlays;
-         vTerrainBrushEnabled=terrainBrushEnabled;`);
+         vTerrainBrushEnabled=terrainBrushEnabled;
+         vTerrainElevation=position.y;`);
       shader.fragmentShader=`varying vec2 vTerrainLocalUv;
         varying vec4 vTerrainNeighbors;
         varying vec2 vTerrainParity;
         varying vec4 vTerrainOverlays;
         varying float vTerrainBrushEnabled;
+        varying float vTerrainElevation;
         uniform sampler2D uGroundBrush;
         uniform sampler2D uUrbanBrush;
+        uniform float uWorldSeed;
+        float terrainHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7))+uWorldSeed*0.0031)*43758.5453);}
+        float terrainNoise(vec2 p){
+          vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+          return mix(mix(terrainHash(i),terrainHash(i+vec2(1.0,0.0)),f.x),
+            mix(terrainHash(i+vec2(0.0,1.0)),terrainHash(i+vec2(1.0,1.0)),f.x),f.y);
+        }
         vec2 terrainAtlasUv(float index,vec2 local,vec2 parity){
           float col=mod(index,4.0),row=floor(index/4.0);
           vec2 sampleLocal=vec2(parity.x>0.5?1.0-local.x:local.x,
@@ -183,10 +197,10 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
         }\n${shader.fragmentShader}`.replace('#include <map_fragment>',`
         #ifdef USE_MAP
           vec4 terrainColor=texture2D(map,vMapUv);
-          float north=vTerrainNeighbors.x<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.32,vTerrainLocalUv.y));
-          float east=vTerrainNeighbors.y<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.32,1.0-vTerrainLocalUv.x));
-          float south=vTerrainNeighbors.z<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.32,1.0-vTerrainLocalUv.y));
-          float west=vTerrainNeighbors.w<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.32,vTerrainLocalUv.x));
+          float north=vTerrainNeighbors.x<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.78,vTerrainLocalUv.y));
+          float east=vTerrainNeighbors.y<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.78,1.0-vTerrainLocalUv.x));
+          float south=vTerrainNeighbors.z<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.78,1.0-vTerrainLocalUv.y));
+          float west=vTerrainNeighbors.w<0.0?0.0:0.5*(1.0-smoothstep(0.0,0.78,vTerrainLocalUv.x));
           terrainColor*=max(0.0,1.0-north-east-south-west);
           if(north>0.001)terrainColor+=north*texture2D(map,terrainAtlasUv(vTerrainNeighbors.x,vec2(vTerrainLocalUv.x,1.0-vTerrainLocalUv.y),vec2(vTerrainParity.x,1.0-vTerrainParity.y)));
           if(east>0.001)terrainColor+=east*texture2D(map,terrainAtlasUv(vTerrainNeighbors.y,vec2(1.0-vTerrainLocalUv.x,vTerrainLocalUv.y),vec2(1.0-vTerrainParity.x,vTerrainParity.y)));
@@ -196,7 +210,29 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
             vec2 brushWarp=vec2(
               sin(vCloudWorldXZ.y*2.1+sin(vCloudWorldXZ.x*1.3)),
               cos(vCloudWorldXZ.x*1.8+sin(vCloudWorldXZ.y*1.5)))*0.13;
-            vec4 paint=texture2D(uGroundBrush,(vCloudWorldXZ+brushWarp)/96.0);
+            vec4 paint;
+            if(vTerrainBrushEnabled<1.5){
+              paint=texture2D(uGroundBrush,(vCloudWorldXZ+brushWarp)/96.0);
+            }else{
+              vec2 p=vCloudWorldXZ+brushWarp;
+              float dense=0.63*smoothstep(0.39,0.71,terrainNoise(p/13.0));
+              float feature=0.42*smoothstep(0.47,0.72,terrainNoise(p/9.0+vec2(7.1,3.4)));
+              float accent=0.3*smoothstep(0.57,0.79,terrainNoise(p/4.0+vec2(2.8,8.2)));
+              float trailX=p.x+sin(p.y/32.0+uWorldSeed*0.01)*9.0+
+                sin(p.y/13.0+uWorldSeed*0.013)*3.0;
+              float trailZ=p.y+sin(p.x/39.0+uWorldSeed*0.01)*10.0+
+                sin(p.x/17.0+uWorldSeed*0.017)*3.0;
+              float trailDistance=min(abs(trailX-floor(trailX/135.0+0.5)*135.0),
+                abs(trailZ-floor(trailZ/151.0+0.5)*151.0));
+              float road=1.0-smoothstep(0.22,1.35,trailDistance+
+                (terrainNoise(p/4.0+vec2(9.0,2.0))-0.5)*0.35);
+              float hillFade=1.0-smoothstep(2.4,4.5,vTerrainElevation);
+              paint=vec4(road*(0.34+0.28*hillFade),dense,feature,accent);
+              vec2 edgePoint=clamp(p,vec2(0.5),vec2(95.5));
+              float seam=max(max(max(0.0,-p.x),max(0.0,p.x-96.0)),
+                max(max(0.0,-p.y),max(0.0,p.y-96.0)));
+              paint=mix(texture2D(uGroundBrush,edgePoint/96.0),paint,smoothstep(0.0,6.0,seam));
+            }
             vec2 tileLocal=vTerrainLocalUv;
             if(paint.g>0.003)terrainColor=mix(terrainColor,
               texture2D(map,terrainAtlasUv(vTerrainOverlays.y,tileLocal,vTerrainParity)),paint.g);
@@ -207,7 +243,8 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
             vec2 cityWarp=vec2(
               sin(vCloudWorldXZ.y*1.83+sin(vCloudWorldXZ.x*1.17)),
               cos(vCloudWorldXZ.x*1.59+sin(vCloudWorldXZ.y*1.27)))*0.25;
-            float cityPaint=texture2D(uUrbanBrush,(vCloudWorldXZ+cityWarp)/96.0).r;
+            float cityPaint=vTerrainBrushEnabled<1.5?
+              texture2D(uUrbanBrush,(vCloudWorldXZ+cityWarp)/96.0).r:0.0;
             float city=smoothstep(0.05,0.91,cityPaint);
             if(city>0.003)terrainColor=mix(terrainColor,
               texture2D(map,terrainAtlasUv(4.0,tileLocal,vTerrainParity)),city);
@@ -219,13 +256,17 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
         #endif
       `);
     };
-    surface.customProgramCacheKey=()=> 'terrain-world-brush-v2-city-cloud-v2-town-light';
+    surface.customProgramCacheKey=()=> 'terrain-world-brush-v4-continuous-exterior';
     return surface;
   },[brush,urbanBrush]);
   useEffect(()=>()=>material.dispose(),[material]);
   const chunks=[];
   for(let z=0;z<WORLD_SIZE/CHUNK;z++) for(let x=0;x<WORLD_SIZE/CHUNK;x++) {
-    chunks.push(<TerrainChunk key={x+'-'+z} world={world} x={x} z={z} material={material} />);
+    chunks.push(<TerrainChunk key={x+'-'+z} world={world} x={x} z={z} material={material}
+      revision={world instanceof WorldStore?world.getChunkRevision(x,z):revision}/>);
   }
+  if(world instanceof WorldStore)for(const chunk of world.visibleChunks())
+    chunks.push(<TerrainChunk key={`${chunk.x},${chunk.z}`} world={world} x={chunk.x} z={chunk.z} material={material}
+      revision={world.getChunkRevision(chunk.x,chunk.z)}/>);
   return <group>{chunks}</group>;
 });

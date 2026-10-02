@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Game, hasSave } from '../game/game';
+import { useEffect, useState } from 'react';
+import { Game, hasSave, hasSaveAsync } from '../game/game';
 import { ELEMENT_COLOR, ELEMENT_LABEL, SPECIES, STARTERS } from '../game/content';
 import { monsterPortrait } from '../render/art';
 import { PwaInstallButton, type PwaInstallState } from './PwaInstall';
@@ -7,6 +7,10 @@ import { PwaInstallButton, type PwaInstallState } from './PwaInstall';
 export function StartMenu({game,pwa}:{game:Game;pwa:PwaInstallState}) {
   const [choosing,setChoosing]=useState(false);
   const [seed,setSeed]=useState('');
+  const [canContinue,setCanContinue]=useState(hasSave);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState('');
+  useEffect(()=>{let active=true;void hasSaveAsync().then(value=>{if(active)setCanContinue(value);});return()=>{active=false;};},[]);
   return <div className="start-screen">
     <img className="start-art" src="/art/trio-elemental-web.png" alt="" aria-hidden="true"/>
     <div className="start-card">
@@ -28,7 +32,12 @@ export function StartMenu({game,pwa}:{game:Game;pwa:PwaInstallState}) {
         <button className="subtle-link" onClick={()=>setChoosing(false)}>Voltar</button>
       </>:<div className="start-actions">
         <button className="primary" onClick={()=>setChoosing(true)}>Nova aventura <span>→</span></button>
-        {hasSave()?<button className="secondary" onClick={()=>game.continueGame()}>Continuar jornada</button>:null}
+        {canContinue?<button className="secondary" disabled={loading} onClick={()=>{
+          setLoading(true);setError('');
+          void game.continueGameAsync().then(ok=>{if(!ok)setError('Não foi possível abrir a partida salva.');})
+            .catch(()=>setError('Não foi possível abrir a partida salva.')).finally(()=>setLoading(false));
+        }}>{loading?'Carregando jornada…':'Continuar jornada'}</button>:null}
+        {error?<p role="alert">{error}</p>:null}
         <PwaInstallButton pwa={pwa}/>
       </div>}
       <div className="start-foot">Um RPG de exploração, cartas e encontros visíveis • Desktop e celular</div>

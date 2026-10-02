@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cameraZoom, captureCameraZoom, victoryCameraZoom } from './cameraZoom';
+import * as THREE from 'three';
+import { cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
+import { CAMERA_OFFSET, SPRITE_FACING, SPRITE_UP } from './camera';
 import { BATTLE_RECALL_END_SECONDS, BATTLE_ZOOM_OUT_END_SECONDS, CAPTURE_RECALL_END_SECONDS, CAPTURE_ZOOM_OUT_END_SECONDS } from '../game/game';
 
 describe('enquadramento da câmera',()=>{
@@ -7,10 +9,48 @@ describe('enquadramento da câmera',()=>{
     expect(cameraZoom(1280,800,true)).toBeGreaterThan(cameraZoom(1280,800,false));
     expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));
   });
-  it('aproxima a exploração um pouco mais no celular',()=>{
-    expect(cameraZoom(390,844,false)).toBeGreaterThan(cameraZoom(1280,800,false));
-    expect(cameraZoom(844,390,false)).toBeGreaterThan(48);
-    expect(cameraZoom(1280,800,false)).toBeGreaterThan(60);
+  it('mantém a exploração próxima do herói em desktop e celular',()=>{
+    expect(cameraZoom(1280,800,false)).toBe(108);
+    expect(cameraZoom(844,390,false)).toBe(82);
+    expect(cameraZoom(390,844,false)).toBe(92);
+    expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));
+  });
+  it.each([[1280,720],[844,390]])('mostra objetos abaixo menores ao subir em %ix%i',(width,height)=>{
+    const zoom=cameraZoom(width,height,false);
+    const high=4*0.85;
+    const camera=new THREE.PerspectiveCamera(perspectiveFovForZoom(height,zoom,CAMERA_OFFSET.length()),width/height,0.1,150);
+    camera.position.copy(CAMERA_OFFSET).add(new THREE.Vector3(0,high,0));
+    camera.lookAt(0,high,0);
+    camera.updateMatrixWorld();
+    const right=new THREE.Vector3(Math.SQRT1_2,0,-Math.SQRT1_2);
+    const projectedWidth=(y:number)=>{
+      const left=right.clone().multiplyScalar(-0.5).setY(y).project(camera);
+      const opposite=right.clone().multiplyScalar(0.5).setY(y).project(camera);
+      return (opposite.x-left.x)*width/2;
+    };
+    expect(projectedWidth(high)).toBeCloseTo(zoom,5);
+    expect(projectedWidth(0)).toBeLessThan(projectedWidth(high)*0.9);
+    expect(new THREE.Vector3(0,0,0).project(camera).y).toBeLessThan(
+      new THREE.Vector3(0,high,0).project(camera).y);
+  });
+  it('mantém um PNG grande sem deformação e apoia seu último pixel no terreno',()=>{
+    const camera=new THREE.PerspectiveCamera(20,16/9,0.1,150);
+    camera.position.copy(CAMERA_OFFSET);
+    camera.lookAt(0,0,0);
+    camera.updateMatrixWorld();
+    const size=6.6,footV=0.02;
+    const foot=new THREE.Vector3(0,0,0);
+    const center=foot.clone().addScaledVector(SPRITE_UP,size*(0.5-footV));
+    const right=new THREE.Vector3(1,0,0).applyQuaternion(SPRITE_FACING);
+    const pixelFoot=center.clone().addScaledVector(SPRITE_UP,size*(footV-0.5));
+    expect(pixelFoot.distanceTo(foot)).toBeLessThan(1e-10);
+    expect(pixelFoot.clone().project(camera).distanceTo(foot.clone().project(camera))).toBeLessThan(1e-10);
+    const projectedWidth=(y:number)=>{
+      const left=center.clone().addScaledVector(SPRITE_UP,y).addScaledVector(right,-size/2).project(camera);
+      const opposite=center.clone().addScaledVector(SPRITE_UP,y).addScaledVector(right,size/2).project(camera);
+      return opposite.x-left.x;
+    };
+    expect(projectedWidth(size/2)).toBeCloseTo(projectedWidth(-size/2),6);
   });
   it.each([[1280,800],[844,390]])('espera a carta voltar antes de afastar do herói em %ix%i',(width,height)=>{
     const close=victoryCameraZoom(width,height,BATTLE_RECALL_END_SECONDS);

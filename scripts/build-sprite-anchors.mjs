@@ -14,7 +14,11 @@ export async function buildSpriteAnchors(root = process.cwd()) {
       const frames = info.width > info.height && info.width % info.height === 0 && info.width / info.height <= frameLimit
         ? info.width / info.height : 1;
       const frameWidth = info.width / frames;
-      const threshold = folder === 'environment' ? 51 : 115;
+      // Match the alpha cutoff used by each visible sprite material. Houses
+      // use 0.14; props use 0.20; actors and birds use 0.45.
+      const building=folder==='environment'&&
+        (name.startsWith('casa-')||name==='woodcutter-hut.png'||name==='boathouse.png');
+      const threshold = folder === 'environment' ? building ? 36 : 51 : 115;
       const feet = [];
       for (let frame = 0; frame < frames; frame++) {
         let lastOpaqueRow = -1;

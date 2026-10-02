@@ -55,4 +55,15 @@ describe('paleta de tile maps',()=>{
     const shrine=world.places.find(place=>place.kind==='shrine')!;
     expect(city(shrine.x,shrine.z)).toBe(0);
   });
+  it('usa solo natural em todas as passagens de altura sem desenhar degraus',()=>{
+    const world=generateWorld(40732);
+    const ramps=world.tiles.filter(tile=>tile.terrain==='ramp');
+    expect(ramps.length).toBeGreaterThan(0);
+    expect(ramps.every(tile=>terrainIndex(world,tile)===
+      BIOME_BRUSH_PROFILES[REGION_BIOME_PROFILE[tile.biome]].base)).toBe(true);
+    expect(ramps.every(tile=>terrainIndex(world,tile)!==7)).toBe(true);
+    const city=urbanBrushPixels(world);
+    expect(ramps.every(tile=>city[(tile.z*WORLD_SIZE+tile.x)*4+3]===255)).toBe(true);
+    expect(terrainIndex(world,{...ramps[0],landscape:'mountain'})).toBe(TILE_ATLAS.biome.mountain);
+  });
 });

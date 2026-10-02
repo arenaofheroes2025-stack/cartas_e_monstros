@@ -1,7 +1,7 @@
 export type RenderQuality = 'high' | 'low';
 
 const PIXEL_BUDGET: Record<RenderQuality, number> = {
-  high: 1_000_000,
+  high: 1_400_000,
   low: 750_000
 };
 

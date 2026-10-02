@@ -1,13 +1,13 @@
 // Generated from the last visible pixels of each PNG. Run npm run art:anchors after changing art.
 export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/creatures/brasalto-idle.png": [
-    0.03906
+    0.04688
   ],
   "/art/creatures/brasalto.png": [
-    0.03906,
-    0.03906,
     0.04688,
-    0.03906,
+    0.04688,
+    0.04688,
+    0.04688,
     0.03906,
     0.04688
   ],
@@ -45,15 +45,15 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688
   ],
   "/art/creatures/cinzuri-idle.png": [
-    0.03906
+    0.04688
   ],
   "/art/creatures/cinzuri.png": [
-    0.03906,
-    0.04688,
-    0.03906,
     0.04688,
     0.04688,
-    0.03906
+    0.04688,
+    0.04688,
+    0.04688,
+    0.04688
   ],
   "/art/creatures/conchilo-idle.png": [
     0.04688
@@ -61,10 +61,10 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/creatures/conchilo.png": [
     0.04688,
     0.04688,
-    0.03906,
+    0.04688,
     0.04688,
     0.03906,
-    0.04688
+    0.03906
   ],
   "/art/creatures/coracilo-idle.png": [
     0.04688
@@ -72,9 +72,9 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/creatures/coracilo.png": [
     0.04688,
     0.04688,
-    0.03125,
+    0.04688,
     0.03906,
-    0.03906,
+    0.04688,
     0.03906
   ],
   "/art/creatures/floragato-idle.png": [
@@ -84,7 +84,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688,
     0.03906,
     0.04688,
-    0.04688,
+    0.03906,
     0.04688,
     0.04688
   ],
@@ -107,7 +107,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.03906,
     0.04688,
     0.04688,
-    0.03906,
+    0.04688,
     0.04688
   ],
   "/art/creatures/musgato-idle.png": [
@@ -119,7 +119,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688,
     0.04688,
     0.04688,
-    0.04688
+    0.03906
   ],
   "/art/creatures/vulcazuri-idle.png": [
     0.04688
@@ -139,7 +139,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.03906
   ],
   "/art/environment/bank-grass.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/basalt-rock.png": [
     0.02344
@@ -210,19 +210,19 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.01563
   ],
   "/art/environment/driftwood.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/fallen-log.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/field-flowers.png": [
     0.03906
   ],
   "/art/environment/field-stump.png": [
-    0.03125
+    0.03516
   ],
   "/art/environment/fieldstone.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/flower-bush.png": [
     0.01953
@@ -246,7 +246,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.01563
   ],
   "/art/environment/grass-tuft.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/ice-block.png": [
     0.01563
@@ -287,16 +287,16 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.01953
   ],
   "/art/environment/mineral-cluster.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/moss-boulder.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/moss-rock.png": [
     0.01953
   ],
   "/art/environment/mountain-boulder.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/obsidian-spire.png": [
     0.03906
@@ -356,7 +356,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.02344
   ],
   "/art/environment/shale-fragments.png": [
-    0.03516
+    0.03906
   ],
   "/art/environment/shells.png": [
     0.03516

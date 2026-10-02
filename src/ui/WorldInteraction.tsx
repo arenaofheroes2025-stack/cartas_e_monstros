@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { type Camera, Vector3 } from 'three';
 import { Game, type InteractionTarget } from '../game/game';
 import { DIALOG_CHOICE_KEYS } from '../input/dialogChoices';
+import { SPRITE_UP } from '../render/camera';
 import './worldInteraction.css';
 
 const projected=new Vector3();
+const spriteAnchor=new Vector3();
 
 function placeAt(
   element:HTMLElement,camera:Camera,rect:DOMRect,x:number,y:number,z:number,
@@ -49,14 +51,17 @@ export function WorldInteraction({game,cameraRef}:{game:Game;cameraRef:RefObject
       if(camera&&rect){
         if(action.current){
           const player=game.player;
-          placeAt(action.current,camera,rect,player.x,
-            game.getGroundHeight(player.x,player.z)+1.45+game.playerVisualLift,
-            player.z,36,-20,false);
+          spriteAnchor.set(player.x,game.getGroundHeight(player.x,player.z)+0.1+game.playerVisualLift,player.z)
+            .addScaledVector(SPRITE_UP,1.42);
+          placeAt(action.current,camera,rect,spriteAnchor.x,spriteAnchor.y,
+            spriteAnchor.z,36,-20,false);
         }
         if(speech.current&&game.dialog){
           const {x,z}=game.dialog.anchor;
-          placeAt(speech.current,camera,rect,x,game.getGroundHeight(x,z)+2.35,
-            z,0,-12,true);
+          spriteAnchor.set(x,game.getGroundHeight(x,z)+0.1,z)
+            .addScaledVector(SPRITE_UP,2.2);
+          placeAt(speech.current,camera,rect,spriteAnchor.x,spriteAnchor.y,
+            spriteAnchor.z,0,-12,true);
           if(action.current){
             const buttonBox=action.current.getBoundingClientRect();
             const speechBox=speech.current.getBoundingClientRect();

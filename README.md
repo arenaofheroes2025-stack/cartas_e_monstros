@@ -1,6 +1,6 @@
 # Cartas e Monstros
 
-Primeira região jogável de um RPG de captura elemental para navegador, desktop e celular. O mapa é gerado por semente em 96 × 96 tiles, com níveis de altura de 0 a 4, pontes, rampas, três biomas de encontros, casas, santuários e monstros visíveis. A biblioteca visual tem 80 tiles e 48 novos objetos independentes, distribuídos em áreas de concentração com corredores livres. O vilarejo inclui padaria, moradias, poço, bancos, floreiras, postes iluminados e quatro moradores ambulantes. A arte do jogo está em arquivos PNG próprios sobre geometria 2,5D.
+RPG de captura elemental para navegador, desktop e celular. A região inicial de 96 × 96 tiles mantém a vila, os três santuários e a missão dos selos; além dela, o mundo se expande em chunks de 16 × 16 tiles gerados pela semente, com montanhas, lagos, rios e locais descobríveis. O vilarejo inclui padaria, moradias, poço, bancos, postes iluminados e quatro moradores ambulantes. A arte do jogo usa PNGs sobre terreno 3D, e o progresso fica salvo localmente.
 
 ## Executar
 

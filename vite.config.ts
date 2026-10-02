@@ -28,5 +28,5 @@ export default defineConfig({
     game: 'index.html',
     shadowLab: 'qa-sombras.html'
   } } },
-  test: { environment: 'node' }
+  test: { environment: 'node', include: ['src/**/*.test.{ts,tsx}'] }
 });

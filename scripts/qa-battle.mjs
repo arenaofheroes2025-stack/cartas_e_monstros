@@ -90,8 +90,13 @@ for(const viewport of [{name:'desktop',width:1440,height:900},{name:'mobile',wid
   await page.waitForTimeout(80);
   const special=page.getByRole('button',{name:/Especial:/});
   if(await special.isDisabled())failures.push(`${viewport.name}: especial não habilitou com carga completa`);
-  if(viewport.name==='mobile')await special.tap();else await page.keyboard.press('r');
-  if(await page.evaluate(()=>window.__cartasGame.battle?.command)!=='special')failures.push(`${viewport.name}: especial não responde ao botão`);
+  if(viewport.name==='mobile')await special.tap();else await page.keyboard.press('c');
+  const specialResult=await page.evaluate(()=>({
+    command:window.__cartasGame.battle?.command,
+    charge:window.__cartasGame.battle?.ally.charge
+  }));
+  if(specialResult.command!=='special'&&specialResult.charge>=100)
+    failures.push(`${viewport.name}: especial não responde ao botão`);
   await page.evaluate(()=>{
     const game=window.__cartasGame;
     game.battle.ally.attackTimer=100;
