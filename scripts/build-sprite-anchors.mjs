@@ -10,7 +10,8 @@ export async function buildSpriteAnchors(root = process.cwd()) {
     for (const name of fs.readdirSync(directory).filter(file => file.endsWith('.png')).sort()) {
       const file = path.join(directory, name);
       const {data, info} = await sharp(file).ensureAlpha().raw().toBuffer({resolveWithObject:true});
-      const frames = info.width > info.height && info.width % info.height === 0 && info.width / info.height <= 6
+      const frameLimit=folder==='people'&&name.startsWith('player-anim-')?16:6;
+      const frames = info.width > info.height && info.width % info.height === 0 && info.width / info.height <= frameLimit
         ? info.width / info.height : 1;
       const frameWidth = info.width / frames;
       const threshold = folder === 'environment' ? 51 : 115;

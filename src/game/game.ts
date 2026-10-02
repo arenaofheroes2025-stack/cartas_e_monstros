@@ -12,9 +12,20 @@ export type { SaveData } from './save';
 
 export const DAY_SECONDS = 24 * 60;
 export const BATTLE_INTRO_SECONDS = 2.8;
+export const BATTLE_SUMMON_CARD_RELEASE_SECONDS = 0.85;
+export const BATTLE_SUMMON_CARD_ARRIVE_SECONDS = 1.52;
 export const BATTLE_RECALL_END_SECONDS = 2.53;
+export const BATTLE_CARD_STOW_SECONDS = 0.2;
 export const BATTLE_ZOOM_OUT_END_SECONDS = 3.8;
 export const BATTLE_FINISH_SECONDS = 4.1;
+export const BATTLE_DEFEAT_SECONDS = 1;
+export const BATTLE_SUMMON_POSE_SECONDS = 1.35;
+export const BATTLE_COMMAND_POSE_SECONDS = 0.4;
+export const BATTLE_ITEM_THROW_SECONDS = 0.38;
+export const BATTLE_ITEM_RELEASE_SECONDS = 0.18;
+export const PLAYER_PICKUP_SECONDS = 0.6;
+export const PLAYER_JUMP_TAKEOFF = 0.16;
+export const PLAYER_JUMP_LAND_SECONDS = 0.18;
 export const CAPTURE_RECALL_END_SECONDS = 3.2;
 export const CAPTURE_ZOOM_OUT_END_SECONDS = 4.1;
 export const CAPTURE_FINISH_SECONDS = 4.35;
@@ -75,11 +86,15 @@ export interface BattleState {
   time: number;
   intro: number;
   introSummoned: boolean;
+  summonPoseTime: number;
   statuses: TimedStatus[];
   itemUseTime: number;
+  pendingItemThrow: EffectEvent | null;
+  itemThrowTarget?: Point;
   pendingAutoSupport: boolean;
   autoItemDelay: number;
   cue: CommandCue | null;
+  defeat?: { elapsed: number; duration: number };
   finisher?: {
     elapsed: number;
     duration: number;
@@ -134,6 +149,8 @@ export class Game {
   wildActors: WildActor[] = [];
   walkingNpcs: WalkingNpcActor[] = [];
   jump: JumpState | null = null;
+  jumpLandingTime = 0;
+  playerPickupTime = 0;
   move = { x: 0, z: 0 };
   private lastMove = { x: 1, z: 0 };
   private fallHeight = 0;
@@ -170,7 +187,7 @@ export class Game {
     };
     this.wildActors = this.world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
     this.walkingNpcs = this.world.walkers.map(npc => ({...npc, moveTimer: 0}));
-    this.jump=null;this.fallTime=0;
+    this.jump=null;this.jumpLandingTime=0;this.fallTime=0;this.playerPickupTime=0;
     this.mode = 'explore';
     this.reveal();
     this.notify('Sua jornada começou. Converse no vilarejo e explore os caminhos.', 6);
@@ -189,7 +206,7 @@ export class Game {
     save.nextItemSerial??=0;
     this.wildActors = this.world.wild.map(w => ({...w, direction: 0, moveTimer: 0}));
     this.walkingNpcs = this.world.walkers.map(npc => ({...npc, moveTimer: 0}));
-    this.jump=null;this.fallTime=0;
+    this.jump=null;this.jumpLandingTime=0;this.fallTime=0;this.playerPickupTime=0;
     this.mode = 'explore';
     this.reveal();
     this.persist();
@@ -216,9 +233,9 @@ export class Game {
   }
 
   jumpForward(): boolean {
-    if((this.mode!=='explore'&&this.mode!=='battle')||!this.world||this.jump)return false;
+    if((this.mode!=='explore'&&this.mode!=='battle')||!this.world||this.jump||this.jumpLandingTime>0)return false;
     const battle=this.mode==='battle'?this.battle:null;
-    if(this.mode==='battle'&&(!battle||battle.intro>0||battle.finisher||battle.captureSequence||this.battleMenu))return false;
+    if(this.mode==='battle'&&(!battle||battle.intro>0||battle.itemUseTime>0||battle.finisher||battle.defeat||battle.captureSequence||this.battleMenu))return false;
     const from={...this.player};
     const source=tileAt(this.world,Math.floor(from.x),Math.floor(from.z));
     if(!source)return false;
@@ -248,7 +265,8 @@ export class Game {
   get playerVisualLift():number {
     if(this.jump){
       const t=Math.min(1,this.jump.elapsed/this.jump.duration);
-      const y=this.jump.fromHeight+(this.jump.toHeight-this.jump.fromHeight)*t+Math.sin(Math.PI*t)*1.12;
+      const air=Math.max(0,(t-PLAYER_JUMP_TAKEOFF)/(1-PLAYER_JUMP_TAKEOFF));
+      const y=this.jump.fromHeight+(this.jump.toHeight-this.jump.fromHeight)*air+Math.sin(Math.PI*air)*1.12;
       return y-this.getGroundHeight(this.player.x,this.player.z);
     }
     return this.fallTime>0?this.fallHeight*this.fallTime/0.24:0;
@@ -259,10 +277,11 @@ export class Game {
     if(!jump)return;
     jump.elapsed=Math.min(jump.duration,jump.elapsed+dt);
     const t=jump.elapsed/jump.duration;
-    const eased=t*t*(3-2*t);
+    const air=Math.max(0,(t-PLAYER_JUMP_TAKEOFF)/(1-PLAYER_JUMP_TAKEOFF));
+    const eased=air*air*(3-2*air);
     this.player.x=jump.from.x+(jump.to.x-jump.from.x)*eased;
     this.player.z=jump.from.z+(jump.to.z-jump.from.z)*eased;
-    if(t>=1)this.jump=null;
+    if(t>=1){this.jump=null;this.jumpLandingTime=PLAYER_JUMP_LAND_SECONDS;}
   }
 
   private canOccupy(from: Point, to: Point, isPlayer=false): boolean {
@@ -296,12 +315,14 @@ export class Game {
     dt = Math.min(dt, 0.05);
     if (this.messageTime > 0) { this.messageTime -= dt; if (this.messageTime <= 0) this.message = ''; }
     if (!this.world || !this.save || this.shopOpen || this.mode === 'pause' || this.mode === 'dialog' || this.mode === 'title') return;
+    if(!this.battleMenu)this.jumpLandingTime=Math.max(0,this.jumpLandingTime-dt);
     if (this.mode === 'explore') {
       this.save.elapsed += dt;
+      this.playerPickupTime=Math.max(0,this.playerPickupTime-dt);
       const before = {...this.player};
       const beforeHeight=this.getGroundHeight(before.x,before.z);
       if(this.jump)this.advanceJump(dt);
-      else this.movePosition(this.player, this.move.x, this.move.z, 4, dt,true);
+      else if(this.playerPickupTime===0&&this.jumpLandingTime===0)this.movePosition(this.player, this.move.x, this.move.z, 4, dt,true);
       const drop=beforeHeight-this.getGroundHeight(this.player.x,this.player.z);
       if(!this.jump&&drop>0.1){this.fallHeight=drop;this.fallTime=0.24;}
       else this.fallTime=Math.max(0,this.fallTime-dt);
@@ -309,7 +330,7 @@ export class Game {
       if (this.walkDistance > 1) { this.walkDistance = 0; this.reveal(); }
       this.updateWild(dt);
       this.updateWalkingNpcs(dt);
-      if(!this.jump)this.checkNearbyWild();
+      if(!this.jump&&this.jumpLandingTime===0&&this.playerPickupTime===0)this.checkNearbyWild();
       this.saveTimer += dt;
       if (this.saveTimer > 8) { this.saveTimer = 0; this.persist(); this.onChange?.(); }
     } else if (this.battle && !this.battleMenu) {
@@ -322,7 +343,7 @@ export class Game {
         }
         if(this.battle.intro===0)this.onChange?.();
       } else {
-        if(this.jump&&!this.battle.captureSequence)this.advanceJump(dt);
+        if(this.jump&&!this.battle.captureSequence&&!this.battle.defeat)this.advanceJump(dt);
         this.updateBattle(dt);
       }
     }
@@ -476,6 +497,8 @@ export class Game {
     if (!this.save) return;
     this.save.openedCaches.push(cache.id);
     this.save.cards[cache.element]++;
+    this.playerPickupTime=PLAYER_PICKUP_SECONDS;
+    this.setMove(0,0);
     this.effects.push({kind:'capture',x:cache.x,z:cache.z,element:cache.element});
     this.notify('Você encontrou 1 carta de ' + ELEMENT_LABEL[cache.element] + '!');
     this.persist();
@@ -494,6 +517,8 @@ export class Game {
     this.save.nextItemSerial=serial+1;
     if(replacement)this.world.items.push(replacement);
     this.save.groundItems=this.world.items;
+    this.playerPickupTime=PLAYER_PICKUP_SECONDS;
+    this.setMove(0,0);
     this.effects.push({kind:'capture',x:spawn.x,z:spawn.z});
     this.notify(ITEMS[spawn.itemId].name+' guardado no inventário!');
     this.persist();this.onChange?.();
@@ -574,11 +599,11 @@ export class Game {
       ally:{...allyStart,hp:ally.hp,charge:0,attackTimer:0.6,windup:0,skillWindup:false,dodgeTime:0,dodgeCooldown:0,strikeRadius:0,recovery:0,flash:0},
       foe:{...foeStart,hp:maxHp(enemy),charge:0,attackTimer:1.55,windup:0,skillWindup:false,dodgeTime:0,dodgeCooldown:0,strikeRadius:0,recovery:0,flash:0},
       command:'return',moveTime:0,message:'A arena se formou!',messageTime:2,time:0,
-      intro:BATTLE_INTRO_SECONDS,introSummoned:false,statuses:[],itemUseTime:0,
+      intro:BATTLE_INTRO_SECONDS,introSummoned:false,summonPoseTime:0,statuses:[],itemUseTime:0,pendingItemThrow:null,
       pendingAutoSupport:true,autoItemDelay:0,cue:null
     };
     this.battleMenu=null;
-    this.jump=null;
+    this.jump=null;this.jumpLandingTime=0;
     this.message='';
     this.messageTime=0;
     this.mode='battle';
@@ -604,7 +629,7 @@ export class Game {
   }
 
   openBattleMenu(menu: BattleMenu): void {
-    if (this.mode!=='battle'||!this.battle||this.battle.intro>0||this.battle.finisher||this.battle.captureSequence) return;
+    if (this.mode!=='battle'||!this.battle||this.battle.intro>0||this.battle.itemUseTime>0||this.battle.finisher||this.battle.defeat||this.battle.captureSequence) return;
     this.battleMenu=menu;
     if(menu==='items'){
       this.selectedBattleBagSlot=Math.max(0,this.save?.battleBag.findIndex(Boolean)??0);
@@ -726,13 +751,13 @@ export class Game {
 
   private showCommandCue(label:string,icon:string,color:string,itemId?:ItemId):void {
     if(!this.battle)return;
-    this.battle.cue={sequence:++this.cueSequence,label,icon,color,itemId,remaining:1.6,poseRemaining:1.25};
+    this.battle.cue={sequence:++this.cueSequence,label,icon,color,itemId,remaining:1.6,poseRemaining:BATTLE_COMMAND_POSE_SECONDS};
     this.onChange?.();
   }
 
   useBattleItem(uid:string):boolean {
     const battle=this.battle,save=this.save;
-    if(this.mode!=='battle'||!battle||!save||battle.intro>0||battle.finisher||battle.captureSequence||this.battleMenu!=='items')return false;
+    if(this.mode!=='battle'||!battle||!save||battle.intro>0||battle.itemUseTime>0||battle.finisher||battle.defeat||battle.captureSequence||this.battleMenu!=='items')return false;
     if(!save.battleBag.includes(uid))return false;
     return this.applyBattleItem(uid,false);
   }
@@ -766,20 +791,24 @@ export class Game {
         duration:effect.duration,remaining:effect.duration});
     }
     const source=automatic?battle.ally:this.player;
-    this.effects.push({kind:'item',itemId:item.itemId,x:source.x,z:source.z,
+    const itemFlight:EffectEvent={kind:'item',itemId:item.itemId,x:source.x,z:source.z,
       target:{x:target.x,z:target.z},itemEffect:effect.kind,amount:appliedAmount,
-      stat:effect.kind==='status'?effect.stat:undefined,targetUid,autoItem:automatic});
+      stat:effect.kind==='status'?effect.stat:undefined,targetUid,autoItem:automatic};
     if(automatic){
+      this.effects.push(itemFlight);
       battle.ally.itemPoseTime=0.72;
       battle.autoItemDelay=0.82;
       battle.message=effect.kind==='heal'
         ?`${SPECIES[this.activeMonster!.species].name} comeu ${definition.name} e recuperou ${appliedAmount} PV!`
         :`${SPECIES[this.activeMonster!.species].name} ativou ${definition.name} automaticamente!`;
     }else{
-      battle.itemUseTime=0.75;
+      battle.itemUseTime=BATTLE_ITEM_THROW_SECONDS;
+      battle.pendingItemThrow=itemFlight;
+      battle.itemThrowTarget={x:target.x,z:target.z};
       battle.message=`${definition.name} usado em ${effect.target==='ally'?SPECIES[this.activeMonster!.species].name:SPECIES[battle.enemy.species].name}!`;
       this.battleMenu=null;
       this.showCommandCue(definition.name+'!', '✦', definition.color, item.itemId);
+      if(battle.cue)battle.cue.poseRemaining=0;
     }
     battle.messageTime=2.1;
     this.persist();this.onChange?.();
@@ -826,7 +855,7 @@ export class Game {
 
   battleCommand(command: BattleCommand): void {
     const battle=this.battle;
-    if (this.mode!=='battle'||!battle||battle.intro>0||battle.finisher||battle.captureSequence||this.battleMenu) return;
+    if (this.mode!=='battle'||!battle||battle.intro>0||battle.itemUseTime>0||battle.finisher||battle.defeat||battle.captureSequence||this.battleMenu) return;
     if(command==='return'&&battle.command!=='follow')return;
     if(command==='follow'&&battle.command==='follow')return;
     if(command==='special'&&battle.ally.charge<100)return;
@@ -857,7 +886,7 @@ export class Game {
   }
 
   orderMove(point: Point): void {
-    if (this.mode!=='battle'||!this.battle||this.battle.intro>0||this.battle.finisher||this.battle.captureSequence||this.battleMenu) return;
+    if (this.mode!=='battle'||!this.battle||this.battle.intro>0||this.battle.itemUseTime>0||this.battle.finisher||this.battle.defeat||this.battle.captureSequence||this.battleMenu) return;
     const center=this.battle.center;
     if (distance(point,center)>this.battle.radius-0.5) return;
     this.battle.command='move';
@@ -868,7 +897,7 @@ export class Game {
   }
 
   switchMonster(index: number): void {
-    if (!this.battle||!this.save||this.mode!=='battle'||this.battle.intro>0||this.battle.finisher||this.battle.captureSequence) return;
+    if (!this.battle||!this.save||this.mode!=='battle'||this.battle.intro>0||this.battle.itemUseTime>0||this.battle.finisher||this.battle.defeat||this.battle.captureSequence) return;
     if (index<0||index>=this.save.party.length||this.save.party[index].hp<=0||index===this.battle.allyIndex) return;
     this.save.party[this.battle.allyIndex].hp=this.battle.ally.hp;
     this.battle.allyIndex=index;
@@ -882,6 +911,7 @@ export class Game {
     this.battle.command='return';
     this.battle.waypoint=undefined;
     this.battle.moveTime=0;
+    this.battle.summonPoseTime=BATTLE_SUMMON_POSE_SECONDS;
     this.battle.pendingAutoSupport=true;
     this.battle.autoItemDelay=0;
     this.battleMenu=null;
@@ -906,6 +936,11 @@ export class Game {
 
   private updateBattle(dt: number): void {
     const battle=this.battle!, save=this.save!;
+    if(battle.defeat){
+      battle.defeat.elapsed=Math.min(battle.defeat.duration,battle.defeat.elapsed+dt);
+      if(battle.defeat.elapsed>=battle.defeat.duration)this.endBattle('loss');
+      return;
+    }
     if(battle.captureSequence){
       const sequence=battle.captureSequence;
       sequence.elapsed=Math.min(sequence.duration,sequence.elapsed+dt);
@@ -935,6 +970,7 @@ export class Game {
       return;
     }
     battle.time+=dt;
+    battle.summonPoseTime=Math.max(0,battle.summonPoseTime-dt);
     battle.autoItemDelay=Math.max(0,battle.autoItemDelay-dt);
     if(battle.pendingAutoSupport){
       battle.pendingAutoSupport=false;
@@ -947,13 +983,17 @@ export class Game {
       if(battle.cue.remaining===0){battle.cue=null;this.onChange?.();}
     }
     battle.itemUseTime=Math.max(0,battle.itemUseTime-dt);
+    if(battle.pendingItemThrow&&battle.itemUseTime<=BATTLE_ITEM_THROW_SECONDS-BATTLE_ITEM_RELEASE_SECONDS){
+      this.effects.push({...battle.pendingItemThrow,x:this.player.x,z:this.player.z});
+      battle.pendingItemThrow=null;
+    }
     let expired=false;
     for(const status of battle.statuses){status.remaining=Math.max(0,status.remaining-dt);if(status.remaining===0)expired=true;}
     if(expired){battle.statuses=battle.statuses.filter(status=>status.remaining>0);this.onChange?.();}
     if (battle.messageTime>0) battle.messageTime-=dt;
     const movement={x:this.move.x,z:this.move.z};
     const old={...save.player};
-    if(!this.jump)this.movePosition(save.player,movement.x,movement.z,3.7,dt,true);
+    if(!this.jump&&this.jumpLandingTime===0&&battle.itemUseTime===0)this.movePosition(save.player,movement.x,movement.z,3.7,dt,true);
     if (distance(save.player,battle.center)>battle.radius-0.8) { save.player.x=old.x;save.player.z=old.z; }
     for (const actor of [battle.ally,battle.foe]) {
       actor.attackTimer=Math.max(0,actor.attackTimer-dt);
@@ -1003,7 +1043,7 @@ export class Game {
         battle.ally.itemPoseTime=0;battle.pendingAutoSupport=true;battle.autoItemDelay=0;
         battle.command='return';battle.waypoint=undefined;battle.moveTime=0;
         this.notify(SPECIES[save.party[next].species].name+' entrou para ajudar!');}
-      else this.endBattle('loss');
+      else this.beginDefeat();
     }
   }
 
@@ -1018,11 +1058,26 @@ export class Game {
     battle.cue=null;
     battle.message='Vitória!';
     battle.messageTime=BATTLE_FINISH_SECONDS;
+    this.jump=null;this.jumpLandingTime=0;
+    this.setMove(0,0);
     battle.finisher={elapsed:0,duration:BATTLE_FINISH_SECONDS,xp:20+battle.enemy.level*5,xpShown:false,
       enemyElement:SPECIES[battle.enemy.species].element,allyElement:SPECIES[this.activeMonster!.species].element,
       foe:{x:battle.foe.x,z:battle.foe.z},
       ally:{x:battle.ally.x,z:battle.ally.z},hero:{...this.player}};
     this.battleMenu=null;
+    this.onChange?.();
+  }
+
+  private beginDefeat(): void {
+    const battle=this.battle;
+    if(!battle||battle.defeat)return;
+    battle.cue=null;
+    battle.message='Derrota!';
+    battle.messageTime=BATTLE_DEFEAT_SECONDS;
+    battle.defeat={elapsed:0,duration:BATTLE_DEFEAT_SECONDS};
+    this.battleMenu=null;
+    this.jump=null;this.jumpLandingTime=0;
+    this.setMove(0,0);
     this.onChange?.();
   }
 
@@ -1073,12 +1128,12 @@ export class Game {
   }
 
   captureChance(): number {
-    if (!this.battle||this.battle.finisher||this.battle.captureSequence) return 0;
+    if (!this.battle||this.battle.finisher||this.battle.defeat||this.battle.captureSequence) return 0;
     return captureChance(this.battle.enemy,this.battle.foe.hp);
   }
 
   capture(cardElement?:Element): void {
-    if (!this.battle||!this.save||this.mode!=='battle'||this.battle.intro>0||this.battle.finisher||this.battle.captureSequence) return;
+    if (!this.battle||!this.save||this.mode!=='battle'||this.battle.intro>0||this.battle.finisher||this.battle.defeat||this.battle.captureSequence) return;
     if (!this.battle.wildId) {this.notify('Monstros de guardiões não podem ser capturados.');return;}
     const species=SPECIES[this.battle.enemy.species],element=species.element;
     if(cardElement&&cardElement!==element){this.notify('Use uma carta de '+ELEMENT_LABEL[element]+' para capturar '+species.name+'.');return;}
@@ -1087,7 +1142,7 @@ export class Game {
     if (chance===0) {this.notify('Enfraqueça '+species.name+' até metade da vida para capturar.');return;}
     this.save.cards[element]--;
     this.battleMenu=null;
-    this.jump=null;
+    this.jump=null;this.jumpLandingTime=0;
     this.setMove(0,0);
     const success=Math.random()*100<chance;
     let destination:'equipe'|'coleção'|undefined;
@@ -1113,7 +1168,7 @@ export class Game {
   }
 
   flee(): void {
-    if (!this.battle||this.mode!=='battle'||this.battle.intro>0||this.battle.finisher||this.battle.captureSequence) return;
+    if (!this.battle||this.mode!=='battle'||this.battle.intro>0||this.battle.finisher||this.battle.defeat||this.battle.captureSequence) return;
     if (this.battle.guardian) {this.notify('Você precisa terminar o desafio do guardião.');return;}
     if (this.save && this.battle.wildId) this.save.wildCooldown[this.battle.wildId]=this.save.elapsed+25;
     this.endBattle('flee');
@@ -1162,7 +1217,7 @@ export class Game {
     }
     this.battle=null;
     this.battleMenu=null;
-    this.jump=null;
+    this.jump=null;this.jumpLandingTime=0;
     this.mode='explore';
     if (result==='loss') this.rescue();
     this.persist();
@@ -1180,7 +1235,7 @@ export class Game {
 
   togglePause(): void {
     if (this.mode==='dialog'||this.mode==='title') return;
-    if (this.battle&&this.battle.intro>0)return;
+    if (this.battle&&(this.battle.intro>0||this.battle.defeat))return;
     if (this.battleMenu) {this.closeBattleMenu();return;}
     if (this.mode==='pause') this.mode=this.previousMode;
     else {this.previousMode=this.mode;this.mode='pause';this.persist();}

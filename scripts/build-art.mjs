@@ -74,6 +74,63 @@ for (const id of creatures) await normalizeCells(source('creatures',`${id}.png`)
 await normalizeCells(source('people','player.png'),3,2,128,['player'],'people',true);
 await normalizeCells(source('people','player-jump.png'),1,1,128,['player-jump'],'people',false,'lanczos3');
 await normalizeCells(source('people','player-summon.png'),1,1,128,['player-summon'],'people',false,'lanczos3');
+const playerAnimations={
+  idle:{count:4},
+  // The approved walk uses every generated pose except its neutral first cell.
+  walk:{count:7,sourceName:'walk-v4',sourceCount:8,indices:[1,2,3,4,5,6,7]},
+  jump:{count:6},
+  summon:{count:6,sourceName:'summon-v3'},
+  cardRecall:{count:6,sourceName:'summon-v1'},
+  itemThrow:{count:6},
+  pickup:{count:4,sourceName:'pickup-v2'},
+  command:{count:4},talk:{count:4},victory:{count:6},defeat:{count:6}
+};
+for (const [animation,config] of Object.entries(playerAnimations)) {
+  const {count,sourceName=animation,sourceCount=count}=config;
+  const indices=config.indices??Array.from({length:count},(_,index)=>index);
+  const sheet=source('people','player-animations',`${sourceName}-spritesheet.png`);
+  const metadata=await sharp(sheet).metadata();
+  const cellSize=metadata.height;
+  if(![128,132].includes(cellSize)||metadata.width!==cellSize*sourceCount||metadata.channels!==4)
+    throw new Error(`Invalid ${animation} sheet: expected ${sourceCount} transparent square frames`);
+  const frames=[];
+  const frameDirectory=output('people','player-frames');
+  fs.mkdirSync(frameDirectory,{recursive:true});
+  for(const filename of fs.readdirSync(frameDirectory))
+    if(filename.startsWith(`${animation}-`)&&filename.endsWith('.png'))
+      fs.unlinkSync(path.join(frameDirectory,filename));
+  for(let frame=0;frame<count;frame++){
+    const sourceFrame=await sharp(sheet)
+      .extract({left:indices[frame]*cellSize,top:0,width:cellSize,height:cellSize})
+      .resize(128,128,{kernel:'nearest'}).png().toBuffer();
+    if(animation==='summon'&&frame===count-1){
+      // The raised-card pose fills this cell; retain the generated final pose.
+      frames.push(sourceFrame);
+      fs.writeFileSync(path.join(frameDirectory,`${animation}-${String(frame).padStart(2,'0')}.png`),sourceFrame);
+      continue;
+    }
+    const {data,info}=await sharp(sourceFrame).raw().toBuffer({resolveWithObject:true});
+    let top=128,bottom=-1;
+    for(let y=0;y<128;y++)for(let x=0;x<128;x++){
+      if(data[(y*128+x)*info.channels+3]<115)continue;
+      top=Math.min(top,y);bottom=Math.max(bottom,y);
+    }
+    if(bottom<0)throw new Error(`Empty ${animation} frame ${frame}`);
+    // SpriteCook places grounded boots on the final pixel row. Move the art up
+    // while keeping the jump apex inside the canvas and preserving each pose.
+    const shiftY=Math.max(-5,2-top);
+    if(shiftY>0||bottom+shiftY>123)throw new Error(`Clipped ${animation} frame ${frame}`);
+    const cropped=await sharp(sourceFrame).extract({left:0,top:-shiftY,width:128,height:128+shiftY}).png().toBuffer();
+    let image=await sharp({create:{width:128,height:128,channels:4,background:'#00000000'}})
+      .composite([{input:cropped,left:0,top:0}]).png().toBuffer();
+    frames.push(image);
+    fs.writeFileSync(path.join(frameDirectory,`${animation}-${String(frame).padStart(2,'0')}.png`),image);
+    if(animation==='idle'&&frame===0)fs.writeFileSync(output('people','player-idle.png'),image);
+  }
+  fs.writeFileSync(output('people',`player-anim-${animation}.png`),
+    await sharp({create:{width:128*count,height:128,channels:4,background:'#00000000'}})
+      .composite(frames.map((input,index)=>({input,left:128*index,top:0}))).png().toBuffer());
+}
 await normalizeCells(source('people','npcs.png'),2,2,512,['artisan','healer','keeper','guardian'],'people',false,'lanczos3');
 await normalizeCells(source('people','cartographer-walk.png'),3,1,384,['cartographer'],'people',true,'lanczos3');
 await normalizeCells(source('people','botanist-walk.png'),3,1,384,['botanist'],'people',true,'lanczos3');

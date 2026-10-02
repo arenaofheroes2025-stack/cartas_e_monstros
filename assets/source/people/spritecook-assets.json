@@ -1,0 +1,142 @@
+[
+  {
+    "asset_id": "3d6650e3-5f0a-44db-b051-4d3b441f154c",
+    "sha12": "2fe2609238c9",
+    "label": "Tiny Pixel Knight - Idle",
+    "file": "knight-idle.png"
+  },
+  {
+    "asset_id": "9ace9f5b-db21-4058-8800-baf873ea3d7a",
+    "sha12": "2edf5ff55403",
+    "label": "Cartas e Monstros - Hero Reference",
+    "file": "player-animations/hero-reference.png"
+  },
+  {
+    "asset_id": "45f728f4-00dd-4aa1-a54e-b52061a26ab3",
+    "sha12": "e94b31ad2294",
+    "label": "Hero - Idle (4 frames)",
+    "file": "player-animations/idle-spritesheet.png"
+  },
+  {
+    "asset_id": "accc4483-efd8-4e05-a58d-99921ece0e00",
+    "sha12": "05d1d70644af",
+    "label": "Hero - Walk v1 (6 frames)",
+    "file": "player-animations/walk-v1-spritesheet.png"
+  },
+  {
+    "asset_id": "db2ea891-4f92-4f79-9cd5-0d15d6576d1a",
+    "sha12": "b9e0f75d418b",
+    "label": "Hero - Jump v1 (6 frames)",
+    "file": "player-animations/jump-v1-spritesheet.png"
+  },
+  {
+    "asset_id": "ad3a3d32-e0ec-42ea-a947-747d8263eb91",
+    "sha12": "15f18549429d",
+    "label": "Hero - Summon Card v1 (6 frames)",
+    "file": "player-animations/summon-v1-spritesheet.png"
+  },
+  {
+    "asset_id": "158937a2-8d7f-41d3-849a-c679e353c538",
+    "sha12": "b15d5d6a2749",
+    "label": "Hero - Command (4 frames)",
+    "file": "player-animations/command-spritesheet.png"
+  },
+  {
+    "asset_id": "3eea7e84-48e2-4e94-bf1c-b518cbe2c2f5",
+    "sha12": "f7d46ecb2dc0",
+    "label": "Hero - Talk (4 frames)",
+    "file": "player-animations/talk-spritesheet.png"
+  },
+  {
+    "asset_id": "263c0f41-3325-4d78-891a-b4a62b8e30e8",
+    "sha12": "615b346f9987",
+    "label": "Hero - Victory (6 frames)",
+    "file": "player-animations/victory-spritesheet.png"
+  },
+  {
+    "asset_id": "794ea88b-b529-402b-a83f-54e4d8fd3773",
+    "sha12": "7c6947fcc0e0",
+    "label": "Hero - Defeat (6 frames)",
+    "file": "player-animations/defeat-spritesheet.png"
+  },
+  {
+    "asset_id": "ee8a5a13-a367-48f7-b883-ba5e8e01d005",
+    "sha12": "8d3ea3ab9a56",
+    "label": "Hero - Yellow Card Raised Reference",
+    "file": "../../../public/art/people/player-summon.png"
+  },
+  {
+    "asset_id": "0b9af87b-b05f-4313-a614-8fb96869f832",
+    "sha12": "bcd2d79f280f",
+    "label": "Hero - Walk v2 (4 frames)",
+    "file": "player-animations/walk-spritesheet.png"
+  },
+  {
+    "asset_id": "040e9f32-0cf9-45fd-a04b-17d9f9b5a1aa",
+    "sha12": "1b57a6a06519",
+    "label": "Hero - Walk v3 (6 frames)",
+    "file": "player-animations/walk-v3-spritesheet.png"
+  },
+  {
+    "asset_id": "52423e46-4a70-4050-8e8e-59eb22b8ebd2",
+    "sha12": "89cdc8beccfc",
+    "label": "Hero - Walk v4 (8 source frames, use 2-8)",
+    "file": "player-animations/walk-v4-spritesheet.png",
+    "selected": true
+  },
+  {
+    "asset_id": "ecc87505-4aca-4476-8703-5c79743a9b05",
+    "sha12": "583f6f459d51",
+    "label": "Hero - Walk v5 (6 frames)",
+    "file": "player-animations/walk-v5-spritesheet.png"
+  },
+  {
+    "asset_id": "89cfa971-5758-45b6-ae9b-9a1be42c4975",
+    "sha12": "e068187b5d28",
+    "label": "Hero - Opposite Step Candidate (4 frames)",
+    "file": "player-animations/walk-opposite-spritesheet.png"
+  },
+  {
+    "asset_id": "862343db-e8ae-439e-9a1a-dcd695ffd53a",
+    "sha12": "7419dad48e84",
+    "label": "Hero - Jump v2 (6 frames)",
+    "file": "player-animations/jump-spritesheet.png"
+  },
+  {
+    "asset_id": "9ef3fc63-7679-4943-87a0-4601705b0961",
+    "sha12": "0ffe19e6ded3",
+    "label": "Hero - Summon Card v2 (6 frames)",
+    "file": "player-animations/summon-spritesheet.png"
+  },
+  {
+    "asset_id": "67ddb124-08e5-4073-b182-893211fa0c83",
+    "sha12": "1fb212bb52f0",
+    "label": "Hero - Summon Card v3 (6 frames)",
+    "file": "player-animations/summon-v3-spritesheet.png",
+    "selected": true
+  },
+  {
+    "asset_id": "2ade664a-f3c8-442a-bb8f-9a10888ec0a9",
+    "sha12": "13571007b230",
+    "label": "Hero - Single Yellow Summon Card v4 (6 frames)",
+    "file": "player-animations/summon-v4-spritesheet.png"
+  },
+  {
+    "asset_id": "cae57c2c-55f4-49be-9d91-5c26275a5c1d",
+    "sha12": "069de3dc20ab",
+    "label": "Hero - Throw Item (6 frames)",
+    "file": "player-animations/itemThrow-spritesheet.png"
+  },
+  {
+    "asset_id": "02699edc-90f3-45fc-b251-8c2d096ed032",
+    "sha12": "836c4480cdc8",
+    "label": "Hero - Pickup v1 (6 frames)",
+    "file": "player-animations/pickup-spritesheet.png"
+  },
+  {
+    "asset_id": "649fb61d-af9f-412d-9c51-34adcc5788f4",
+    "sha12": "9fb80ece53ec",
+    "label": "Hero - Standing Pickup v2 (4 frames)",
+    "file": "player-animations/pickup-v2-spritesheet.png"
+  }
+]

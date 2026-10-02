@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { BATTLE_RECALL_END_SECONDS, CAPTURE_RECALL_END_SECONDS, Game, type BattleActor, type WalkingNpcActor, type WildActor } from '../game/game';
+import { BATTLE_COMMAND_POSE_SECONDS, BATTLE_INTRO_SECONDS, BATTLE_ITEM_THROW_SECONDS, BATTLE_RECALL_END_SECONDS, BATTLE_SUMMON_POSE_SECONDS, CAPTURE_RECALL_END_SECONDS, Game, PLAYER_PICKUP_SECONDS, type BattleActor, type WalkingNpcActor, type WildActor } from '../game/game';
 import { SPECIES } from '../game/content';
 import { staticNpcAt } from '../game/npcs';
-import { imageTexture, monsterTexture, personTexture } from './art';
+import { monsterTexture, personTexture, playerTexture } from './art';
+import { playerAnimationFrame, playerIntroCardPose, playerJumpLandingFrame, playerVictoryCardPose, type PlayerAnimation } from './playerAnimations';
 import { SPRITE_PITCH_COMPENSATION } from './camera';
 import { withCloudShadows } from './CloudShadows';
 import { facingForDirection, facingToward } from './facing';
@@ -83,21 +84,53 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
 }
 
 function Player({game}:{game:Game}) {
+  const playback=useRef<{animation:PlayerAnimation;start:number;cueSequence:number}>({animation:'idle',start:0,cueSequence:-1});
   return <PixelActor game={game} get={time=>{
     const jump=game.jump;
-    const moving=Math.hypot(game.move.x,game.move.z)>0.1 && (game.mode==='explore'||game.mode==='battle');
+    const landing=game.jumpLandingTime>0;
+    const moving=Math.hypot(game.move.x,game.move.z)>0.1 && (game.mode==='explore'||game.mode==='battle')&&game.playerPickupTime===0&&!landing;
     const target=game.battle?.foe;
     const capture=game.battle?.captureSequence;
+    const battle=game.battle;
     const returningCard=(!!game.battle?.finisher&&game.battle.finisher.elapsed>=1.38&&game.battle.finisher.elapsed<BATTLE_RECALL_END_SECONDS)||
       (!!capture?.success&&capture.elapsed>=2.48&&capture.elapsed<CAPTURE_RECALL_END_SECONDS);
     const throwingCard=!!capture&&capture.elapsed<0.7;
-    const commanding=(game.battle?.cue?.poseRemaining??0)>0||returningCard||throwingCard;
+    const commanding=(battle?.cue?.poseRemaining??0)>0;
+    let animation:PlayerAnimation='idle';
+    let elapsed:number|undefined;
+    let frameOverride:number|undefined;
+    if(battle?.defeat){animation='defeat';elapsed=battle.defeat.elapsed;}
+    else if(battle?.finisher){
+      const pose=playerVictoryCardPose(battle.finisher.elapsed);
+      animation=pose.animation;frameOverride=pose.frame;
+    }else if(jump){animation='jump';elapsed=jump.elapsed;}
+    else if(landing){animation='jump';}
+    else if(battle?.intro&&battle.intro>0){
+      const pose=playerIntroCardPose(BATTLE_INTRO_SECONDS-battle.intro);
+      animation=pose.animation;frameOverride=pose.frame;
+    }else if((battle?.itemUseTime??0)>0){
+      animation='itemThrow';elapsed=BATTLE_ITEM_THROW_SECONDS-battle!.itemUseTime;
+    }else if((battle?.summonPoseTime??0)>0){
+      animation='summon';elapsed=BATTLE_SUMMON_POSE_SECONDS-battle!.summonPoseTime;
+    }else if(throwingCard){animation='command';elapsed=capture!.elapsed;}
+    else if(game.mode==='explore'&&game.playerPickupTime>0){
+      animation='pickup';elapsed=PLAYER_PICKUP_SECONDS-game.playerPickupTime;
+    }
+    else if(commanding){
+      animation='command';elapsed=BATTLE_COMMAND_POSE_SECONDS-battle!.cue!.poseRemaining;
+    }else if(game.mode==='dialog')animation='talk';
+    else if(moving)animation='walk';
+    const cueSequence=battle?.cue?.sequence??-1;
+    if(playback.current.animation!==animation||animation==='command'&&playback.current.cueSequence!==cueSequence){
+      playback.current={animation,start:time,cueSequence};
+    }
+    const frame=landing&&animation==='jump'&&!jump
+      ?playerJumpLandingFrame(game.jumpLandingTime)
+      :frameOverride??playerAnimationFrame(animation,elapsed??time-playback.current.start);
     return {
       x:game.player.x,z:game.player.z,visible:!!game.world&&game.mode!=='title',
-      texture:jump?imageTexture('/art/people/player-jump.png'):returningCard?personTexture('player',2):(game.battle?.intro??0)>0||(game.battle?.itemUseTime??0)>0||commanding
-        ?imageTexture('/art/people/player-summon.png')
-        :personTexture('player',moving?Math.floor(time*7)%2:0),scale:jump?0.84:1,
-      facing:jump?facingToward(jump.from,jump.to):throwingCard&&capture?facingToward(game.player,capture.foe):returningCard&&game.battle?facingToward(game.player,game.battle.ally):commanding&&game.battle?facingToward(game.player,game.battle.ally):moving?facingForDirection(game.move.x,game.move.z):target?facingToward(game.player,target):undefined,
+      texture:playerTexture(animation,frame),
+      facing:jump?facingToward(jump.from,jump.to):landing?undefined:animation==='itemThrow'&&battle?.itemThrowTarget?facingToward(game.player,battle.itemThrowTarget):battle?.finisher||battle?.intro&&battle.intro>0?facingToward(game.player,battle.ally):throwingCard&&capture?facingToward(game.player,capture.foe):returningCard&&game.battle?facingToward(game.player,game.battle.ally):commanding&&game.battle?facingToward(game.player,game.battle.ally):moving?facingForDirection(game.move.x,game.move.z):target?facingToward(game.player,target):undefined,
       lift:game.playerVisualLift
     };
   }}/>;

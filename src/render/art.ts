@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { spriteFootV } from './spriteAnchors';
+import { PLAYER_ANIMATIONS, type PlayerAnimation } from './playerAnimations';
 
 const imageCache = new Map<string, THREE.Texture>();
 const stripCache = new Map<string, THREE.Texture[]>();
@@ -54,9 +55,14 @@ export function monsterPortrait(speciesId: string): string {
 }
 
 export function personTexture(role: 'player'|'artisan'|'healer'|'keeper'|'guardian'|'cartographer'|'botanist'|'baker'|'courier', frame = 0): THREE.Texture {
-  if (role==='player') return stripFrames('/art/people/player.png')[Math.max(0,Math.min(5,frame))];
+  if (role==='player') return playerTexture('idle',frame);
   if (role==='cartographer'||role==='botanist'||role==='baker'||role==='courier') return stripFrames(`/art/people/${role}.png`,3)[Math.max(0,Math.min(2,frame))];
   return imageTexture(`/art/people/${role}.png`,true);
+}
+
+export function playerTexture(animation: PlayerAnimation, frame = 0): THREE.Texture {
+  const count=PLAYER_ANIMATIONS[animation].frames;
+  return stripFrames(`/art/people/player-anim-${animation}.png`,count)[Math.max(0,Math.min(count-1,frame))];
 }
 
 export function personPortrait(role: 'player'|'artisan'|'healer'|'keeper'|'guardian'): string {

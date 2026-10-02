@@ -17,6 +17,11 @@ function readyBattle(game:Game):void {
   game.battle!.foe.attackTimer=999;
 }
 
+function finishManualThrow(game:Game):void {
+  for(let step=0;step<8;step++)game.update(0.05);
+  expect(game.battle!.itemUseTime).toBe(0);
+}
+
 describe('mochila e itens de batalha',()=>{
   it('equipa uma comida e um suporte por criatura a partir da mochila ou do inventário',()=>{
     const game=new Game();game.newGame('brasito',40732);
@@ -195,6 +200,8 @@ describe('mochila e itens de batalha',()=>{
     expect(game.useBattleItem('starter-pao')).toBe(true);
     expect(game.battle!.ally.hp).toBe(22);
     expect(game.save!.inventory.some(item=>item.uid==='starter-pao')).toBe(false);
+    expect(game.effects.some(effect=>effect.kind==='item'&&effect.itemId==='pao')).toBe(false);
+    finishManualThrow(game);
     expect(game.effects.some(effect=>effect.kind==='item'&&effect.itemId==='pao')).toBe(true);
     expect(game.effects.find(effect=>effect.kind==='item'&&effect.itemId==='pao'))
       .toMatchObject({itemEffect:'heal',amount:12,targetUid:game.activeMonster!.uid});
@@ -207,6 +214,7 @@ describe('mochila e itens de batalha',()=>{
     game.save!.party[0].hp=maxHp(game.save!.party[0])-4;
     readyBattle(game);game.openBattleMenu('items');
     expect(game.useBattleItem('starter-pao')).toBe(true);
+    finishManualThrow(game);
     expect(game.effects.find(effect=>effect.kind==='item'&&effect.itemId==='pao'))
       .toMatchObject({itemEffect:'heal',amount:4});
   });
@@ -216,17 +224,22 @@ describe('mochila e itens de batalha',()=>{
     expect(game.equipBattleItem('casca-extra')).toBe(true);
     readyBattle(game);
     game.openBattleMenu('items');expect(game.useBattleItem('starter-tonico')).toBe(true);
+    finishManualThrow(game);
     game.openBattleMenu('items');expect(game.useBattleItem('casca-extra')).toBe(true);
     const uid=game.activeMonster!.uid;
     expect(game.battle!.statuses).toHaveLength(2);
     expect(game.statusBonus(uid,'attack')).toBe(5);
     expect(game.statusBonus(uid,'defense')).toBe(5);
-    expect(game.battle!.statuses.every(status=>status.remaining===12)).toBe(true);
+    expect(game.battle!.statuses[0].remaining).toBeCloseTo(11.6);
+    expect(game.battle!.statuses[1].remaining).toBe(12);
     expect(game.effects.filter(effect=>effect.kind==='item'&&effect.itemEffect==='status'))
       .toEqual(expect.arrayContaining([
         expect.objectContaining({amount:5,stat:'attack',targetUid:uid}),
-        expect.objectContaining({amount:5,stat:'defense',targetUid:uid})
       ]));
+    finishManualThrow(game);
+    expect(game.effects).toEqual(expect.arrayContaining([
+      expect.objectContaining({kind:'item',amount:5,stat:'defense',targetUid:uid})
+    ]));
   });
   it('aplica bônus e penalidades temporários ao alvo certo e pausa sua duração no menu',()=>{
     const game=new Game();game.newGame('brasito',40732);
@@ -237,11 +250,14 @@ describe('mochila e itens de batalha',()=>{
     const allyUid=game.activeMonster!.uid;
     expect(game.statusBonus(allyUid,'attack')).toBe(5);
     expect(game.statusBonus(game.battle!.enemy.uid,'attack')).toBe(0);
+    finishManualThrow(game);
     game.openBattleMenu('items');expect(game.useBattleItem('test-weak')).toBe(true);
     expect(game.statusBonus(game.battle!.enemy.uid,'attack')).toBe(-5);
+    finishManualThrow(game);
     game.openBattleMenu('cards');
+    const remaining=game.battle!.statuses[0].remaining;
     for(let i=0;i<400;i++)game.update(0.05);
-    expect(game.battle!.statuses[0].remaining).toBe(12);
+    expect(game.battle!.statuses[0].remaining).toBe(remaining);
     game.closeBattleMenu();
     for(let i=0;i<305;i++)game.update(0.05);
     expect(game.statusBonus(allyUid,'attack')).toBe(0);

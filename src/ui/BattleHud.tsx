@@ -39,6 +39,9 @@ export function BattleHud({game,cameraRef,onAllyDetails,onEnemyDetails}:{game:Ga
   const battle=game.battle,save=game.save,ally=game.activeMonster;
   if(!battle||!save||!ally)return null;
   const friend=SPECIES[ally.species],foe=SPECIES[battle.enemy.species];
+  if(battle.defeat)return <div className="battle-ui battle-finish-ui" aria-live="polite">
+    <div className="battle-finish-label"><span>DERROTA</span><strong>Sua equipe desmaiou</strong><small>A guardiã está a caminho.</small></div>
+  </div>;
   if(battle.finisher)return <div className="battle-ui battle-finish-ui" aria-live="polite">
     <div className="battle-finish-label"><span>VITÓRIA</span><strong>{foe.name} foi derrotado</strong><small>+{battle.finisher.xp} XP para {friend.name}</small></div>
   </div>;

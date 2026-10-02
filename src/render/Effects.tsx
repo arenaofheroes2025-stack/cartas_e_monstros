@@ -103,9 +103,12 @@ export function Effects({game}:{game:Game}) {
         const mesh=new THREE.Mesh(new THREE.PlaneGeometry(0.68,0.68),material);
         mesh.renderOrder=13;
         group.current.add(mesh);
-        itemFlights.current.push({mesh,from:new THREE.Vector3(event.x,game.getGroundHeight(event.x,event.z)+(event.autoItem?0.84:1.25),event.z),
+        const handOffset=event.autoItem?0:0.32;
+        const dx=event.target.x-event.x,dz=event.target.z-event.z;
+        const distance=Math.hypot(dx,dz)||1;
+        itemFlights.current.push({mesh,from:new THREE.Vector3(event.x+dx/distance*handOffset,game.getGroundHeight(event.x,event.z)+(event.autoItem?0.84:1.25),event.z+dz/distance*handOffset),
           to:new THREE.Vector3(event.target.x,game.getGroundHeight(event.target.x,event.target.z)+1.1,event.target.z),
-          elapsed:0,duration:event.autoItem?0.62:0.68,color:ITEMS[event.itemId].color,targetUid:event.targetUid,
+          elapsed:0,duration:event.autoItem?0.62:0.38,color:ITEMS[event.itemId].color,targetUid:event.targetUid,
           itemEffect:event.itemEffect,amount:event.amount,stat:event.stat,autoItem:event.autoItem});
         continue;
       }

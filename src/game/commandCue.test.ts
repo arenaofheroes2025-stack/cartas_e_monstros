@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Game } from './game';
+import { BATTLE_COMMAND_POSE_SECONDS, Game } from './game';
 
 const store=new Map<string,string>();
 beforeEach(()=>{store.clear();vi.stubGlobal('localStorage',{
@@ -22,7 +22,7 @@ describe('ordens visíveis do herói',()=>{
       ['attack','Atacar!','#ef665e'],['follow','Perseguir!','#f4d36a'],['return','Volte!','#a4db8d']
     ] as const){
       game.battleCommand(command);
-      expect(game.battle!.cue).toMatchObject({label,color,poseRemaining:1.25});
+      expect(game.battle!.cue).toMatchObject({label,color,poseRemaining:BATTLE_COMMAND_POSE_SECONDS});
     }
     const previous=game.battle!.cue!.sequence;
     game.battleCommand('dodge');

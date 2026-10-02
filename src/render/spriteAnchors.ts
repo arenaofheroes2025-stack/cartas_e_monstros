@@ -404,8 +404,89 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/people/keeper.png": [
     0.02148
   ],
-  "/art/people/player-idle.png": [
+  "/art/people/player-anim-cardRecall.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-command.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-defeat.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.04688,
     0.04688
+  ],
+  "/art/people/player-anim-idle.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-itemThrow.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-jump.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.17969,
+    0.17969,
+    0.17188
+  ],
+  "/art/people/player-anim-pickup.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-summon.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0
+  ],
+  "/art/people/player-anim-talk.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-victory.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-anim-walk.png": [
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906,
+    0.03906
+  ],
+  "/art/people/player-idle.png": [
+    0.03906
   ],
   "/art/people/player-jump.png": [
     0.03906
