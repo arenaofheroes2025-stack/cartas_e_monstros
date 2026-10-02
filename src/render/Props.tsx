@@ -143,32 +143,45 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
 }
 
 function PlaceArt({place,world,fading=false}:{place:Place|Decoration;world:WorldData;fading?:boolean}) {
+  const meshRef=useRef<THREE.Mesh>(null);
   const tile=world.tiles[place.z*world.size+place.x];
   const size=placeSize(place);
   const visualHeight=size;
+  // Large buildings need stable subpixel sampling as the camera glides.
+  const building=place.kind==='house'||place.id.startsWith('casa-')||
+    place.id==='woodcutter-hut'||place.id==='boathouse';
+  const art=imageTexture(`/art/environment/${place.id}.png`,building);
   const shadowGroup=place.kind==='house'?'casas':shadowGroupForAsset(place.id);
   const shadowOffset=shadowGroupOffset(shadowGroup);
-  const footV=imageTexture(`/art/environment/${place.id}.png`).userData.footV as number;
+  const footV=art.userData.footV as number;
   const shadowGeometry=useMemo(()=>makeProjectedShadowGeometry(world,[{
     x:place.x+0.5+shadowOffset.x,z:place.z+0.5+shadowOffset.z,y:0.1+tile.height*HEIGHT_STEP
   }],size,calibratedCasterHeight(visualHeight,shadowGroup),footV),
     [world,place.x,place.z,place.id,place.kind,size,visualHeight,tile.height,footV]);
   const shadowMaterial=useMemo(()=>{
-    const material=projectedShadowMaterial(imageTexture(`/art/environment/${place.id}.png`));
+    const material=projectedShadowMaterial(art);
     material.uniforms.uAlphaCut.value=0.14;
     return material;
-  },[place.id]);
+  },[art]);
   useLayoutEffect(()=>()=>{shadowGeometry.dispose();shadowMaterial.dispose();},[shadowGeometry,shadowMaterial]);
-  const material=useMemo(()=>{const art=imageTexture(`/art/environment/${place.id}.png`);return withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+  const material=useMemo(()=>withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,alphaTest:fading?0.01:0.14,side:THREE.DoubleSide,depthWrite:true
-  })));},[place.id,fading]);
+  }))),[art,fading]);
   useLayoutEffect(()=>()=>material.dispose(),[material]);
-  const position=new THREE.Vector3(place.x+0.5,0.1+tile.height*HEIGHT_STEP,place.z+0.5)
-    .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV));
+  const matrix=useMemo(()=>new THREE.Matrix4().compose(
+    new THREE.Vector3(place.x+0.5,0.1+tile.height*HEIGHT_STEP,place.z+0.5)
+      .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV)),
+    SPRITE_FACING,new THREE.Vector3(1,1,1)),
+    [place.x,place.z,tile.height,visualHeight,footV]);
+  useLayoutEffect(()=>{
+    if(!meshRef.current)return;
+    meshRef.current.matrix.copy(matrix);
+    meshRef.current.matrixWorldNeedsUpdate=true;
+  },[matrix]);
   return <>
     <mesh geometry={shadowGeometry} material={shadowMaterial} renderOrder={3}/>
-    <mesh position={position} quaternion={SPRITE_FACING} material={material} receiveShadow>
+    <mesh ref={meshRef} matrixAutoUpdate={false} material={material} receiveShadow>
       <planeGeometry args={[size,visualHeight]}/>
     </mesh>
   </>;
