@@ -1,0 +1,111 @@
+.game-app .inventory-panel{width:min(930px,calc(100vw - 28px));height:min(590px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);display:flex;flex-direction:column;overflow:hidden;padding:16px 20px;background:linear-gradient(145deg,#1e3b49,#112b38 70%);border-color:#d2a35e}
+.inventory-panel>.eyebrow{flex:none;font-size:9px}
+.game-app .inventory-heading{flex:none;margin:0 28px 7px 0;align-items:center}
+.game-app .inventory-heading h2{margin:0;color:#ffe6b5;font-size:30px;line-height:1}
+.game-app .inventory-heading p{margin:3px 0 0;font-size:11px}
+.game-app .inventory-bag-icon{width:44px;height:44px}
+.inventory-workspace{display:grid;grid-template-columns:210px minmax(0,1fr);gap:13px;flex:1;min-height:0}
+.inventory-party{min-width:0;min-height:0;padding:11px;border:1px solid #eed49a;border-radius:14px;background:linear-gradient(155deg,#eee9da,#d5e5d5);box-shadow:inset 0 1px #fff9,0 5px 15px #08172066;color:#243e45}
+.inventory-party-heading{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
+.inventory-party-heading h3{margin:0;font:700 17px Georgia,serif}
+.inventory-party-heading small{color:#66807c;font:800 10px Consolas,monospace}
+.inventory-party-list{display:flex;flex-direction:column;gap:7px;max-height:calc(100% - 30px);overflow-y:auto}
+.inventory-party-card{display:flex;align-items:center;gap:7px;width:100%;min-width:0;min-height:60px;padding:4px 7px;border:1px solid #c1cdb9;border-radius:11px;background:#fffdf2;color:#26434a;text-align:left;box-shadow:0 3px 0 #a1b5a877;touch-action:manipulation}
+.inventory-party-card:hover,.inventory-party-card:focus-visible{border-color:#d49b52;background:#fff9e8}
+.inventory-party-card>img{flex:none;width:48px;height:48px;object-fit:contain;image-rendering:pixelated}
+.inventory-party-card>span{display:flex;flex-direction:column;min-width:0;flex:1}
+.inventory-party-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 12px Georgia,serif}
+.inventory-party-health{display:block;width:100%;height:6px;margin:4px 0;border-radius:5px;background:#aabdb0;overflow:hidden}
+.inventory-party-health i{display:block;height:100%;border-radius:5px;background:#5ebf75}
+.inventory-party-card small{display:flex;justify-content:space-between;gap:3px;color:#466a6a;font:800 9px Consolas,monospace;white-space:nowrap}
+.inventory-party-card small b{color:#275263}
+.inventory-main{display:flex;flex-direction:column;min-width:0;min-height:0;padding:10px 12px;border:1px solid #f4d68e;border-radius:14px;background:radial-gradient(circle at 85% 95%,#f6d88488,transparent 34%),linear-gradient(130deg,#d29b4d,#f0cc77 65%,#dfad55);box-shadow:inset 0 1px #fff7,0 5px 15px #08172066;color:#3a302b}
+.inventory-main .inventory-section-title{flex:none;margin:0 0 6px;padding:0 0 3px;border-color:#8e6b4080}
+.inventory-main .inventory-section-title h3{color:#3a3330;font:700 15px Georgia,serif}
+.inventory-main .inventory-section-title span{color:#654f39;font:800 9px Consolas,monospace}
+.inventory-main .inventory-loadout{flex:none}
+.inventory-main .loadout-grid{gap:6px}
+.inventory-main .loadout-slot{height:70px;border-color:#916b4f;background:linear-gradient(145deg,#39464a,#1d313a);color:#f7e6c7}
+.inventory-main .loadout-slot img,.inventory-main .loadout-empty{width:38px;height:38px}
+.inventory-main .loadout-slot strong{font-size:8px}
+.inventory-main .loadout-help{min-height:13px;margin:3px 0 0!important;color:#634f3c!important;font-size:9px}
+.inventory-main .inventory-stock{display:flex;flex-direction:column;flex:1;min-height:0;margin-top:5px}
+.inventory-categories{display:flex;gap:4px;flex:none;margin-bottom:5px}
+.inventory-categories button{display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:0;height:31px;padding:3px 5px;border:1px solid #ac7b45;border-radius:7px;background:#ffe3a166;color:#4b3b33;font-size:10px;font-weight:800;touch-action:manipulation}
+.inventory-categories button.active{background:#263e47;border-color:#263e47;color:#ffebc3;box-shadow:0 2px 0 #8c652f}
+.inventory-categories button img{width:20px;height:20px;object-fit:contain;image-rendering:pixelated}
+.inventory-main .inventory-layout{display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
+.inventory-main .inventory-item-list{display:flex;flex-direction:column;flex:1;min-height:0;max-height:none;gap:3px;padding:2px 3px;overflow-y:auto;scrollbar-color:#986534 #edc77e}
+.inventory-main .inventory-slot{aspect-ratio:auto;display:flex;align-items:center;gap:9px;flex:none;width:100%;min-height:35px;height:35px;max-height:none;padding:3px 9px;border:1px solid transparent;border-radius:7px;background:#fff2d74a;box-shadow:none;color:#3e3630;text-align:left}
+.inventory-main .inventory-slot.occupied{background:#fff2d74a;border-color:#b9894b66}
+.inventory-main .inventory-slot.selected{background:#233a43;border-color:#243a42;box-shadow:inset 4px 0 var(--item-accent),0 2px 5px #65472180;color:#fff0cf}
+.inventory-main .inventory-slot img{flex:none;width:27px;height:27px;object-fit:contain;filter:drop-shadow(0 2px 2px #4a352887)}
+.inventory-row-name{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0}
+.inventory-row-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.inventory-row-name small{color:#6a5641;font:800 9px Consolas,monospace;white-space:nowrap}
+.inventory-slot.selected .inventory-row-name small{color:#e4caa2}
+.inventory-row-count{flex:none;color:inherit;font:800 12px Consolas,monospace}
+.inventory-main .inventory-none{margin:auto;padding:8px;color:#5c4937;font-size:11px;text-align:center}
+.inventory-main .inventory-detail{display:flex;flex-direction:row;align-items:center;gap:12px;flex:none;min-height:106px;height:106px;padding:9px 11px;border:1px solid #657a76;border-radius:10px;background:#1a3541;color:#fff0d1;overflow:hidden}
+.inventory-main .inventory-item-summary{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.inventory-main .inventory-art{flex:none;width:70px;height:70px;background:radial-gradient(circle,#38505a,#1a3541 67%)}
+.inventory-main .inventory-art img{width:70px;height:70px}
+.inventory-main .inventory-item-summary small{color:var(--item-accent);font-size:9px}
+.inventory-main .inventory-item-summary h3{margin:2px 0 4px;color:#ffe6b4;font-size:18px}
+.inventory-main .inventory-item-summary p{margin:0;color:#d6e2d7;font-size:11px;line-height:1.25}
+.inventory-main .inventory-actions{display:flex;flex-direction:column;flex:none;width:170px;gap:5px;margin:0;padding:0}
+.inventory-main .inventory-actions button{min-height:36px;margin:0;padding:6px 8px;font-size:11px}
+.inventory-main .inventory-empty-detail{font-size:12px}
+.game-app .inventory-footer{flex:none;margin-top:5px}
+.game-app .inventory-footer span{font-size:9px}
+@media(max-width:950px) and (max-height:600px) and (orientation:landscape){
+  .game-app .inventory-panel{width:calc(100vw - 16px);height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);padding:7px 10px}
+  .game-app .inventory-heading{margin:0 26px 4px 0}
+  .game-app .inventory-heading h2{font-size:18px}
+  .inventory-workspace{grid-template-columns:155px minmax(0,1fr);gap:7px}
+  .inventory-party{padding:6px;border-radius:9px}
+  .inventory-party-heading{margin-bottom:4px}
+  .inventory-party-heading h3{font-size:12px}
+  .inventory-party-heading small{font-size:8px}
+  .inventory-party-list{gap:4px;max-height:calc(100% - 19px)}
+  .inventory-party-card{min-height:48px;padding:2px 4px;gap:3px;border-radius:7px}
+  .inventory-party-card>img{width:36px;height:36px}
+  .inventory-party-card strong{font-size:10px}
+  .inventory-party-health{height:4px;margin:2px 0}
+  .inventory-party-card small{font-size:8px}
+  .inventory-main{padding:6px 8px;border-radius:9px}
+  .inventory-main .inventory-section-title{margin:0 0 3px;padding-bottom:1px}
+  .inventory-main .inventory-section-title h3{font-size:12px}
+  .inventory-main .inventory-section-title span{font-size:8px}
+  .inventory-main .loadout-grid{gap:4px}
+  .inventory-main .loadout-slot{height:44px;padding:2px 1px}
+  .inventory-main .loadout-slot img,.inventory-main .loadout-empty{width:27px;height:27px}
+  .inventory-main .loadout-slot strong{font-size:7px}
+  .inventory-main .loadout-help{display:none}
+  .inventory-main .inventory-stock{margin-top:3px}
+  .inventory-categories{gap:3px;margin-bottom:3px}
+  .inventory-categories button{height:23px;padding:1px 3px;font-size:9px}
+  .inventory-categories button img{width:16px;height:16px}
+  .inventory-main .inventory-layout{gap:4px}
+  .inventory-main .inventory-item-list{height:auto;max-height:none;gap:2px;padding:1px 2px}
+  .inventory-main .inventory-slot{height:28px;min-height:28px;max-height:28px;padding:2px 5px;gap:6px}
+  .inventory-main .inventory-slot img{width:22px;height:22px}
+  .inventory-row-name strong{font-size:10px}
+  .inventory-row-name small{font-size:8px}
+  .inventory-row-count{font-size:10px}
+  .game-app .inventory-panel .inventory-main .inventory-detail{height:80px;min-height:80px;padding:5px 7px;gap:7px}
+  .inventory-main .inventory-art,.inventory-main .inventory-art img{width:51px;height:51px}
+  .inventory-main .inventory-item-summary{gap:5px}
+  .inventory-main .inventory-item-summary small{font-size:7px}
+  .inventory-main .inventory-item-summary h3{font-size:13px;margin:1px 0 2px}
+  .inventory-main .inventory-item-summary p{font-size:9px;line-height:1.15}
+  .inventory-main .inventory-actions{width:154px;flex-direction:row;gap:4px}
+  .inventory-main .inventory-actions button{min-height:31px;padding:3px;font-size:9px}
+  .game-app .inventory-footer{display:none}
+}
+@media(max-width:680px) and (max-height:360px) and (orientation:landscape){
+  .inventory-workspace{grid-template-columns:138px minmax(0,1fr)}
+  .inventory-main .inventory-actions{width:136px}
+  .inventory-main .inventory-row-name small{display:none}
+}
+@media(prefers-reduced-motion:reduce){.inventory-party-card,.inventory-categories button,.inventory-main .inventory-slot{transition:none}}

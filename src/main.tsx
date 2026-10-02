@@ -18,6 +18,7 @@ import { BattleInspection, BattleMenuPanel, CollectionPanel, PausePanel } from '
 import './style.css';
 import './ui/mobileLandscape.css';
 import './ui/mobileMenus.css';
+import './ui/inventoryReference.css';
 
 function App() {
   const [game]=useState(()=>new Game());
@@ -53,7 +54,7 @@ function App() {
     {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} revision={revision} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onCompanion={setDetailsUid}/>:null}
     {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef} onAllyDetails={setDetailsUid} onEnemyDetails={()=>setEnemyDetails(true)}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
-    {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)}/>:null}
+    {bagOpen?<InventoryPanel game={game} onClose={()=>setBagOpen(false)} onCompanion={setDetailsUid}/>:null}
     {inGame&&!orientationPaused?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
     {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}/>:null}
     {collection?<CollectionPanel game={game} onClose={()=>setCollection(false)} onDetails={uid=>{setCollection(false);setDetailsUid(uid);}}/>:null}
