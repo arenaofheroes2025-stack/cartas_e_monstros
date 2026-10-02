@@ -44,59 +44,68 @@
   outline:2px solid #ffe0a7;outline-offset:2px;
 }
 
-/* Inventário: a equipe ocupa a ala ilustrada; itens e escolhas, o balcão azul. */
-.game-app .inventory-panel{background:#102c3e;border-color:var(--menu-edge);box-shadow:var(--menu-shadow)}
+/* Uma superfície para a mochila; linhas e realces mostram a hierarquia. */
+.game-app .inventory-panel{background:var(--menu-counter);border-color:var(--menu-edge);box-shadow:var(--menu-shadow)}
 .game-app .inventory-heading h2{color:#fff0ce}
 .game-app .inventory-party{
-  border-color:#987f63;background:var(--menu-scene);color:#ffe8c4;
-  box-shadow:inset 0 1px #e7c99546,0 8px 20px #04172266;
+  border:0;border-right:1px solid #aac6b66b;border-radius:0;background:transparent;color:#ffe8c4;
+  box-shadow:none;
 }
 .game-app .inventory-party-heading small{color:#e4bd80}
 .game-app .inventory-party-card{
-  border-color:#ae9b7c;background:linear-gradient(105deg,#153744,#1b4653);
-  color:#ffedcf;box-shadow:inset 3px 0 #d59d64,0 4px 13px #03141f66;
-  transition:transform .16s,background .16s,border-color .16s;
+  border:0;border-bottom:1px solid #b9d5cd4d;border-radius:0;background:transparent;
+  color:#ffedcf;box-shadow:none;
+  transition:background .16s;
 }
 .game-app .inventory-party-card:hover,.game-app .inventory-party-card:focus-visible{
-  border-color:#f0ca8b;background:linear-gradient(105deg,#1f5060,#226074);transform:translateX(2px);
+  background:#e4bf7b21;transform:none;
 }
 .game-app .inventory-party-card small,.game-app .inventory-party-card small b{color:#cce0d7}
 .game-app .inventory-party-health{background:#082634}
 .game-app .inventory-main{
-  border-color:#638f99;border-left:4px solid #d48f55;background:var(--menu-counter);
-  box-shadow:inset 0 1px #b9d5cd37,0 8px 22px #041b286b;color:#e7efe3;
+  border:0;border-radius:0;background:transparent;
+  box-shadow:none;color:#e7efe3;
 }
 .game-app .inventory-main .inventory-section-title{border-color:#88ada781}
 .game-app .inventory-main .inventory-section-title h3{color:#ffe7bf}
 .game-app .inventory-main .inventory-section-title span,.game-app .inventory-main .loadout-help{color:#bdd5cc!important}
 .game-app .inventory-main .loadout-slot{
-  border-color:#7f9d98;background:linear-gradient(145deg,#1a4051,#102b3b);color:#f7e6c7;
-  box-shadow:inset 0 1px #e4e4c927,0 4px 9px #03182687;
+  border-color:#7f9d98;background:#072b3d6b;color:#f7e6c7;
+  box-shadow:none;
 }
-.game-app .inventory-main .loadout-slot.selected{border-color:var(--item-accent,#f0be77);box-shadow:0 0 0 2px color-mix(in srgb,var(--item-accent,#f0be77),transparent 65%),0 5px 12px #03182687}
+.game-app .inventory-main .loadout-slot.selected{border-color:var(--item-accent,#f0be77);box-shadow:inset 0 0 0 1px var(--item-accent,#f0be77)}
 .game-app .inventory-categories button{
-  border-color:#7aa8a5;background:#123c55;color:#d7e7dd;
-  transition:background .15s,border-color .15s,transform .15s;
+  border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:#d7e7dd;
+  box-shadow:none;transition:background .15s,border-color .15s;
 }
-.game-app .inventory-categories button:hover{background:#245a73;transform:translateY(-1px)}
-.game-app .inventory-categories button.active{border-color:#ffe1a8;background:var(--menu-gold);color:#193a48;box-shadow:0 2px 0 #926d47}
+.game-app .inventory-categories button:hover{background:#e4bf7b1a;transform:none}
+.game-app .inventory-categories button.active{border-color:#f0be77;background:#e4bf7b1c;color:#ffe7bf;box-shadow:none}
 .game-app .inventory-main .inventory-slot,.game-app .inventory-main .inventory-slot.occupied{
-  border-color:#6d99945c;background:#123d5378;color:#e5f0e7;
-  transition:transform .15s,background .15s,border-color .15s;
+  border:0;border-bottom:1px solid #6d99945c;border-radius:0;background:transparent;color:#e5f0e7;
+  transition:background .15s;
 }
-.game-app .inventory-main .inventory-slot:hover{background:#2a688a91;transform:translateX(2px)}
+.game-app .inventory-main .inventory-slot:hover{background:#e4bf7b1a;transform:none}
 .game-app .inventory-main .inventory-slot.selected{
-  border-color:var(--item-accent);background:linear-gradient(95deg,#061e31,#082c49);
-  box-shadow:inset 4px 0 var(--item-accent),0 3px 9px #041b2877;color:#fff0cf;
+  border-color:var(--item-accent);background:#e4bf7b1a;
+  box-shadow:inset 3px 0 var(--item-accent);color:#fff0cf;
 }
 .game-app .inventory-row-name small,.game-app .inventory-main .inventory-none{color:#bed7d0}
 .game-app .inventory-main .inventory-detail{
-  border-color:#8cbdba7d;background:linear-gradient(100deg,#0b2c3d,#123f57);
-  box-shadow:0 6px 18px #0420358a;
+  border:0;border-top:1px solid #8cbdba7d;border-radius:0;background:transparent;
+  box-shadow:none;
 }
-.game-app .inventory-main .inventory-art{background:radial-gradient(circle,#32617a,#123a50 65%,transparent 72%)}
+.game-app .inventory-main .inventory-art{background:transparent}
 .game-app .inventory-heal-use{background:#82c49b;color:#113840}
 .game-app .inventory-use{background:#f0be77;color:#173a48}
+
+/* A loja compartilha o mesmo fundo; o item escolhido é uma seção, não outro cartão. */
+.game-app .shop-panel{background:var(--menu-counter)}
+.game-app .shop-scene{background:transparent}
+.game-app .shop-scene:after{background:linear-gradient(0deg,#092b42 2%,transparent 48%)}
+.game-app .shop-counter{border-left:1px solid #b5a57a80;background:transparent}
+.game-app .shop-wallet{border:0;border-radius:0;background:transparent;padding:0;box-shadow:none}
+.game-app .shop-row.selected{border-color:transparent;border-left:3px solid var(--shop-accent);border-radius:0;background:#e4bf7b1c;box-shadow:none;transform:none}
+.game-app .shop-purchase{border:0;border-top:1px solid #8cbdba7d;border-radius:0;background:transparent;box-shadow:none;padding:10px 0 0}
 
 /* Coleção, ficha e seleções preservam seus acentos elementais. */
 .game-app .collection-panel{
