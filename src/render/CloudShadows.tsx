@@ -4,8 +4,10 @@ import * as THREE from 'three';
 import { Game } from '../game/game';
 import { WorldData } from '../game/world';
 import { daylightPhase } from './daylightPhase';
+import type { SceneLightSource } from './lightSources';
 
 const TEXTURE_SIZE = 128;
+const TOWN_LIGHT_LIMIT = 6;
 
 function hash(x: number, y: number, seed: number): number {
   let value = Math.imul(x + seed * 17, 374761393) ^ Math.imul(y - seed * 13, 668265263);
@@ -76,13 +78,30 @@ const cloudUniforms = {
   uCloudCoverage: { value: 0.2 },
   uWorldLightGrade: { value: new THREE.Vector3(1,1,1) },
   uWorldLightFill: { value: 0 },
-  uWorldSpriteLift: { value: 0 }
+  uWorldSpriteLift: { value: 0 },
+  uTownLights: { value: Array.from({length:TOWN_LIGHT_LIMIT},()=>new THREE.Vector4()) },
+  uTownLightCount: { value: 0 },
+  uTownLightNight: { value: 0 }
 };
 
 export function setWorldLightGrade(red:number,green:number,blue:number,fill:number,spriteLift:number):void {
   cloudUniforms.uWorldLightGrade.value.set(red,green,blue);
   cloudUniforms.uWorldLightFill.value=fill;
   cloudUniforms.uWorldSpriteLift.value=spriteLift;
+}
+
+export function setTownLightSources(sources:readonly SceneLightSource[]):void {
+  const count=Math.min(sources.length,TOWN_LIGHT_LIMIT);
+  cloudUniforms.uTownLightCount.value=count;
+  for(let index=0;index<count;index++){
+    const source=sources[index];
+    cloudUniforms.uTownLights.value[index].set(source.x,source.z,source.reach,
+      source.kind==='lamp'?1:0.85);
+  }
+}
+
+export function setTownLightNight(night:number):void {
+  cloudUniforms.uTownLightNight.value=night;
 }
 
 export function cloudPhase(elapsed: number, hour: number): { x: number; y: number; strength: number; coverage:number } {
@@ -115,7 +134,10 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
       uniform float uCloudCoverage;
       uniform vec3 uWorldLightGrade;
       uniform float uWorldLightFill;
-      uniform float uWorldSpriteLift;\n${shader.fragmentShader}`.replace(
+      uniform float uWorldSpriteLift;
+      ${spriteArtwork?`uniform vec4 uTownLights[${TOWN_LIGHT_LIMIT}];
+      uniform float uTownLightCount;
+      uniform float uTownLightNight;`:''}\n${shader.fragmentShader}`.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
        float cloudDensity = texture2D(uCloudMask, vCloudWorldXZ / 64.0 + uCloudOffset).r;
@@ -125,9 +147,22 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
          uWorldLightFill * (vec3(1.0) - clamp(gl_FragColor.rgb,0.0,1.0));
        ${spriteArtwork?'gl_FragColor.rgb = mix(gl_FragColor.rgb,max(gl_FragColor.rgb,sqrt(max(gl_FragColor.rgb,vec3(0.0)))),uWorldSpriteLift);':''}
        gl_FragColor.rgb *= cloudShade;
+       ${spriteArtwork?`if(uTownLightNight>0.001){
+         float townFill=0.0;
+         for(int i=0;i<${TOWN_LIGHT_LIMIT};i++){
+           if(float(i)>=uTownLightCount)break;
+           vec2 difference=vCloudWorldXZ-uTownLights[i].xy;
+           float radius=uTownLights[i].z;
+           float radial=dot(difference,difference)/(radius*radius);
+           townFill+=uTownLights[i].w*(1.0-smoothstep(0.08,0.95,radial));
+         }
+         townFill=min(townFill,1.3)*uTownLightNight;
+         gl_FragColor.rgb=gl_FragColor.rgb*(1.0+townFill*0.12)+
+           vec3(0.045,0.03,0.015)*townFill;
+       }`:''}
        #include <tonemapping_fragment>`);
   };
-  material.customProgramCacheKey = () => `cloud-shadows-v9-${spriteArtwork?'sprite':'terrain'}`;
+  material.customProgramCacheKey = () => `cloud-shadows-v10-${spriteArtwork?'sprite':'terrain'}`;
   return material;
 }
 

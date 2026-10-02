@@ -8,7 +8,7 @@ import { worldLightSources, type SceneLightSource } from './lightSources';
 import { SUN_OFFSET } from './sun';
 import { SHADOW_CALIBRATION } from './shadowCalibration';
 import { setProjectedShadowOpacity } from './ProjectedShadows';
-import { setWorldLightGrade } from './CloudShadows';
+import { setTownLightNight, setTownLightSources, setWorldLightGrade } from './CloudShadows';
 import { daylightPhase } from './daylightPhase';
 
 const daySky=new THREE.Color('#9cccd4');
@@ -54,13 +54,14 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   const lastCull=useRef(-1);
   const lastShadow=useRef({x:Number.NaN,z:Number.NaN,at:0});
   const sources=useMemo(()=>game.world?worldLightSources(game.world):[],[game.world]);
+  const townSources=useMemo(()=>sources.filter(source=>source.kind==='house'||source.kind==='lamp'),[sources]);
   const opened=game.save?.openedCaches.join('|')||'';
   const cards=useMemo<SceneLightSource[]>(()=>{
     if(!game.world)return [];
     const found=new Set(opened?opened.split('|'):[]);
     return game.world.caches.filter(cache=>!found.has(cache.id)).map(cache=>{
       const groundY=game.getGroundHeight(cache.x+0.5,cache.z+0.5)+0.13;
-      return {id:`card-${cache.id}`,x:cache.x+0.5,y:groundY+0.52,z:cache.z+0.5,groundY,
+      return {id:`card-${cache.id}`,kind:'card',x:cache.x+0.5,y:groundY+0.52,z:cache.z+0.5,groundY,
         color:ELEMENT_COLOR[cache.element],reach:3.5};
     });
   },[game.world,opened]);
@@ -72,6 +73,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     lightSlots.current.fill(null);
     active.current.clear();
     lastCull.current=-1;
+    setTownLightSources([]);
   },[game.world]);
   useEffect(()=>{
     lastShadow.current.x=Number.NaN;
@@ -83,6 +85,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     const hour=game.hour;
     const {daylight,morning,warmth}=daylightPhase(hour);
     const night=1-daylight;
+    setTownLightNight(night);
     const clearDay=daylight*(1-Math.max(morning,warmth)*0.3);
     const dayLift=1+daylight*0.15+clearDay*0.18;
     setWorldLightGrade(
@@ -112,10 +115,14 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       scene.fog.near=18+daylight*5;
       scene.fog.far=45+daylight*20;
     }
-    village.current.intensity=0.4+night*1.7;
+    village.current.intensity=0.35+night*2.1;
 
     if(clock.elapsedTime-lastCull.current>0.2){
       lastCull.current=clock.elapsedTime;
+      setTownLightSources(townSources.filter(source=>
+        Math.hypot(source.x-px,source.z-pz)<source.reach+3)
+        .sort((a,b)=>
+          (a.x-px)**2+(a.z-pz)**2-(b.x-px)**2-(b.z-pz)**2));
       const visible=visibleLightIds(camera,allSources,active.current,3.5,7);
       const next=visible.length<=LIGHT_POOL_SIZE?visible:visible
         .sort((a,b)=>{
@@ -143,17 +150,20 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       if(!light||!glow)continue;
       const source=lightSlots.current[slot];
       if(!source){light.intensity=0;glow.visible=false;continue;}
-      const card=source.id.startsWith('card-');
+      const card=source.kind==='card';
       light.position.set(source.x,source.y,source.z);
       light.color.set(source.color);
       light.distance=source.reach;
-      light.intensity=card?0.5+night*0.55:0.25+night*2.05;
+      light.intensity=card?0.5+night*0.55:
+        source.kind==='lamp'?0.28+night*2.8:
+        source.kind==='house'?0.28+night*2.5:0.25+night*2.05;
       glow.visible=true;
       glow.position.set(source.x,source.groundY,source.z);
-      glow.scale.setScalar(card?2.4:5.8);
+      glow.scale.setScalar(card?2.4:source.reach*0.7);
       const material=glowMaterials[slot];
       material.uniforms.uColor.value.set(source.color);
-      material.uniforms.uOpacity.value=card?0.1+night*0.28:0.035+night*0.32;
+      material.uniforms.uOpacity.value=card?0.1+night*0.28:
+        source.kind==='shrine'?0.035+night*0.32:0.015+night*0.105;
     }
     // The sun keeps a fixed direction. Its shadow depth map only needs to
     // follow the player when the light's coverage has moved far enough.
@@ -174,7 +184,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       shadow-mapSize={[quality==='high'?1024:512,quality==='high'?1024:512]}
       shadow-camera-left={-22} shadow-camera-right={22} shadow-camera-top={22} shadow-camera-bottom={-22}
       shadow-camera-near={0.5} shadow-camera-far={135} shadow-bias={-0.00025} shadow-normalBias={0.006}/>
-    <pointLight ref={village} position={[48,3,48]} color="#f1ad69" distance={14} decay={2} intensity={1}/>
+    <pointLight ref={village} position={[48,3,53]} color="#f5c997" distance={14} decay={2} intensity={1}/>
     {lightPool}
     {glowMaterials.map((material,slot)=><mesh key={slot} ref={mesh=>{glowMeshes.current[slot]=mesh;}}
       geometry={glowGeometry} material={material} visible={false}

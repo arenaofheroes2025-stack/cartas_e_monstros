@@ -15,7 +15,7 @@ describe('apoio e direção das sombras',()=>{
     expect((house.offsetX+house.offsetZ)*Math.SQRT1_2).toBeLessThan(-0.8);
   });
   it('projeta a sombra na direção oposta à luz local à noite',()=>{
-    const source={id:'lamp',x:4,y:2,z:5,groundY:0,color:'#fff',reach:6.5};
+    const source={id:'lamp',kind:'lamp' as const,x:4,y:2,z:5,groundY:0,color:'#fff',reach:6.5};
     const direction=dominantShadowDirection(23,6,5,[source]);
     expect(direction.x).toBeCloseTo(1);
     expect(direction.z).toBeCloseTo(0);
