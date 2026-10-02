@@ -39,7 +39,7 @@ function ActorBars({game,cameraRef,side}:{game:Game;cameraRef:RefObject<Camera|n
           element.classList.toggle('recovering',actor.recovery>0&&actor.windup<=0);
           element.classList.toggle('special-ready',actor.charge>=100);
           element.classList.toggle('special-windup',actor.windup>0&&actor.skillWindup);
-          const notice=actor.windup>0&&actor.skillWindup?SPECIES[monster.species].skill.name:actor.charge>=100&&side==='foe'?'Especial pronto':'';
+          const notice=actor.windup>0&&actor.skillWindup?SPECIES[monster.species].skill.name:'';
           if(warning.current.textContent!==notice)warning.current.textContent=notice;
           const label=`${side==='foe'?'Inimigo':'Aliado'}: ${Math.ceil(actor.hp)} de ${maxHp(monster)} PV; golpe comum ${Math.round(progress*100)}%; especial ${Math.floor(actor.charge)}%`;
           if(element.getAttribute('aria-label')!==label)element.setAttribute('aria-label',label);
@@ -52,9 +52,9 @@ function ActorBars({game,cameraRef,side}:{game:Game;cameraRef:RefObject<Camera|n
   },[game,cameraRef,side]);
   return <div ref={root} className={`battle-actor-bars ${side}`} role="img" aria-label={side==='foe'?'Vida e golpes do inimigo':'Vida e golpes do aliado'}>
     <strong ref={warning} className="actor-special-warning"/>
-    <span className="actor-meter health"><b>PV</b><span ref={health}/></span>
-    <span className="actor-meter attack"><b>Golpe</b><span ref={attack}/></span>
-    <span className="actor-meter special"><b>Especial</b><span ref={special}/></span>
+    <span className="actor-meter health"><span ref={health}/></span>
+    <span className="actor-meter attack"><span ref={attack}/></span>
+    <span className="actor-meter special"><span ref={special}/></span>
   </div>;
 }
 

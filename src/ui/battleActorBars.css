@@ -1,19 +1,19 @@
-.battle-actor-bars{position:absolute;z-index:3;width:118px;display:flex;flex-direction:column;gap:2px;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 3px #07151dbc)}
+.battle-actor-bars{position:absolute;z-index:3;width:100px;display:flex;flex-direction:column;align-items:center;gap:2px;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 3px #07151dbc)}
 .actor-special-warning{min-height:0;color:#ffe2a4;font:900 9px Consolas,monospace;text-align:center;text-shadow:0 1px 4px #07151d}
 .actor-special-warning:empty{display:none}
-.battle-actor-bars .actor-meter{position:relative;display:block;width:100%;height:11px;border:1px solid #c1d2c6a8;border-radius:5px;background:#102b39ed;overflow:hidden}
+.battle-actor-bars .actor-meter{position:relative;display:block;width:86%;height:7px;border:1px solid #c1d2c6a8;border-radius:5px;background:#102b39ed;overflow:hidden}
 .battle-actor-bars .actor-meter>span{position:absolute;inset:0 auto 0 0;display:block;width:0;border-radius:3px;transition:width .12s linear}
-.battle-actor-bars .actor-meter b{position:absolute;z-index:1;left:4px;top:0;color:#fff9df;font:900 7px Consolas,monospace;line-height:9px;text-shadow:0 1px 2px #06151d,0 0 3px #06151d}
+.battle-actor-bars .health{width:100%;height:12px;border-color:#d7e5d3b8}
 .battle-actor-bars.ally .health>span{background:#75c98a}
 .battle-actor-bars.foe .health>span{background:#dc7366}
-.battle-actor-bars .attack{height:9px;border-color:#73959ab5}
+.battle-actor-bars .attack{border-color:#73959ab5}
 .battle-actor-bars .attack>span{background:#73cbd7}
 .battle-actor-bars.winding .attack>span{background:#ffd277;box-shadow:0 0 5px #ffcf74}
 .battle-actor-bars.recovering .attack>span{background:#b49c72}
-.battle-actor-bars .special{height:10px;border-color:#9a7ac2b5}
+.battle-actor-bars .special{border-color:#9a7ac2b5}
 .battle-actor-bars .special>span{background:#ad83e9}
 .battle-actor-bars.special-ready .special{border-color:#e1bdff;box-shadow:0 0 5px #d49bff88}
 .battle-actor-bars.special-windup .special{animation:actor-special-pulse .3s ease-in-out infinite alternate}
 @keyframes actor-special-pulse{to{box-shadow:0 0 9px #ffc67b;border-color:#ffdf9c}}
-@media(pointer:coarse) and (orientation:landscape){.battle-actor-bars{width:99px;gap:1px}.battle-actor-bars .actor-meter{height:10px}.battle-actor-bars .attack{height:9px}.battle-actor-bars .special{height:9px}.actor-special-warning{font-size:8px}}
+@media(pointer:coarse) and (orientation:landscape){.battle-actor-bars{width:86px;gap:1px}.battle-actor-bars .actor-meter{height:6px}.battle-actor-bars .health{height:11px}.actor-special-warning{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.battle-actor-bars.special-windup .special{animation:none}}
