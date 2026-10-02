@@ -112,7 +112,7 @@ export function cloudPhase(elapsed: number, hour: number): { x: number; y: numbe
   };
 }
 
-export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: T): T {
+export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: T, townGround=false): T {
   // Sprites use a stronger painted emissive layer than the terrain. Lift their
   // dark painted details in daylight without fading the inked silhouettes.
   const spriteArtwork=!!material.emissiveMap&&material.emissiveIntensity>=0.25;
@@ -135,7 +135,7 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
       uniform vec3 uWorldLightGrade;
       uniform float uWorldLightFill;
       uniform float uWorldSpriteLift;
-      ${spriteArtwork?`uniform vec4 uTownLights[${TOWN_LIGHT_LIMIT}];
+      ${spriteArtwork||townGround?`uniform vec4 uTownLights[${TOWN_LIGHT_LIMIT}];
       uniform float uTownLightCount;
       uniform float uTownLightNight;`:''}\n${shader.fragmentShader}`.replace(
       '#include <color_fragment>',
@@ -147,22 +147,23 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
          uWorldLightFill * (vec3(1.0) - clamp(gl_FragColor.rgb,0.0,1.0));
        ${spriteArtwork?'gl_FragColor.rgb = mix(gl_FragColor.rgb,max(gl_FragColor.rgb,sqrt(max(gl_FragColor.rgb,vec3(0.0)))),uWorldSpriteLift);':''}
        gl_FragColor.rgb *= cloudShade;
-       ${spriteArtwork?`if(uTownLightNight>0.001){
+       ${spriteArtwork||townGround?`if(uTownLightNight>0.001&&uTownLightCount>0.5){
          float townFill=0.0;
          for(int i=0;i<${TOWN_LIGHT_LIMIT};i++){
            if(float(i)>=uTownLightCount)break;
            vec2 difference=vCloudWorldXZ-uTownLights[i].xy;
-           float radius=uTownLights[i].z;
+           float radius=uTownLights[i].z*${townGround?'0.62':'1.0'};
            float radial=dot(difference,difference)/(radius*radius);
            townFill+=uTownLights[i].w*(1.0-smoothstep(0.08,0.95,radial));
          }
-         townFill=min(townFill,1.3)*uTownLightNight;
-         gl_FragColor.rgb=gl_FragColor.rgb*(1.0+townFill*0.12)+
-           vec3(0.045,0.03,0.015)*townFill;
+         townFill=min(townFill,${townGround?'1.0':'1.3'})*uTownLightNight;
+         ${townGround?`gl_FragColor.rgb=gl_FragColor.rgb*(1.0+townFill*0.25)+
+           vec3(0.055,0.038,0.016)*townFill;`:`gl_FragColor.rgb=gl_FragColor.rgb*(1.0+townFill*0.12)+
+           vec3(0.045,0.03,0.015)*townFill;`}
        }`:''}
        #include <tonemapping_fragment>`);
   };
-  material.customProgramCacheKey = () => `cloud-shadows-v10-${spriteArtwork?'sprite':'terrain'}`;
+  material.customProgramCacheKey = () => `cloud-shadows-v11-${townGround?'town-ground':spriteArtwork?'sprite':'terrain'}`;
   return material;
 }
 

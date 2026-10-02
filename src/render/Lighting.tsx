@@ -9,7 +9,7 @@ import { SUN_OFFSET } from './sun';
 import { SHADOW_CALIBRATION } from './shadowCalibration';
 import { setProjectedShadowOpacity } from './ProjectedShadows';
 import { setTownLightNight, setTownLightSources, setWorldLightGrade } from './CloudShadows';
-import { daylightPhase } from './daylightPhase';
+import { daylightPhase, townLightPhase } from './daylightPhase';
 
 const daySky=new THREE.Color('#9cccd4');
 const nightSky=new THREE.Color('#142a42');
@@ -85,7 +85,8 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     const hour=game.hour;
     const {daylight,morning,warmth}=daylightPhase(hour);
     const night=1-daylight;
-    setTownLightNight(night);
+    const townLight=townLightPhase(hour);
+    setTownLightNight(townLight);
     const clearDay=daylight*(1-Math.max(morning,warmth)*0.3);
     const dayLift=1+daylight*0.15+clearDay*0.18;
     setWorldLightGrade(
@@ -115,7 +116,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       scene.fog.near=18+daylight*5;
       scene.fog.far=45+daylight*20;
     }
-    village.current.intensity=0.35+night*2.1;
+    village.current.intensity=0.35+townLight*2.1;
 
     if(clock.elapsedTime-lastCull.current>0.2){
       lastCull.current=clock.elapsedTime;
@@ -155,15 +156,15 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       light.color.set(source.color);
       light.distance=source.reach;
       light.intensity=card?0.5+night*0.55:
-        source.kind==='lamp'?0.28+night*2.8:
-        source.kind==='house'?0.28+night*2.5:0.25+night*2.05;
+        source.kind==='lamp'?0.28+townLight*2.8:
+        source.kind==='house'?0.28+townLight*2.5:0.25+night*2.05;
       glow.visible=true;
       glow.position.set(source.x,source.groundY,source.z);
       glow.scale.setScalar(card?2.4:source.reach*0.7);
       const material=glowMaterials[slot];
       material.uniforms.uColor.value.set(source.color);
       material.uniforms.uOpacity.value=card?0.1+night*0.28:
-        source.kind==='shrine'?0.035+night*0.32:0.015+night*0.105;
+        source.kind==='shrine'?0.035+night*0.32:0.015+townLight*0.105;
     }
     // The sun keeps a fixed direction. Its shadow depth map only needs to
     // follow the player when the light's coverage has moved far enough.

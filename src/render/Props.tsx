@@ -101,8 +101,9 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
     const candidates=(game.mode==='explore'||(game.mode==='pause'&&!game.battle))?tiles.map((tile,i)=>{
       const dx=tile.x+0.5-player.x,dz=tile.z+0.5-player.z;
       return {i,dx,dz,distance:Math.hypot(dx,dz)};
-    }).filter(({dx,dz,distance})=>distance<Math.max(2.7,size*0.82)&&
-      (dx+dz)*Math.SQRT1_2>0.15&&Math.abs((dx-dz)*Math.SQRT1_2)<size*0.4)
+    }).filter(({dx,dz,distance})=>distance<Math.max(2.7,size*(wind?1.12:0.82))&&
+      (dx+dz)*Math.SQRT1_2>(wind?-0.15:0.15)&&
+      Math.abs((dx-dz)*Math.SQRT1_2)<size*(wind?0.56:0.4))
       .sort((a,b)=>a.distance-b.distance).slice(0,ghostLimit):[];
     const next=new Set(candidates.map(item=>item.i));
     if(next.size===faded.current.size&&[...next].every(i=>faded.current.has(i)))return;

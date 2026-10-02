@@ -145,7 +145,7 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
   useEffect(()=>()=>urbanBrush.dispose(),[urbanBrush]);
   const material=useMemo(()=>{
     const atlas=terrainAtlas();
-    const surface=withCloudShadows(new THREE.MeshLambertMaterial({map:atlas,emissiveMap:atlas,emissive:'#ffffff',emissiveIntensity:0.13,vertexColors:true,side:THREE.DoubleSide}));
+    const surface=withCloudShadows(new THREE.MeshLambertMaterial({map:atlas,emissiveMap:atlas,emissive:'#ffffff',emissiveIntensity:0.13,vertexColors:true,side:THREE.DoubleSide}),true);
     const cloudCompile=surface.onBeforeCompile.bind(surface);
     surface.onBeforeCompile=(shader,renderer)=>{
       cloudCompile(shader,renderer);
@@ -219,7 +219,7 @@ export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}
         #endif
       `);
     };
-    surface.customProgramCacheKey=()=> 'terrain-world-brush-v2-city-cloud-v1';
+    surface.customProgramCacheKey=()=> 'terrain-world-brush-v2-city-cloud-v2-town-light';
     return surface;
   },[brush,urbanBrush]);
   useEffect(()=>()=>material.dispose(),[material]);
