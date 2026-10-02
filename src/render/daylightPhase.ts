@@ -11,6 +11,11 @@ export function daylightPhase(hour:number):{daylight:number;morning:number;warmt
   return {daylight,morning,warmth:evening};
 }
 
+export function strongSunPhase(hour:number):number {
+  return THREE.MathUtils.smoothstep(hour,9,10)*
+    (1-THREE.MathUtils.smoothstep(hour,17,18))*daylightPhase(hour).daylight;
+}
+
 export function townLightPhase(hour:number):number {
   return Math.max(
     1-THREE.MathUtils.smoothstep(hour,6,7.5),

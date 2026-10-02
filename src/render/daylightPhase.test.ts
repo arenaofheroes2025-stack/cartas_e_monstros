@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daylightPhase, townLightPhase } from './daylightPhase';
+import { daylightPhase, strongSunPhase, townLightPhase } from './daylightPhase';
 
 describe('luz ao longo do dia',()=>{
   it('é clara ao meio-dia, aquece no fim da tarde e cede à noite',()=>{
@@ -21,6 +21,19 @@ describe('luz ao longo do dia',()=>{
     expect(townLightPhase(18.5)).toBe(1);
     expect(townLightPhase(22)).toBe(1);
     expect(townLightPhase(7.5)).toBe(0);
+  });
+
+  it('reforça as sombras entre 10h e 17h sem salto na entrada ou no entardecer',()=>{
+    expect(strongSunPhase(8)).toBe(0);
+    expect(strongSunPhase(9.5)).toBeGreaterThan(0);
+    expect(strongSunPhase(9.5)).toBeLessThan(1);
+    for(const hour of [10,12,16,17])expect(strongSunPhase(hour)).toBe(1);
+    expect(strongSunPhase(17.5)).toBeGreaterThan(0);
+    expect(strongSunPhase(17.5)).toBeLessThan(1);
+    expect(strongSunPhase(18)).toBe(0);
+    expect(strongSunPhase(22)).toBe(0);
+    for(const hour of [9,10,17,18])
+      expect(Math.abs(strongSunPhase(hour+0.01)-strongSunPhase(hour-0.01))).toBeLessThan(0.01);
   });
 
   it('transita sem saltos nos horários em que as cores mudam',()=>{

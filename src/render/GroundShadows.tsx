@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Game } from '../game/game';
 import { HEIGHT_STEP, tileAt, type WorldData, WORLD_SIZE } from '../game/world';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
-import { daylightPhase } from './daylightPhase';
+import { daylightPhase, strongSunPhase } from './daylightPhase';
 import { SHADOW_SLOPE } from './sun';
 import { WorldStore } from '../game/worldStore';
 
@@ -90,7 +90,7 @@ export const GroundShadows=memo(function GroundShadows({game,world,revision=0}:{
   useEffect(() => () => material.dispose(), [material]);
   useFrame(() => {
     const daylight = daylightPhase(game.hour).daylight;
-    material.uniforms.uStrength.value = 0.64 + daylight * 0.4;
+    material.uniforms.uStrength.value = 0.64 + daylight * 0.4 + strongSunPhase(game.hour) * 0.07;
   });
   const width = WORLD_SIZE / CHUNK_SIZE;
   const chunks=[];

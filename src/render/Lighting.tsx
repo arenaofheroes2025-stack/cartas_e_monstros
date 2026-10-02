@@ -9,7 +9,7 @@ import { SUN_OFFSET } from './sun';
 import { SHADOW_CALIBRATION } from './shadowCalibration';
 import { setProjectedShadowOpacity } from './ProjectedShadows';
 import { setTownLightNight, setTownLightSources, setWorldLightGrade } from './CloudShadows';
-import { daylightPhase, townLightPhase } from './daylightPhase';
+import { daylightPhase, strongSunPhase, townLightPhase } from './daylightPhase';
 
 const daySky=new THREE.Color('#9cccd4');
 const nightSky=new THREE.Color('#142a42');
@@ -84,6 +84,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     if(!main.current||!ambient.current||!hemisphere.current||!village.current)return;
     const hour=game.hour;
     const {daylight,morning,warmth}=daylightPhase(hour);
+    const strongSun=strongSunPhase(hour);
     const night=1-daylight;
     const townLight=townLightPhase(hour);
     setTownLightNight(townLight);
@@ -96,18 +97,18 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       daylight*(0.22+0.14*(1-Math.max(morning,warmth))),
       clearDay*0.26+warmth*0.06
     );
-    setProjectedShadowOpacity(0.045+daylight*(SHADOW_CALIBRATION.opacity-0.045));
+    setProjectedShadowOpacity(0.045+daylight*(SHADOW_CALIBRATION.opacity-0.045)+strongSun*0.07);
     const px=game.player.x,pz=game.player.z;
-    main.current.intensity=0.62+daylight*(SHADOW_CALIBRATION.sunStrength-0.62);
+    main.current.intensity=0.62+daylight*(SHADOW_CALIBRATION.sunStrength-0.62)+strongSun*0.08;
     main.current.color.copy(nightMoon).lerp(daySun,daylight)
       .lerp(morningSun,morning*0.65).lerp(warmSun,warmth*0.85);
     main.current.position.set(px+SUN_OFFSET.x,SUN_OFFSET.y,pz+SUN_OFFSET.z);
     main.current.target.position.set(px,0,pz);
     main.current.target.updateMatrixWorld();
-    ambient.current.intensity=0.64+daylight*0.48;
+    ambient.current.intensity=0.64+daylight*0.48-strongSun*0.035;
     ambient.current.color.set('#9bb8dc').lerp(daylightAmbient,daylight)
       .lerp(morningAmbient,morning*0.48).lerp(warmAmbient,warmth*0.6);
-    hemisphere.current.intensity=0.36+daylight*0.28;
+    hemisphere.current.intensity=0.36+daylight*0.28-strongSun*0.015;
     sky.copy(nightSky).lerp(daySky,daylight)
       .lerp(morningSky,morning*0.25).lerp(warmSky,warmth*0.35);
     scene.background=sky;
