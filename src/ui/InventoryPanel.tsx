@@ -15,7 +15,7 @@ const CATEGORIES: {id:ItemCategory;label:string;icon:ItemId}[] = [
   {id:'artefato',label:'Artefatos',icon:'amuleto-lento'}
 ];
 
-export function InventoryPanel({game,onClose,onCompanion}:{game:Game;onClose:()=>void;onCompanion:(uid:string)=>void}) {
+export function InventoryPanel({game,covered=false,onClose,onCompanion}:{game:Game;covered?:boolean;onClose:()=>void;onCompanion:(uid:string)=>void}) {
   const [selected,setSelected]=useState<string|null>(()=>game.save?.battleBag.find((uid):uid is string=>!!uid)??game.save?.inventory[0]?.uid??null);
   const [category,setCategory]=useState<ItemCategory>('todos');
   const [pending,setPending]=useState<string|null>(null);
@@ -47,8 +47,9 @@ export function InventoryPanel({game,onClose,onCompanion}:{game:Game;onClose:()=
   };
   const closeHeal=useCallback(()=>setHealingItem(null),[]);
   const finishHeal=useCallback(()=>{setSelected(null);setPending(null);},[]);
-  return <div className="overlay inventory-overlay" role="presentation" onMouseDown={event=>{if(!healingItem&&event.target===event.currentTarget)onClose();}}>
-    <section className="modal-panel inventory-panel" role="dialog" aria-modal={!healingItem} aria-label="Inventário e mochila" inert={!!healingItem}>
+  return <div className="overlay inventory-overlay" role="presentation" inert={covered} aria-hidden={covered}
+    onMouseDown={event=>{if(!healingItem&&event.target===event.currentTarget)onClose();}}>
+    <section className="modal-panel inventory-panel" role="dialog" aria-modal={!healingItem&&!covered} aria-label="Inventário e mochila" inert={!!healingItem}>
       <button className="close-button" onClick={onClose} aria-label="Fechar inventário">✕</button>
       <div className="eyebrow">EQUIPAMENTO DO HERÓI</div>
       <header className="inventory-heading"><div><h2>Mochila</h2><p>Organize seis itens para a batalha. Os demais ficam guardados.</p></div>
@@ -58,7 +59,7 @@ export function InventoryPanel({game,onClose,onCompanion}:{game:Game;onClose:()=
       <aside className="inventory-party" aria-label="Equipe de criaturas"><div className="inventory-party-heading"><h3>Equipe</h3><small>{game.save?.party.length??0}/3</small></div>
         <div className="inventory-party-list">{game.save?.party.map(monster=>{
           const maximum=maxHp(monster),health=Math.max(0,Math.min(100,monster.hp/maximum*100));
-          return <button key={monster.uid} type="button" className="inventory-party-card" onClick={()=>{onClose();onCompanion(monster.uid);}} aria-label={`Ver ficha de ${SPECIES[monster.species].name}, ${monster.hp} de ${maximum} PV`}>
+          return <button key={monster.uid} type="button" className="inventory-party-card" onClick={()=>onCompanion(monster.uid)} aria-label={`Ver ficha de ${SPECIES[monster.species].name}, ${monster.hp} de ${maximum} PV`}>
             <img src={monsterPortrait(monster.species)} alt=""/><span><strong>{SPECIES[monster.species].name}</strong><span className="inventory-party-health"><i style={{width:`${health}%`}}/></span><small>{monster.hp}/{maximum} PV <b>Nv. {monster.level}</b></small></span>
           </button>;
         })}</div>

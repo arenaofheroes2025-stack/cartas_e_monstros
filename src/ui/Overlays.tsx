@@ -52,11 +52,11 @@ export function BattleInspection({monster,hp,opponent,onClose}:{monster:Monster;
   </div>;
 }
 
-export function CollectionPanel({game,onClose,onDetails}:{game:Game;onClose:()=>void;onDetails:(uid:string)=>void}) {
+export function CollectionPanel({game,covered=false,onClose,onDetails}:{game:Game;covered?:boolean;onClose:()=>void;onDetails:(uid:string)=>void}) {
   const [target,setTarget]=useState<number|undefined>();
   const save=game.save;
   if(!save)return null;
-  return <div className="overlay"><div className="modal-panel collection-panel"><button className="close-button" onClick={onClose}>✕</button><div className="eyebrow">SUA JORNADA</div><h2>Equipe & coleção</h2><p>Leve até três monstros. Capturas extras aguardam na coleção.</p>
+  return <div className="overlay" inert={covered} aria-hidden={covered}><div className="modal-panel collection-panel" role="dialog" aria-modal={!covered} aria-labelledby="collection-title"><button className="close-button" onClick={onClose}>✕</button><div className="eyebrow">SUA JORNADA</div><h2 id="collection-title">Equipe & coleção</h2><p>Leve até três monstros. Capturas extras aguardam na coleção.</p>
     <h3>Equipe ativa</h3><div className="creature-list team">{save.party.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={target===i} action={target===i?'Vaga selecionada':'Selecionar vaga'} onClick={()=>setTarget(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div>
     <h3>Reserva <small>{save.collection.length}</small></h3>{save.collection.length?<div className="creature-list reserve">{save.collection.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} action={save.party.length<3?'Adicionar à equipe':'Trocar com vaga'} onClick={()=>{game.swapCollection(i,target);setTarget(undefined);}} onDetails={()=>onDetails(monster.uid)}/>)}</div>:<p className="empty-note">Encontre monstros pelo mapa e capture com cartas elementais.</p>}
     <div className="collection-foot">Selecione uma vaga da equipe e depois um monstro da reserva para trocar.</div>
