@@ -87,22 +87,25 @@
   .game-app .companion-item-options{grid-template-columns:repeat(2,minmax(0,1fr));max-height:calc(100dvh - 105px);overflow:auto}
   .game-app .companion-item-options button{min-width:0}
 
-  .game-app .collection-panel{width:min(800px,calc(100vw - 16px));height:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
+  .game-app .collection-panel{width:min(610px,calc(100vw - 16px));height:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
   .game-app .collection-panel>.eyebrow,.game-app .collection-panel>p,.game-app .collection-foot{display:none}
   .game-app .collection-panel h2{margin:0 0 2px;font-size:18px}
   .game-app .collection-panel h3{margin:4px 0;font-size:12px}
-  .game-app .collection-panel .creature-list{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:6px;overflow-x:auto;overflow-y:hidden;min-height:100px;max-height:102px;flex:none;padding:2px 1px}
-  .game-app .collection-panel .creature-card{flex:0 0 145px;min-width:0;height:96px;padding:4px 6px;overflow:hidden}
-  .game-app .collection-panel .creature-card-select{overflow:hidden}
-  .game-app .collection-panel .creature-card-head{gap:5px}
-  .game-app .collection-panel .creature-card-head img{width:39px;height:39px}
-  .game-app .collection-panel .creature-card-head strong{font-size:11px}
-  .game-app .collection-panel .creature-card-head small{font-size:8px}
-  .game-app .collection-panel .creature-card-head em,.game-app .collection-panel .creature-stats,.game-app .collection-panel .creature-xp-label,.game-app .collection-panel .creature-xp-track{display:none}
-  .game-app .collection-panel .creature-card-action{display:block;margin-top:1px;font-size:8px;text-align:center}
-  .game-app .collection-panel .creature-health-track{display:block;width:100%;height:5px;margin:4px 0 2px;border-radius:4px;background:#12303b;overflow:hidden}
-  .game-app .collection-panel .creature-health-track i{display:block;height:100%;background:#82d49a}
-  .game-app .collection-panel .creature-card-details{margin-top:3px;padding:4px;font-size:9px}
+  .game-app .collection-panel .creature-list{display:flex;flex-wrap:wrap;justify-content:center;align-content:start;gap:6px;overflow-x:hidden;overflow-y:auto;min-height:0;max-height:none;padding:2px 4px 6px}
+  .game-app .collection-panel .creature-list.team{flex:none;max-height:110px}
+  .game-app .collection-panel .creature-list.reserve{flex:1}
+  .game-app .collection-panel .creature-card{flex:0 1 158px;min-width:0;height:103px;padding:3px 4px;overflow:visible}
+  .game-app .collection-panel .creature-card-select{overflow:hidden;padding:0 3px 1px}
+  .game-app .collection-panel .creature-card-art{height:38px}
+  .game-app .collection-panel .creature-card-art img{width:43px;height:43px}
+  .game-app .collection-panel .creature-card-name{font-size:12px}
+  .game-app .collection-panel .creature-card-vitals{margin-top:3px}
+  .game-app .collection-panel .creature-card-level{font-size:9px}
+  .game-app .collection-panel .creature-card-health small{font-size:8px}
+  .game-app .collection-panel .creature-health-track{height:6px}
+  .game-app .collection-panel .creature-card-xp{margin-top:3px}
+  .game-app .collection-panel .creature-card-action{font-size:8px}
+  .game-app .collection-panel .creature-card-details{top:3px;right:3px;width:23px;height:23px;font-size:12px}
 
   .game-app .battle-inspection-panel{width:min(485px,calc(100vw - 20px));padding:13px}
   .game-app .battle-inspection-main{display:flex;align-items:center;gap:11px}

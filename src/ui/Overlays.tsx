@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Game } from '../game/game';
-import { attack, defense, ELEMENT_COLOR, ELEMENT_LABEL, experienceNeeded, luck, maxHp, speed, SPECIES, type Monster } from '../game/content';
+import { attack, defense, ELEMENT_COLOR, ELEMENT_LABEL, experienceNeeded, maxHp, speed, SPECIES, type Monster } from '../game/content';
 import { monsterPortrait } from '../render/art';
-import { attackDamage, attackRadius } from '../game/battle/rules';
+import { attackDamage } from '../game/battle/rules';
 import './combatReadability.css';
 import { PwaInstallButton, type PwaInstallState } from './PwaInstall';
 
@@ -22,13 +22,18 @@ export function BattleMenuPanel({game}:{game:Game}) {
 function MonsterCard({monster,chosen=false,action,onClick,onDetails}:{monster:Monster;chosen?:boolean;action:string;onClick:()=>void;onDetails:()=>void}) {
   const species=SPECIES[monster.species];
   const needed=experienceNeeded(monster.level);
-  return <div className={chosen?'creature-card chosen':'creature-card'}><button type="button" className="creature-card-select" onClick={onClick} aria-label={`${species.name}, nível ${monster.level}. ${action}`}>
-    <span className="creature-card-head"><img src={monsterPortrait(monster.species)} alt=""/><span><strong>{species.name}</strong><em style={{color:ELEMENT_COLOR[species.element]}}>{ELEMENT_LABEL[species.element]}</em><small>Nv. {monster.level} · {monster.hp}/{maxHp(monster)} PV</small></span></span>
-    <span className="creature-stats"><span>ATQ <b>{attack(monster)}</b></span><span>DEF <b>{defense(monster)}</b></span><span>VEL <b>{speed(monster)}</b></span><span>SORTE <b>{luck(monster)}</b></span><span>ÁREA <b>{attackRadius(monster).toFixed(1)}</b></span></span>
-    <span className="creature-health-track"><i style={{width:`${Math.min(100,monster.hp/maxHp(monster)*100)}%`}}/></span>
-    <span className="creature-xp-label">EXP <b>{monster.xp}/{needed}</b></span><span className="creature-xp-track"><i style={{width:`${Math.min(100,monster.xp/needed*100)}%`}}/></span>
-    <span className="creature-card-action">{action}</span>
-  </button><button type="button" className="creature-card-details" onClick={onDetails} aria-label={`Ver ficha e itens de ${species.name}`}>Ver ficha e itens ↗</button></div>;
+  const health=Math.max(0,Math.min(100,monster.hp/maxHp(monster)*100));
+  const experience=Math.max(0,Math.min(100,monster.xp/needed*100));
+  return <div className={chosen?'creature-card chosen':'creature-card'} style={{'--creature-accent':ELEMENT_COLOR[species.element]} as CSSProperties}>
+    <button type="button" className="creature-card-select" onClick={onClick} aria-pressed={chosen} aria-label={`${species.name}, nível ${monster.level}, ${monster.hp} de ${maxHp(monster)} PV, ${monster.xp} de ${needed} EXP. ${action}`}>
+      <span className="creature-card-art"><img src={monsterPortrait(monster.species)} alt=""/></span>
+      <strong className="creature-card-name">{species.name}</strong>
+      <span className="creature-card-vitals"><span className="creature-card-level">Nv. {monster.level}</span><span className="creature-card-health"><span className="creature-health-track"><i style={{width:`${health}%`}}/></span><small>{monster.hp}/{maxHp(monster)}</small></span></span>
+      <span className="creature-card-xp" title={`${monster.xp}/${needed} EXP`}><small>EXP</small><span><i style={{width:`${experience}%`}}/></span></span>
+      <span className="creature-card-action">{action}</span>
+    </button>
+    <button type="button" className="creature-card-details" onClick={onDetails} aria-label={`Ver ficha e itens de ${species.name}`} title={`Ficha e itens de ${species.name}`}>i</button>
+  </div>;
 }
 
 export function BattleInspection({monster,hp,opponent,onClose}:{monster:Monster;hp:number;opponent?:Monster;onClose:()=>void}) {
@@ -52,8 +57,8 @@ export function CollectionPanel({game,onClose,onDetails}:{game:Game;onClose:()=>
   const save=game.save;
   if(!save)return null;
   return <div className="overlay"><div className="modal-panel collection-panel"><button className="close-button" onClick={onClose}>✕</button><div className="eyebrow">SUA JORNADA</div><h2>Equipe & coleção</h2><p>Leve até três monstros. Capturas extras aguardam na coleção.</p>
-    <h3>Equipe ativa</h3><div className="creature-list">{save.party.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={target===i} action={target===i?'Vaga selecionada':'Selecionar vaga'} onClick={()=>setTarget(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div>
-    <h3>Reserva <small>{save.collection.length}</small></h3>{save.collection.length?<div className="creature-list">{save.collection.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} action={save.party.length<3?'Adicionar à equipe':'Trocar com vaga'} onClick={()=>{game.swapCollection(i,target);setTarget(undefined);}} onDetails={()=>onDetails(monster.uid)}/>)}</div>:<p className="empty-note">Encontre monstros pelo mapa e capture com cartas elementais.</p>}
+    <h3>Equipe ativa</h3><div className="creature-list team">{save.party.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} chosen={target===i} action={target===i?'Vaga selecionada':'Selecionar vaga'} onClick={()=>setTarget(i)} onDetails={()=>onDetails(monster.uid)}/>)}</div>
+    <h3>Reserva <small>{save.collection.length}</small></h3>{save.collection.length?<div className="creature-list reserve">{save.collection.map((monster,i)=><MonsterCard key={monster.uid} monster={monster} action={save.party.length<3?'Adicionar à equipe':'Trocar com vaga'} onClick={()=>{game.swapCollection(i,target);setTarget(undefined);}} onDetails={()=>onDetails(monster.uid)}/>)}</div>:<p className="empty-note">Encontre monstros pelo mapa e capture com cartas elementais.</p>}
     <div className="collection-foot">Selecione uma vaga da equipe e depois um monstro da reserva para trocar.</div>
   </div></div>;
 }

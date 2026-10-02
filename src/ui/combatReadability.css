@@ -18,27 +18,37 @@
 .enemy-attack-track i.recovering{background:#d6bd70;box-shadow:0 0 6px #d6bd7080}
 .enemy-attack-meter small{font-size:9px;color:#b9cfca}
 
-.collection-panel .creature-list{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}
-.collection-panel .creature-card{display:block;padding:10px;text-align:left}
-.collection-panel .creature-card-select{display:block;width:100%;padding:0;border:0;background:none;color:inherit;text-align:left}
-.collection-panel .creature-card-details{display:block;width:100%;margin-top:7px;padding:6px;border:1px solid #8eae9a;border-radius:6px;background:#1c4250;color:#f0d7a8;font-size:10px;font-weight:800}
-.collection-panel .creature-card-details:hover,.collection-panel .creature-card-details:focus-visible{border-color:#f2c681;background:#2b5660}
-.collection-panel .creature-card-head{display:flex;align-items:center;gap:9px}
-.collection-panel .creature-card-head img{display:block;flex:none;width:72px;height:72px;object-fit:contain;background:#32545b;border-radius:8px}
-.collection-panel .creature-card-head>span{display:block;min-width:0}
-.collection-panel .creature-card-head strong{display:block;font-size:15px}
-.collection-panel .creature-card-head em{display:block;font-size:10px;font-style:normal;font-weight:800;text-transform:uppercase;letter-spacing:.09em}
-.collection-panel .creature-card-head small{display:block;color:#c3d3c8;font-size:10px}
-.collection-panel .creature-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:9px}
-.collection-panel .creature-stats span{display:block;padding:5px 1px;border-radius:5px;background:#1a3948;color:#a8c9c6;text-align:center;font-size:9px;font-weight:800}
-.collection-panel .creature-stats b{display:block;color:#fff0cb;font-size:13px}
-.collection-panel .creature-xp-label{display:flex;justify-content:space-between;margin-top:9px;color:#bdd4cf;font-size:10px;font-weight:800}
-.collection-panel .creature-xp-label b{color:#f4c586}
-.collection-panel .creature-xp-track{display:block;height:6px;margin-top:4px;background:#17303d;border-radius:6px;overflow:hidden}
-.collection-panel .creature-xp-track i{display:block;height:100%;background:#f0ba75;border-radius:6px}
-.collection-panel .creature-card-action{display:block;margin-top:7px;color:#e6d0a9;font-size:10px;text-align:right}
-.collection-panel .creature-health-track{display:block;height:5px;margin-top:7px;border-radius:5px;background:#102a36;overflow:hidden}
-.collection-panel .creature-health-track i{display:block;height:100%;border-radius:5px;background:#83d499}
+.modal-panel.collection-panel{width:min(650px,100%);display:flex;flex-direction:column;overflow:hidden;padding:18px 22px}
+.modal-panel.collection-panel h2{margin:3px 0 5px}
+.modal-panel.collection-panel>p{margin:0 0 6px;font-size:12px}
+.modal-panel.collection-panel h3{flex:none;margin:8px 0 5px}
+.collection-panel .collection-foot{margin-top:7px}
+.collection-panel .creature-list{display:flex;flex-wrap:wrap;justify-content:center;align-content:start;gap:9px;min-height:0;overflow-y:auto;padding:4px 6px 6px}
+.collection-panel .creature-list.team{flex:none;max-height:305px}
+.collection-panel .creature-list.reserve{flex:1}
+.collection-panel .creature-card{position:relative;display:block;flex:0 1 170px;height:137px;min-width:0;padding:4px;border:2px solid color-mix(in srgb,var(--creature-accent),white 30%);border-radius:14px;background:linear-gradient(155deg,#f7f5dc 0%,#e5f1df 55%,#cde5d9 100%);box-shadow:inset 0 0 0 2px #ffffff9e,0 5px 0 color-mix(in srgb,var(--creature-accent),#183842 60%),0 9px 17px #061a24a3;text-align:center;transition:transform .16s ease,box-shadow .16s ease}
+.collection-panel .creature-card:before{content:'';position:absolute;inset:3px;border:1px solid color-mix(in srgb,var(--creature-accent),white 35%);border-radius:10px;pointer-events:none}
+.collection-panel .creature-card:hover{transform:translateY(-2px)}
+.collection-panel .creature-card.chosen{border-color:#ffdc77;box-shadow:inset 0 0 0 2px #fff5ca,0 0 0 2px #ffd777,0 5px 0 #a5793e,0 9px 18px #061a24a3}
+.collection-panel .creature-card.chosen:after{content:'▶';position:absolute;left:-17px;top:48%;color:#ffe6a3;font-size:15px;text-shadow:0 2px 3px #061a24}
+.collection-panel .creature-card-select{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:0 5px 2px;border:0;background:none;color:#223f47;text-align:center;touch-action:manipulation}
+.collection-panel .creature-card-select:focus-visible,.collection-panel .creature-card-details:focus-visible{outline:2px solid #142f3f;outline-offset:2px}
+.collection-panel .creature-card-art{display:grid;place-items:center;width:100%;height:60px;flex:none;background:radial-gradient(ellipse at 50% 80%,color-mix(in srgb,var(--creature-accent),white 58%) 0%,#ffffff14 67%);border-radius:9px}
+.collection-panel .creature-card-art img{display:block;width:63px;height:63px;object-fit:contain;image-rendering:pixelated;background:none;border-radius:0}
+.collection-panel .creature-card-name{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 15px Georgia,serif;color:#233744;line-height:1.2}
+.collection-panel .creature-card-vitals{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;margin-top:4px}
+.collection-panel .creature-card-level{flex:none;color:#2e7692;font:800 10px Consolas,monospace}
+.collection-panel .creature-card-health{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;flex:1}
+.collection-panel .creature-card-health small{flex:none;color:#2d464a;font:800 9px Consolas,monospace;white-space:nowrap}
+.collection-panel .creature-health-track{display:block;flex:1;max-width:55px;height:7px;border:1px solid #7b9b8e;border-radius:5px;background:#9fbaae;overflow:hidden}
+.collection-panel .creature-health-track i{display:block;height:100%;border-radius:4px;background:#60bf79}
+.collection-panel .creature-card-xp{display:flex;align-items:center;gap:4px;width:100%;margin-top:4px}
+.collection-panel .creature-card-xp small{color:#6b6970;font:800 7px Consolas,monospace}
+.collection-panel .creature-card-xp>span{display:block;flex:1;height:3px;border-radius:4px;background:#b6c4b8;overflow:hidden}
+.collection-panel .creature-card-xp i{display:block;height:100%;border-radius:4px;background:#de9d61}
+.collection-panel .creature-card-action{display:block;max-width:100%;margin-top:auto;color:#42636d;font:800 8px 'Trebuchet MS',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collection-panel .creature-card-details{position:absolute;top:5px;right:5px;display:grid;place-items:center;width:25px;height:25px;padding:0;border:1px solid color-mix(in srgb,var(--creature-accent),#315362 45%);border-radius:50%;background:#f6f4dc;color:#244b55;font:900 italic 14px Georgia,serif;box-shadow:0 1px 3px #173b3b5c;touch-action:manipulation}
+.collection-panel .creature-card-details:hover{background:#fff9e5;transform:scale(1.06)}
 .battle-ui .combatant{color:#f6e6c6;text-align:left;touch-action:manipulation}
 .battle-ui .combatant:focus-visible{outline:2px solid #ffdb97;outline-offset:2px}
 .battle-ui .combatant.enemy{border-color:#c47a70}
@@ -54,7 +64,7 @@
 .battle-inspection-panel p{margin:9px 0 0;font-size:11px}
 .battle-menu-health-track{display:block;width:100%;height:6px;border-radius:5px;background:#15323e;overflow:hidden}
 .battle-menu-health-track i{display:block;height:100%;background:#86d49d}
-@media(max-width:650px){.combatant.enemy{min-width:0}.enemy-attack-meter>span:first-child{font-size:9px}.collection-panel .creature-list{grid-template-columns:1fr}}
+@media(max-width:650px){.combatant.enemy{min-width:0}.enemy-attack-meter>span:first-child{font-size:9px}}
 @media(max-width:950px) and (max-height:500px) and (orientation:landscape){
   .game-app .battle-top .combatant.enemy{width:218px;min-width:0;padding:4px 8px 4px 4px}
   .game-app .battle-bottom{top:190px}
