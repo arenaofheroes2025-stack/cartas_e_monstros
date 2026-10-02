@@ -61,7 +61,7 @@ export function WorldMapPanel({game,onClose}:{game:Game;onClose:()=>void}) {
       y:drag.current.panY+event.clientY-drag.current.y}));
   };
   const stopDrag=()=>{drag.current=null;};
-  const wheel=(event:WheelEvent<HTMLDivElement>)=>{event.preventDefault();changeZoom(zoom+(event.deltaY<0?.25:-.25));};
+  const wheel=(event:WheelEvent<HTMLDivElement>)=>{changeZoom(zoom+(event.deltaY<0?.25:-.25));};
   const explored=Math.round(discovered.size/world.tiles.length*100);
 
   return <div className="world-map-overlay" role="presentation" onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>

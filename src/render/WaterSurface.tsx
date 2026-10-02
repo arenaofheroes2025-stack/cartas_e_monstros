@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Game } from '../game/game';
@@ -178,7 +178,7 @@ function WaterChunk({tiles,world,x,z,material,floorMaterial}:{tiles:Tile[];world
   </group>;
 }
 
-export function WaterSurface({world,game}:{world:WorldData;game:Game}) {
+export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldData;game:Game}) {
   const time=useMemo<THREE.IUniform<number>>(()=>({value:0}),[]);
   const artwork=useMemo<THREE.IUniform<number>>(()=>({value:0.55}),[]);
   const material=useMemo(()=>animatedWaterMaterial(time,artwork),[time,artwork]);
@@ -200,4 +200,4 @@ export function WaterSurface({world,game}:{world:WorldData;game:Game}) {
   const width=WORLD_SIZE/CHUNK_SIZE;
   return <group>{chunks.map((tiles,index)=>tiles.length>0&&
     <WaterChunk key={index} tiles={tiles} world={world} x={index%width} z={Math.floor(index/width)} material={material} floorMaterial={floorMaterial}/>)}</group>;
-}
+});

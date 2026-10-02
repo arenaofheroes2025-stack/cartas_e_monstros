@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Game } from '../game/game';
 import { propAsset } from '../game/assets';
@@ -8,7 +8,7 @@ import { CHUNK_SIZE } from './ChunkVisibility';
 
 // Decode happens when the world mounts; upload nearby art to the GPU during
 // browser idle time so crossing a chunk border is less likely to pause a frame.
-export function NearbyTextureWarmup({game,world}:{game:Game;world:WorldData}) {
+export const NearbyTextureWarmup=memo(function NearbyTextureWarmup({game,world}:{game:Game;world:WorldData}) {
   const {gl}=useThree();
   const assetsByChunk=useMemo(()=>{
     const width=Math.ceil(world.size/CHUNK_SIZE);
@@ -72,4 +72,4 @@ export function NearbyTextureWarmup({game,world}:{game:Game;world:WorldData}) {
     };
   },[assetsByChunk,game,gl]);
   return null;
-}
+});

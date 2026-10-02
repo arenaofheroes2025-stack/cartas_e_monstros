@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { HEIGHT_STEP, type Decoration, type Place, type Tile, type WorldData } from '../game/world';
@@ -151,7 +151,7 @@ function chunkTouchesArena(x:number,z:number,arena:ArenaCutout):boolean {
   return Math.hypot(nearestX-arena.x,nearestZ-arena.z)<=arena.radius+6.5;
 }
 
-function PropChunk({tiles,places,world,x,z,arena,game,part}:{tiles:Tile[];places:(Place|Decoration)[];world:WorldData;x:number;z:number;arena?:ArenaCutout;game:Game;part:'inside'|'outside'}) {
+const PropChunk=memo(function PropChunk({tiles,places,world,x,z,arena,game,part}:{tiles:Tile[];places:(Place|Decoration)[];world:WorldData;x:number;z:number;arena?:ArenaCutout;game:Game;part:'inside'|'outside'}) {
   const visibility=useChunkVisibility(x,z,8);
   const groups=useMemo(()=>propArt.map(config=>tiles.filter(tile=>config.matches(tile)&&
     outsideArena(tile.x,tile.z,config.size,arena)===(part==='outside'))),
@@ -162,7 +162,7 @@ function PropChunk({tiles,places,world,x,z,arena,game,part}:{tiles:Tile[];places
     {propArt.map((config,index)=>groups[index].length>0&&<InstancedProp key={config.asset} tiles={groups[index]} asset={config.asset} size={config.size} game={game} world={world} fading={part==='inside'}/>)}
     {visiblePlaces.map(place=><PlaceArt key={place.id} place={place} world={world} fading={part==='inside'}/>)}
   </group>;
-}
+});
 
 export function Props({world,game}:{world:WorldData;game:Game}) {
   const [arena,setArena]=useState<ArenaCutout|null>(null);

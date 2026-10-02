@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Game } from '../game/game';
@@ -81,7 +81,7 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
   return material;
 }
 
-export function CloudShadows({ game, world }: { game: Game; world: WorldData }) {
+export const CloudShadows=memo(function CloudShadows({ game, world }: { game: Game; world: WorldData }) {
   useEffect(() => {
     const oldTexture = cloudUniforms.uCloudMask.value;
     cloudUniforms.uCloudMask.value = makeCloudTexture(world.seed);
@@ -93,4 +93,4 @@ export function CloudShadows({ game, world }: { game: Game; world: WorldData }) 
     cloudUniforms.uCloudStrength.value = phase.strength;
   });
   return null;
-}
+});

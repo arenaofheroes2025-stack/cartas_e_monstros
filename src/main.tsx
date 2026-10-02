@@ -40,7 +40,7 @@ function App() {
   });
   const orientationPaused=usePortraitLock();
   const pwa=usePwaInstall();
-  const overlayOpen=collection||detailsUid!==null||bagOpen||mapOpen||enemyDetails||game.shopOpen;
+  const overlayOpen=collection||detailsUid!==null||bagOpen||mapOpen||enemyDetails||game.shopOpen||pwa.helpOpen;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
   const openDetails=useCallback((uid:string)=>{

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { HEIGHT_STEP, tileAt, type WorldData, WORLD_SIZE } from '../game/world';
 import { TILE_ATLAS } from '../game/biomeArt';
@@ -138,7 +138,7 @@ function TerrainChunk({world,x,z,material}:{world:WorldData;x:number;z:number;ma
   return <group ref={visibility}><mesh geometry={geometry} material={material} receiveShadow castShadow /></group>;
 }
 
-export function TerrainChunks({world}:{world:WorldData}) {
+export const TerrainChunks=memo(function TerrainChunks({world}:{world:WorldData}) {
   const brush=useMemo(()=>terrainBrushTexture(world),[world]);
   useEffect(()=>()=>brush.dispose(),[brush]);
   const urbanBrush=useMemo(()=>urbanBrushTexture(world),[world]);
@@ -228,4 +228,4 @@ export function TerrainChunks({world}:{world:WorldData}) {
     chunks.push(<TerrainChunk key={x+'-'+z} world={world} x={x} z={z} material={material} />);
   }
   return <group>{chunks}</group>;
-}
+});

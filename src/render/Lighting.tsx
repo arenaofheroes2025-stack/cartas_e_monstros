@@ -44,7 +44,7 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   const sky=useMemo(()=>new THREE.Color(),[]);
   const {scene,gl}=useThree();
   const lastCull=useRef(-1);
-  const lastShadow=useRef(0);
+  const lastShadow=useRef({x:Number.NaN,z:Number.NaN,at:0});
   const sources=useMemo(()=>game.world?worldLightSources(game.world):[],[game.world]);
   const opened=game.save?.openedCaches.join('|')||'';
   const cards=useMemo<SceneLightSource[]>(()=>{
@@ -65,6 +65,10 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
     active.current.clear();
     lastCull.current=-1;
   },[game.world]);
+  useEffect(()=>{
+    lastShadow.current.x=Number.NaN;
+    gl.shadowMap.needsUpdate=true;
+  },[game.world,quality,gl]);
 
   useFrame(({clock,camera})=>{
     if(!main.current||!ambient.current||!hemisphere.current||!village.current)return;
@@ -132,7 +136,16 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
       material.uniforms.uColor.value.set(source.color);
       material.uniforms.uOpacity.value=card?0.1+night*0.28:0.035+night*0.32;
     }
-    if(clock.elapsedTime-lastShadow.current>0.35){gl.shadowMap.needsUpdate=true;lastShadow.current=clock.elapsedTime;}
+    // The sun keeps a fixed direction. Its shadow depth map only needs to
+    // follow the player when the light's coverage has moved far enough.
+    const shadow=lastShadow.current;
+    const minInterval=quality==='low'?0.75:0.5;
+    const minDistance=quality==='low'?1.2:0.8;
+    if(!Number.isFinite(shadow.x)||
+      (clock.elapsedTime-shadow.at>minInterval&&Math.hypot(px-shadow.x,pz-shadow.z)>minDistance)){
+      gl.shadowMap.needsUpdate=true;
+      shadow.x=px;shadow.z=pz;shadow.at=clock.elapsedTime;
+    }
   });
 
   return <group>

@@ -128,7 +128,8 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Gam
 export function WorldScene({game,quality,orientationPaused=false,cameraRef}:{game:Game;quality:'high'|'low';orientationPaused?:boolean;cameraRef:RefObject<THREE.Camera|null>}) {
   const preview=useMemo(()=>generateWorld(40732),[]);
   const world=game.world||preview;
-  return <Canvas orthographic shadows="soft" gl={{antialias:false,powerPreference:'high-performance'}}
+  const framePaused=orientationPaused||game.mode==='pause'||game.mode==='dialog';
+  return <Canvas orthographic shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,powerPreference:'high-performance'}}
     dpr={preferredRenderDpr(window.innerWidth,window.innerHeight,window.devicePixelRatio,quality)}
     camera={{position:[61,22,61],zoom:40,near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
     <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef}/>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Game } from '../game/game';
@@ -70,7 +70,7 @@ function ShadowChunk({geometry,x,z,material}:{geometry:THREE.BufferGeometry;x:nu
   </group>;
 }
 
-export function GroundShadows({game,world}:{game:Game;world:WorldData}) {
+export const GroundShadows=memo(function GroundShadows({game,world}:{game:Game;world:WorldData}) {
   const chunks = useMemo(() => {
     const result: THREE.BufferGeometry[] = [];
     for (let z = 0; z < WORLD_SIZE / CHUNK_SIZE; z++) for (let x = 0; x < WORLD_SIZE / CHUNK_SIZE; x++)
@@ -98,4 +98,4 @@ export function GroundShadows({game,world}:{game:Game;world:WorldData}) {
   const width = WORLD_SIZE / CHUNK_SIZE;
   return <group>{chunks.map((geometry,index)=><ShadowChunk key={index} geometry={geometry}
     x={index%width} z={Math.floor(index/width)} material={material}/>)}</group>;
-}
+});
