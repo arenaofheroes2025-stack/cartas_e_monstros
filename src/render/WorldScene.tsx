@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { BATTLE_INTRO_SECONDS, Game } from '../game/game';
@@ -26,12 +26,20 @@ import { NearbyTextureWarmup } from './NearbyTextureWarmup';
 
 function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:boolean}) {
   const accumulated=useRef(0);
+  const lastActiveFrame=useRef(performance.now());
+  useLayoutEffect(()=>{lastActiveFrame.current=performance.now();},
+    [orientationPaused,game.mode,game.battleMenu,game.shopOpen]);
   useFrame((_,delta)=>{
+    const now=performance.now();
+    const clockDelta=(now-lastActiveFrame.current)/1000;
+    lastActiveFrame.current=now;
     if(orientationPaused){accumulated.current=0;return;}
+    // Count active wall time, independent of skipped physics steps or paused menus.
+    game.advanceClock(clockDelta);
     accumulated.current=Math.min(accumulated.current+delta,0.16);
     let steps=0;
     while(accumulated.current>=1/60&&steps++<8) {
-      game.update(1/60);
+      game.update(1/60,false);
       accumulated.current-=1/60;
     }
   });

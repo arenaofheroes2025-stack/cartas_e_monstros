@@ -7,6 +7,7 @@ import { TILE_ATLAS } from '../game/biomeArt';
 import { imageTexture } from './art';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
 import { withCloudShadows } from './CloudShadows';
+import { daylightPhase } from './daylightPhase';
 
 const SURFACE=0.1;
 const waterColumn=TILE_ATLAS.base.water%TILE_ATLAS.columns;
@@ -102,7 +103,7 @@ function underwaterFloorMaterial(time:THREE.IUniform<number>):THREE.MeshLambertM
   return material;
 }
 
-function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUniform<number>):THREE.MeshLambertMaterial {
+function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUniform<number>,sunlight:THREE.IUniform<number>):THREE.MeshLambertMaterial {
   const material=withCloudShadows(new THREE.MeshLambertMaterial({
     map:imageTexture('/art/terrain-atlas.png',true),
     side:THREE.DoubleSide,transparent:true,depthWrite:false
@@ -112,6 +113,7 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
     cloudCompile(shader,renderer);
     shader.uniforms.uWaterTime=time;
     shader.uniforms.uWaterArtwork=artwork;
+    shader.uniforms.uWaterSunlight=sunlight;
     shader.vertexShader=`attribute vec2 waterLocalUv;
       attribute vec4 waterEdges;
       attribute float waterDepth;
@@ -124,6 +126,7 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
        vWaterDepth=waterDepth;`);
     shader.fragmentShader=`uniform float uWaterTime;
       uniform float uWaterArtwork;
+      uniform float uWaterSunlight;
       varying vec2 vWaterLocalUv;
       varying vec4 vWaterEdges;
       varying float vWaterDepth;\n${shader.fragmentShader}`.replace('#include <map_fragment>',`
@@ -158,12 +161,16 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
     `).replace('#include <opaque_fragment>',`
       #ifdef USE_MAP
         outgoingLight=mix(outgoingLight,waterPaint.rgb,uWaterArtwork);
-        outgoingLight*=0.78;
+        outgoingLight*=0.66+0.12*uWaterSunlight;
+        float sunGlint=smoothstep(0.87,0.98,ripple)*
+          smoothstep(0.72,0.94,0.5+0.5*sin(vCloudWorldXZ.x*3.4-vCloudWorldXZ.y*2.8+uWaterTime*0.62));
+        outgoingLight+=vec3(0.075,0.115,0.13)*sunGlint*uWaterSunlight*
+          (1.0-0.35*clamp(vWaterDepth,0.0,1.0));
       #endif
       #include <opaque_fragment>
     `);
   };
-  material.customProgramCacheKey=()=> 'water-depth-surface-v4';
+  material.customProgramCacheKey=()=> 'water-depth-surface-v5';
   return material;
 }
 
@@ -181,7 +188,8 @@ function WaterChunk({tiles,world,x,z,material,floorMaterial}:{tiles:Tile[];world
 export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldData;game:Game}) {
   const time=useMemo<THREE.IUniform<number>>(()=>({value:0}),[]);
   const artwork=useMemo<THREE.IUniform<number>>(()=>({value:0.55}),[]);
-  const material=useMemo(()=>animatedWaterMaterial(time,artwork),[time,artwork]);
+  const sunlight=useMemo<THREE.IUniform<number>>(()=>({value:1}),[]);
+  const material=useMemo(()=>animatedWaterMaterial(time,artwork,sunlight),[time,artwork,sunlight]);
   const floorMaterial=useMemo(()=>underwaterFloorMaterial(time),[time]);
   const chunks=useMemo(()=>{
     const width=WORLD_SIZE/CHUNK_SIZE;
@@ -193,9 +201,9 @@ export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldDa
   useEffect(()=>()=>{material.dispose();floorMaterial.dispose();},[material,floorMaterial]);
   useFrame(({clock})=>{
     time.value=game.save?.elapsed??clock.elapsedTime;
-    const hour=game.hour;
-    const daylight=THREE.MathUtils.clamp((hour-5)/2.5,0,1)*THREE.MathUtils.clamp((20-hour)/2.5,0,1);
-    artwork.value=0.72-0.16*daylight;
+    const daylight=daylightPhase(game.hour).daylight;
+    artwork.value=0.48+0.08*daylight;
+    sunlight.value=daylight;
   });
   const width=WORLD_SIZE/CHUNK_SIZE;
   return <group>{chunks.map((tiles,index)=>tiles.length>0&&

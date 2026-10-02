@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Game } from '../game/game';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_LABEL, experienceNeeded, maxHp, SPECIES } from '../game/content';
 import { CompanionPortrait } from './CompanionPortrait';
@@ -5,10 +6,19 @@ import { MapGlyph } from './WorldMapPanel';
 import { monsterPortrait } from '../render/art';
 import './companionHud.css';
 
+function TimeChip({game}:{game:Game}) {
+  const [,tick]=useState(0);
+  useEffect(()=>{
+    const timer=window.setInterval(()=>tick(value=>value+1),1000);
+    return()=>window.clearInterval(timer);
+  },[]);
+  const hour=Math.floor(game.hour),minute=Math.floor((game.hour-hour)*60);
+  return <div className="time-chip"><span>{game.isNight?'☾':'☀'}</span>{String(hour).padStart(2,'0')}:{String(minute).padStart(2,'0')} <small>{game.isNight?'Noite':'Dia'}</small></div>;
+}
+
 export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCollection:()=>void;onBag:()=>void;onMap:()=>void;onCompanion:(uid:string)=>void}) {
   const save=game.save;
   if(!save)return null;
-  const hour=Math.floor(game.hour),minute=Math.floor((game.hour-hour)*60);
   const current=save.party.find(monster=>monster.hp>0)??save.party[0];
   if(!current)return null;
   const healthMax=maxHp(current),xpMax=experienceNeeded(current.level);
@@ -20,7 +30,7 @@ export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCol
       {game.mode!=='battle'?<div className="objective-chip"><span>◉</span>{save.completed?'Região concluída · continue explorando':'Reúna os três selos elementais'}</div>:null}
     </div>
     <div className="hud-top-right">
-      <div className="time-chip"><span>{game.isNight?'☾':'☀'}</span>{String(hour).padStart(2,'0')}:{String(minute).padStart(2,'0')} <small>{game.isNight?'Noite':'Dia'}</small></div>
+      <TimeChip game={game}/>
       <div className="seals-chip">{(['fogo','agua','natureza'] as const).map(element=><span key={element} className={save.seals.includes(element)?'lit':''} style={{'--seal-color':ELEMENT_COLOR[element]} as React.CSSProperties} title={'Selo de '+ELEMENT_LABEL[element]}>{ELEMENT_ICON[element]}</span>)}</div>
       <button className="icon-button" aria-label="Pausar" onClick={()=>game.togglePause()}>☰</button>
     </div>

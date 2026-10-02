@@ -8,12 +8,20 @@ import { worldLightSources, type SceneLightSource } from './lightSources';
 import { SUN_OFFSET } from './sun';
 import { SHADOW_CALIBRATION } from './shadowCalibration';
 import { setProjectedShadowOpacity } from './ProjectedShadows';
+import { setWorldLightGrade } from './CloudShadows';
+import { daylightPhase } from './daylightPhase';
 
 const daySky=new THREE.Color('#9cccd4');
 const nightSky=new THREE.Color('#142a42');
-const daySun=new THREE.Color('#fff2d2');
+const daySun=new THREE.Color('#fff5d5');
+const morningSun=new THREE.Color('#d9eaff');
+const warmSun=new THREE.Color('#ffc18b');
 const nightMoon=new THREE.Color('#9ab8e3');
-const daylightAmbient=new THREE.Color('#e6efe2');
+const daylightAmbient=new THREE.Color('#f6f1df');
+const morningAmbient=new THREE.Color('#d4e8f8');
+const warmAmbient=new THREE.Color('#f7d8b3');
+const morningSky=new THREE.Color('#8bbbe0');
+const warmSky=new THREE.Color('#df9f80');
 // Keep the WebGL light count fixed: changing it recompiles every lit material.
 const LIGHT_POOL_SIZE=20;
 
@@ -73,20 +81,31 @@ export function Lighting({game,quality}:{game:Game;quality:'high'|'low'}) {
   useFrame(({clock,camera})=>{
     if(!main.current||!ambient.current||!hemisphere.current||!village.current)return;
     const hour=game.hour;
-    const dawn=Math.min(1,Math.max(0,(hour-5)/2.5));
-    const dusk=Math.min(1,Math.max(0,(20-hour)/2.5));
-    const daylight=dawn*dusk,night=1-daylight;
+    const {daylight,morning,warmth}=daylightPhase(hour);
+    const night=1-daylight;
+    const clearDay=daylight*(1-Math.max(morning,warmth)*0.3);
+    const dayLift=1+daylight*0.15+clearDay*0.18;
+    setWorldLightGrade(
+      dayLift*(1+daylight*0.04-morning*0.09+warmth*0.14)-night*0.06,
+      dayLift*(1+daylight*0.025+morning*0.01-warmth*0.03)-night*0.03,
+      dayLift*(1-daylight*0.04+morning*0.18-warmth*0.2)+night*0.06,
+      daylight*(0.22+0.14*(1-Math.max(morning,warmth))),
+      clearDay*0.26+warmth*0.06
+    );
     setProjectedShadowOpacity(0.045+daylight*(SHADOW_CALIBRATION.opacity-0.045));
     const px=game.player.x,pz=game.player.z;
     main.current.intensity=0.62+daylight*(SHADOW_CALIBRATION.sunStrength-0.62);
-    main.current.color.copy(nightMoon).lerp(daySun,daylight);
+    main.current.color.copy(nightMoon).lerp(daySun,daylight)
+      .lerp(morningSun,morning*0.65).lerp(warmSun,warmth*0.85);
     main.current.position.set(px+SUN_OFFSET.x,SUN_OFFSET.y,pz+SUN_OFFSET.z);
     main.current.target.position.set(px,0,pz);
     main.current.target.updateMatrixWorld();
-    ambient.current.intensity=0.64+daylight*0.26;
-    ambient.current.color.set('#9bb8dc').lerp(daylightAmbient,daylight);
-    hemisphere.current.intensity=0.36+daylight*0.16;
-    sky.copy(nightSky).lerp(daySky,daylight);
+    ambient.current.intensity=0.64+daylight*0.48;
+    ambient.current.color.set('#9bb8dc').lerp(daylightAmbient,daylight)
+      .lerp(morningAmbient,morning*0.48).lerp(warmAmbient,warmth*0.6);
+    hemisphere.current.intensity=0.36+daylight*0.28;
+    sky.copy(nightSky).lerp(daySky,daylight)
+      .lerp(morningSky,morning*0.25).lerp(warmSky,warmth*0.35);
     scene.background=sky;
     if(scene.fog instanceof THREE.Fog){
       scene.fog.color.copy(sky);

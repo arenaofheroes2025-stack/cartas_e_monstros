@@ -171,6 +171,12 @@ export class Game {
   get isNight(): boolean { return this.hour < 6 || this.hour >= 19; }
   get activeMonster(): Monster | undefined { return this.battle && this.save ? this.save.party[this.battle.allyIndex] : undefined; }
 
+  advanceClock(seconds:number):void {
+    if(!this.save||!this.world||!Number.isFinite(seconds)||seconds<=0||this.shopOpen||this.battleMenu||
+      (this.mode!=='explore'&&this.mode!=='battle'))return;
+    this.save.elapsed+=seconds;
+  }
+
   newGame(starter: string, requestedSeed?: number): void {
     const seed = requestedSeed && Number.isInteger(requestedSeed) ? requestedSeed : randomSeed();
     this.world = generateWorld(seed);
@@ -311,13 +317,13 @@ export class Game {
     }
   }
 
-  update(dt: number): void {
+  update(dt: number,advanceClock=true): void {
     dt = Math.min(dt, 0.05);
+    if(advanceClock)this.advanceClock(dt);
     if (this.messageTime > 0) { this.messageTime -= dt; if (this.messageTime <= 0) this.message = ''; }
     if (!this.world || !this.save || this.shopOpen || this.mode === 'pause' || this.mode === 'dialog' || this.mode === 'title') return;
     if(!this.battleMenu)this.jumpLandingTime=Math.max(0,this.jumpLandingTime-dt);
     if (this.mode === 'explore') {
-      this.save.elapsed += dt;
       this.playerPickupTime=Math.max(0,this.playerPickupTime-dt);
       const before = {...this.player};
       const beforeHeight=this.getGroundHeight(before.x,before.z);

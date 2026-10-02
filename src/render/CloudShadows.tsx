@@ -46,8 +46,17 @@ export function makeCloudTexture(seed: number): THREE.DataTexture {
 const cloudUniforms = {
   uCloudMask: { value: makeCloudTexture(0) },
   uCloudOffset: { value: new THREE.Vector2() },
-  uCloudStrength: { value: 0 }
+  uCloudStrength: { value: 0 },
+  uWorldLightGrade: { value: new THREE.Vector3(1,1,1) },
+  uWorldLightFill: { value: 0 },
+  uWorldSpriteLift: { value: 0 }
 };
+
+export function setWorldLightGrade(red:number,green:number,blue:number,fill:number,spriteLift:number):void {
+  cloudUniforms.uWorldLightGrade.value.set(red,green,blue);
+  cloudUniforms.uWorldLightFill.value=fill;
+  cloudUniforms.uWorldSpriteLift.value=spriteLift;
+}
 
 export function cloudPhase(elapsed: number, hour: number): { x: number; y: number; strength: number } {
   const dawn = THREE.MathUtils.clamp((hour - 5) / 2.5, 0, 1);
@@ -56,6 +65,9 @@ export function cloudPhase(elapsed: number, hour: number): { x: number; y: numbe
 }
 
 export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: T): T {
+  // Sprites use a stronger painted emissive layer than the terrain. Lift their
+  // dark painted details in daylight without fading the inked silhouettes.
+  const spriteArtwork=!!material.emissiveMap&&material.emissiveIntensity>=0.25;
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, cloudUniforms);
     shader.vertexShader = `varying vec2 vCloudWorldXZ;\n${shader.vertexShader}`.replace(
@@ -70,14 +82,21 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
     shader.fragmentShader = `varying vec2 vCloudWorldXZ;
       uniform sampler2D uCloudMask;
       uniform vec2 uCloudOffset;
-      uniform float uCloudStrength;\n${shader.fragmentShader}`.replace(
+      uniform float uCloudStrength;
+      uniform vec3 uWorldLightGrade;
+      uniform float uWorldLightFill;
+      uniform float uWorldSpriteLift;\n${shader.fragmentShader}`.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
        float cloudDensity = texture2D(uCloudMask, vCloudWorldXZ / 36.0 + uCloudOffset).r;
        diffuseColor.rgb *= 1.0 - uCloudStrength * smoothstep(0.46, 0.68, cloudDensity);`
-    );
+    ).replace('#include <tonemapping_fragment>',
+      `gl_FragColor.rgb *= uWorldLightGrade +
+         uWorldLightFill * (vec3(1.0) - clamp(gl_FragColor.rgb,0.0,1.0));
+       ${spriteArtwork?'gl_FragColor.rgb = mix(gl_FragColor.rgb,max(gl_FragColor.rgb,sqrt(max(gl_FragColor.rgb,vec3(0.0)))),uWorldSpriteLift);':''}
+       #include <tonemapping_fragment>`);
   };
-  material.customProgramCacheKey = () => 'cloud-shadows-v1';
+  material.customProgramCacheKey = () => `cloud-shadows-v4-${spriteArtwork?'sprite':'terrain'}`;
   return material;
 }
 
