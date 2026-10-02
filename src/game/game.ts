@@ -582,6 +582,7 @@ export class Game {
     this.message='';
     this.messageTime=0;
     this.mode='battle';
+    this.setMove(0,0);
     this.onChange?.();
   }
 

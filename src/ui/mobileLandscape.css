@@ -71,6 +71,7 @@
   .game-app .battle-command-cluster .command-bag-icon{width:21px;height:21px}
   .game-app .battle-command-cluster strong{font-size:10px}
   .game-app .battle-command-title{font-size:7px}
+  .game-app .battle-command-title span{display:none}
   .game-app .battle-command-cluster .quick-bag-actions>span,.game-app .battle-command-cluster .quick-cards-actions>span{display:none}
   .game-app .quick-bag-cluster,.game-app .quick-cards-cluster{left:50%!important;right:auto!important;top:50%!important;translate:-50% -50%;width:min(410px,calc(100vw - 28px));max-height:calc(100dvh - 24px);overflow-y:auto;gap:5px;padding:9px}
   .game-app .quick-bag-heading,.game-app .quick-cards-heading{height:27px;font-size:12px}

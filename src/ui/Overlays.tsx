@@ -69,7 +69,7 @@ export function PausePanel({game,quality,setQuality,pwa}:{game:Game;quality:'hig
     <button className="secondary" onClick={()=>{game.persist();game.notify('Jogo salvo neste dispositivo.');game.togglePause();}}>Salvar agora</button>
     <PwaInstallButton pwa={pwa}/>
     <div className="setting-row"><span>Qualidade gráfica</span><div className="segment"><button className={quality==='high'?'selected':''} onClick={()=>setQuality('high')}>Alta</button><button className={quality==='low'?'selected':''} onClick={()=>setQuality('low')}>Leve</button></div></div>
-    <div className="controls-copy">WASD/setas: andar · Espaço: pular também na batalha · Z: interagir/atacar · X: esquivar · C: perseguir · V: voltar · B: cartas · Q: mochila rápida · I: inventário fora da batalha · Esc: pausa</div>
+    <div className="controls-copy">Exploração: WASD ou setas para andar, Z para interagir. Batalha: setas para andar · Z atacar · X esquivar · C especial · A perseguir/voltar · S cartas · Q mochila. Espaço pula · Esc pausa.</div>
     <button className="subtle-link" onClick={()=>{game.persist();window.location.reload();}}>Voltar ao início</button>
   </div></div>;
 }

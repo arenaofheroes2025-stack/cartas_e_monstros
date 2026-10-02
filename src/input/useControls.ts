@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Game, type BattleCommand } from '../game/game';
+import { Game } from '../game/game';
 import { dialogChoiceIndex } from './dialogChoices';
 import { ELEMENTS } from '../game/content';
-
-const battleKeys:Record<string,BattleCommand>={z:'attack',r:'special',x:'dodge',c:'follow',v:'return','1':'attack','2':'dodge','3':'follow','4':'return','5':'special'};
+import { battleKeyAction } from './battleKeys';
 
 export interface Controls { touch: (x:number,y:number)=>void; release:()=>void }
 
@@ -13,8 +12,11 @@ export function useControls(game:Game,blocked=false,onBag?:()=>void):Controls {
   const qHeldViaRepeat=useRef(false);
   const update=()=>{
     if(blocked||game.battleMenu==='items'||game.battleMenu==='cards'){game.setMove(0,0);return;}
-    const right=(keys.current.has('d')||keys.current.has('arrowright')?1:0)-(keys.current.has('a')||keys.current.has('arrowleft')?1:0)+touch.current.x;
-    const down=(keys.current.has('s')||keys.current.has('arrowdown')?1:0)-(keys.current.has('w')||keys.current.has('arrowup')?1:0)+touch.current.y;
+    const arrowsOnly=game.mode==='battle';
+    const right=(keys.current.has('arrowright')||(!arrowsOnly&&keys.current.has('d'))?1:0)-
+      (keys.current.has('arrowleft')||(!arrowsOnly&&keys.current.has('a'))?1:0)+touch.current.x;
+    const down=(keys.current.has('arrowdown')||(!arrowsOnly&&keys.current.has('s'))?1:0)-
+      (keys.current.has('arrowup')||(!arrowsOnly&&keys.current.has('w'))?1:0)+touch.current.y;
     game.setMove((right+down)*Math.SQRT1_2,(-right+down)*Math.SQRT1_2);
   };
   useEffect(()=>{
@@ -39,12 +41,12 @@ export function useControls(game:Game,blocked=false,onBag?:()=>void):Controls {
       }
       if(game.mode==='battle'){
         if(game.battleMenu==='cards'){
-          if(key==='b'||key==='escape'){event.preventDefault();game.closeBattleMenu();return;}
+          if(key==='s'||key==='escape'){event.preventDefault();game.closeBattleMenu();return;}
           if(/^[1-3]$/.test(key)){event.preventDefault();game.selectBattleCard(ELEMENTS[Number(key)-1]);return;}
-          if(['arrowleft','arrowright','arrowup','arrowdown','a','d','w','s'].includes(key)){
+          if(['arrowleft','arrowright','arrowup','arrowdown'].includes(key)){
             event.preventDefault();
             const index=ELEMENTS.indexOf(game.selectedBattleCard);
-            const direction=['arrowleft','arrowup','a','w'].includes(key)?-1:1;
+            const direction=['arrowleft','arrowup'].includes(key)?-1:1;
             game.selectBattleCard(ELEMENTS[(index+direction+ELEMENTS.length)%ELEMENTS.length]);return;
           }
           if(key==='z'||key==='enter'){event.preventDefault();game.useSelectedBattleCard();return;}
@@ -66,9 +68,13 @@ export function useControls(game:Game,blocked=false,onBag?:()=>void):Controls {
         if(key==='q'||key==='i'){
           event.preventDefault();game.openBattleMenu('items');return;
         }
-        const command=battleKeys[key];
-        if(command){event.preventDefault();game.battleCommand(command);return;}
-        if(key==='b'){event.preventDefault();game.openBattleMenu('cards');return;}
+        const action=battleKeyAction(key,game.battle?.command==='follow');
+        if(action){
+          event.preventDefault();
+          if(action==='cards')game.openBattleMenu('cards');
+          else game.battleCommand(action);
+          return;
+        }
       }
       if(key==='i'&&game.mode==='explore'){event.preventDefault();onBag?.();return;}
       if(key==='z'&&game.mode==='explore'){event.preventDefault();game.interact();}

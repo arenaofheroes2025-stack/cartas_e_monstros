@@ -176,7 +176,7 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
     const available=game.save?.cards[selected]??0;
     const valid=!battle.guardian&&selected===foe.element&&chance>0&&available>0;
     return <div className="battle-command-cluster quick-cards-cluster" ref={cluster} role="group" aria-label="Cartas de captura">
-      <div className="quick-cards-heading"><span>✦ CARTAS</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar cartas"><span className="keyboard-key">B </span>✕</button></div>
+      <div className="quick-cards-heading"><span>✦ CARTAS</span><button type="button" onClick={()=>game.closeBattleMenu()} aria-label="Fechar cartas"><span className="keyboard-key">S </span>✕</button></div>
       <div className="quick-cards-list">{ELEMENTS.map((element,index)=>{
         const count=game.save?.cards[element]??0;
         return <button type="button" key={element} className={`quick-card-option ${selected===element?'selected':''}`}
@@ -188,29 +188,30 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
         </button>;
       })}</div>
       <p className="quick-cards-hint">{battle.guardian?'Guardiões não podem ser capturados.':chance===0?`Reduza ${foe.name} a 50% de PV.`:`${foe.name} exige carta de ${ELEMENT_LABEL[foe.element]}.`}</p>
-      <div className="quick-cards-actions"><span>1–3 / setas · B fecha</span><button type="button" disabled={!valid} onClick={()=>game.useSelectedBattleCard()}><span className="keyboard-key">Z </span>Usar</button></div>
+      <div className="quick-cards-actions"><span>1–3 / setas · S fecha</span><button type="button" disabled={!valid} onClick={()=>game.useSelectedBattleCard()}><span className="keyboard-key">Z </span>Usar</button></div>
     </div>;
   }
   const command=game.battle?.command;
   return <div className="battle-command-cluster battle-actions-cluster" ref={cluster} role="group" aria-label="Comandos do monstro">
-    <div className="battle-command-title">COMANDOS <span>MONSTRO</span></div>
-    <button ref={attack} className={`command-attack ${command==='attack'?'selected':''}`} {...press(()=>game.battleCommand('attack'))} title="Dar um golpe comum e voltar · Z ou 1" aria-label="Atacar">
+    <div className="battle-command-title">COMANDOS <span>SETAS: MOVER</span></div>
+    <button ref={attack} className={`command-attack ${command==='attack'?'selected':''}`} {...press(()=>game.battleCommand('attack'))} title="Dar um golpe comum e voltar · Z" aria-label="Atacar">
       <kbd>Z</kbd><span className="command-icon">⚔</span><strong>Atacar</strong><small ref={attackLabel} className="command-cooldown">Pronto</small>
     </button>
     <button ref={special} className={`command-special ${command==='special'?'selected':''}`} {...press(()=>game.battleCommand('special'))}
-      title={`${SPECIES[game.activeMonster!.species].skill.name} · R ou 5`} aria-label={`Especial: ${SPECIES[game.activeMonster!.species].skill.name}`}>
-      <kbd>R</kbd><span className="command-icon">✦</span><strong>{SPECIES[game.activeMonster!.species].skill.name}</strong><small ref={specialLabel} className="command-cooldown">0%</small>
+      title={`${SPECIES[game.activeMonster!.species].skill.name} · C`} aria-label={`Especial: ${SPECIES[game.activeMonster!.species].skill.name}`}>
+      <kbd>C</kbd><span className="command-icon">✦</span><strong>{SPECIES[game.activeMonster!.species].skill.name}</strong><small ref={specialLabel} className="command-cooldown">0%</small>
     </button>
-    <button ref={dodge} className="command-dodge" {...press(()=>game.battleCommand('dodge'))} title="Sair da área do golpe · X ou 2" aria-label="Esquivar">
+    <button ref={dodge} className="command-dodge" {...press(()=>game.battleCommand('dodge'))} title="Sair da área do golpe · X" aria-label="Esquivar">
       <kbd>X</kbd><span className="command-icon">◇</span><strong>Esquivar</strong><small ref={dodgeLabel} className="command-cooldown"/>
     </button>
-    {command==='follow'?<button className="command-return" {...press(()=>game.battleCommand('return'))} title="Voltar para perto do herói · V ou 4" aria-label="Voltar">
-      <kbd>V</kbd><span className="command-icon">↶</span><strong>Voltar</strong>
-    </button>:<button className="command-follow" {...press(()=>game.battleCommand('follow'))} title="Perseguir e atacar continuamente · C ou 3" aria-label="Perseguir">
-      <kbd>C</kbd><span className="command-icon">➤</span><strong>Perseguir</strong>
-    </button>}
-    <button className="command-cards" {...press(()=>game.openBattleMenu('cards'))} title="Abrir cartas de captura · B" aria-label="Abrir cartas de captura">
-      <kbd>B</kbd><span className="command-icon">✦</span><strong>Cartas</strong><small>{game.save?.cards[SPECIES[game.battle!.enemy.species].element]??0}</small>
+    <button className={command==='follow'?'command-return':'command-follow'}
+      {...press(()=>game.battleCommand(game.battle?.command==='follow'?'return':'follow'))}
+      title={command==='follow'?'Voltar para perto do herói · A':'Perseguir e atacar continuamente · A'}
+      aria-label={command==='follow'?'Voltar':'Perseguir'}>
+      <kbd>A</kbd><span className="command-icon">{command==='follow'?'↶':'➤'}</span><strong>{command==='follow'?'Voltar':'Perseguir'}</strong>
+    </button>
+    <button className="command-cards" {...press(()=>game.openBattleMenu('cards'))} title="Abrir cartas de captura · S" aria-label="Abrir cartas de captura">
+      <kbd>S</kbd><span className="command-icon">✦</span><strong>Cartas</strong><small>{game.save?.cards[SPECIES[game.battle!.enemy.species].element]??0}</small>
     </button>
   </div>;
 }

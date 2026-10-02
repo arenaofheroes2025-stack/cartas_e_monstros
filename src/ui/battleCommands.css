@@ -5,6 +5,8 @@
 .battle-command-cluster button:before{content:'';position:absolute;inset:4px auto 4px 0;width:3px;border-radius:3px;background:var(--accent)}
 .battle-command-cluster .command-attack{--accent:#ef665e;--wash:rgba(239,102,94,.23)}
 .battle-command-cluster .command-special{--accent:#c49aff;--wash:rgba(196,154,255,.22)}
+.battle-actions-cluster .command-special{height:39px}
+.battle-actions-cluster .command-special strong{min-width:0;flex:1;max-height:24px;overflow:hidden;white-space:normal;font-size:9px;line-height:11px}
 .battle-command-cluster .command-dodge{--accent:#68c6ee;--wash:rgba(104,198,238,.21)}
 .battle-command-cluster .command-follow{--accent:#f4d36a;--wash:rgba(244,211,106,.21)}
 .battle-command-cluster .command-return{--accent:#a4db8d;--wash:rgba(124,199,112,.22)}
