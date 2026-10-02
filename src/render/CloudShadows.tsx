@@ -5,7 +5,7 @@ import { Game } from '../game/game';
 import { WorldData } from '../game/world';
 import { daylightPhase } from './daylightPhase';
 
-const TEXTURE_SIZE = 64;
+const TEXTURE_SIZE = 128;
 
 function hash(x: number, y: number, seed: number): number {
   let value = Math.imul(x + seed * 17, 374761393) ^ Math.imul(y - seed * 13, 668265263);
@@ -26,12 +26,37 @@ function smoothNoise(x: number, y: number, cells: number, seed: number): number 
 
 export function makeCloudTexture(seed: number): THREE.DataTexture {
   const pixels = new Uint8Array(TEXTURE_SIZE * TEXTURE_SIZE * 4);
+  const puffs:{x:number;y:number;rx:number;ry:number;opacity:number}[]=[];
+  const wrap=(value:number)=>(value%1+1)%1;
+  for(let group=0;group<9;group++){
+    const x=(group%3+0.5+(hash(group,11,seed)-0.5)*0.4)/3;
+    const y=(Math.floor(group/3)+0.5+(hash(group,29,seed)-0.5)*0.4)/3;
+    const radius=0.055+hash(group,47,seed)*0.025;
+    const opacity=0.45+hash(group,143,seed)*0.55;
+    const count=7+Math.floor(hash(group,53,seed)*3);
+    for(let index=0;index<count;index++){
+      const dx=index===0?0:(hash(group,index+61,seed)-0.5)*radius*2.1;
+      const dy=index===0?0:(hash(group,index+73,seed)-0.5)*radius*1.7;
+      puffs.push({
+        x:wrap(x+dx),y:wrap(y+dy),
+        rx:radius*(index===0?1.18:0.63+hash(group,index+83,seed)*0.54),
+        ry:radius*(index===0?0.92:0.52+hash(group,index+97,seed)*0.5),
+        opacity
+      });
+    }
+  }
   for (let y = 0; y < TEXTURE_SIZE; y++) for (let x = 0; x < TEXTURE_SIZE; x++) {
     const u = x / TEXTURE_SIZE, v = y / TEXTURE_SIZE;
-    const density = 0.55 * smoothNoise(u, v, 3, seed) +
-      0.3 * smoothNoise(u, v, 6, seed + 19) +
-      0.15 * smoothNoise(u, v, 12, seed + 43);
-    const value = Math.round(density * 255);
+    const edgeNoise=(smoothNoise(u,v,16,seed+91)-0.5)*0.08;
+    let silhouette=0;
+    for(const puff of puffs){
+      const dx=Math.abs(u-puff.x),dy=Math.abs(v-puff.y);
+      const wrappedX=Math.min(dx,1-dx),wrappedY=Math.min(dy,1-dy);
+      if(wrappedX>puff.rx*1.2||wrappedY>puff.ry*1.2)continue;
+      const distance=Math.sqrt((wrappedX/puff.rx)**2+(wrappedY/puff.ry)**2)+edgeNoise;
+      silhouette=Math.max(silhouette,puff.opacity*(1-THREE.MathUtils.smoothstep(distance,0.7,1.14)));
+    }
+    const value = Math.round(silhouette * 255);
     const offset = (y * TEXTURE_SIZE + x) * 4;
     pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = value;
     pixels[offset + 3] = 255;
@@ -48,6 +73,7 @@ const cloudUniforms = {
   uCloudMask: { value: makeCloudTexture(0) },
   uCloudOffset: { value: new THREE.Vector2() },
   uCloudStrength: { value: 0 },
+  uCloudCoverage: { value: 0.2 },
   uWorldLightGrade: { value: new THREE.Vector3(1,1,1) },
   uWorldLightFill: { value: 0 },
   uWorldSpriteLift: { value: 0 }
@@ -59,8 +85,12 @@ export function setWorldLightGrade(red:number,green:number,blue:number,fill:numb
   cloudUniforms.uWorldSpriteLift.value=spriteLift;
 }
 
-export function cloudPhase(elapsed: number, hour: number): { x: number; y: number; strength: number } {
-  return { x: elapsed * 0.006, y: elapsed * 0.0025, strength: daylightPhase(hour).daylight * 0.2 };
+export function cloudPhase(elapsed: number, hour: number): { x: number; y: number; strength: number; coverage:number } {
+  return {
+    x:elapsed*0.0022,y:elapsed*0.001,
+    strength:daylightPhase(hour).daylight*0.38,
+    coverage:0.24+0.08*Math.sin(elapsed*0.022)
+  };
 }
 
 export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: T): T {
@@ -82,20 +112,22 @@ export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: 
       uniform sampler2D uCloudMask;
       uniform vec2 uCloudOffset;
       uniform float uCloudStrength;
+      uniform float uCloudCoverage;
       uniform vec3 uWorldLightGrade;
       uniform float uWorldLightFill;
       uniform float uWorldSpriteLift;\n${shader.fragmentShader}`.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
-       float cloudDensity = texture2D(uCloudMask, vCloudWorldXZ / 36.0 + uCloudOffset).r;
-       diffuseColor.rgb *= 1.0 - uCloudStrength * smoothstep(0.46, 0.68, cloudDensity);`
+       float cloudDensity = texture2D(uCloudMask, vCloudWorldXZ / 64.0 + uCloudOffset).r;
+       float cloudShade = 1.0 - uCloudStrength * smoothstep(uCloudCoverage, uCloudCoverage + 0.3, cloudDensity);`
     ).replace('#include <tonemapping_fragment>',
       `gl_FragColor.rgb *= uWorldLightGrade +
          uWorldLightFill * (vec3(1.0) - clamp(gl_FragColor.rgb,0.0,1.0));
        ${spriteArtwork?'gl_FragColor.rgb = mix(gl_FragColor.rgb,max(gl_FragColor.rgb,sqrt(max(gl_FragColor.rgb,vec3(0.0)))),uWorldSpriteLift);':''}
+       gl_FragColor.rgb *= cloudShade;
        #include <tonemapping_fragment>`);
   };
-  material.customProgramCacheKey = () => `cloud-shadows-v4-${spriteArtwork?'sprite':'terrain'}`;
+  material.customProgramCacheKey = () => `cloud-shadows-v9-${spriteArtwork?'sprite':'terrain'}`;
   return material;
 }
 
@@ -109,6 +141,7 @@ export const CloudShadows=memo(function CloudShadows({ game, world }: { game: Ga
     const phase = cloudPhase(game.save?.elapsed ?? 0, game.hour);
     cloudUniforms.uCloudOffset.value.set(phase.x, phase.y);
     cloudUniforms.uCloudStrength.value = phase.strength;
+    cloudUniforms.uCloudCoverage.value = phase.coverage;
   });
   return null;
 });
