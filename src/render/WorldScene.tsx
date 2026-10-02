@@ -39,8 +39,9 @@ function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:bo
 }
 
 function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|null>}) {
-  const {camera,size}=useThree();
+  const {camera,size,invalidate}=useThree();
   useEffect(()=>{cameraRef.current=camera;return()=>{cameraRef.current=null;};},[camera,cameraRef]);
+  useEffect(()=>{if(game.mode==='dialog')invalidate();},[game.mode,invalidate]);
   const look=useMemo(()=>new THREE.Vector3(),[]);
   const target=useMemo(()=>new THREE.Vector3(),[]);
   useFrame((_,delta)=>{
@@ -80,15 +81,23 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
     const finish=battle?.finisher;
     const capture=battle?.captureSequence;
     const finishZoom=finish?victoryCameraZoom(size.width,size.height,finish.elapsed):baseZoom;
-    const zoom=capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):finish?finishZoom:baseZoom*introPush;
+    let interactionPush=1;
+    if(!battle){
+      if(game.mode==='dialog')interactionPush=1.22;
+      else if(game.mode==='explore'&&game.playerPickupTime>0)interactionPush=1.18;
+    }
+    const zoom=capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):finish?finishZoom:baseZoom*introPush*interactionPush;
     if(camera instanceof THREE.OrthographicCamera&&Math.abs(camera.zoom-zoom)>0.01){
-      camera.zoom=THREE.MathUtils.damp(camera.zoom,zoom,finish||capture?.success?6.5:battle?3.6:5.2,delta);
+      const zoomDamping=finish||capture?.success?6.5:battle?3.6:interactionPush>1?8:5.2;
+      camera.zoom=THREE.MathUtils.damp(camera.zoom,zoom,zoomDamping,delta);
       camera.updateProjectionMatrix();
     }
     const desired=look.copy(target).add(CAMERA_OFFSET);
+    const positionDelta=camera.position.distanceToSquared(desired);
     camera.position.lerp(desired,1-Math.exp(-(finish||capture?.success?8.5:battle?4.2:6.2)*delta));
     // Keep the projection angle fixed while the camera glides toward the arena.
     camera.lookAt(look.copy(camera.position).sub(CAMERA_OFFSET));
+    if(game.mode==='dialog'&&(Math.abs(camera.zoom-zoom)>0.05||positionDelta>0.0004))invalidate();
   });
   return null;
 }
