@@ -168,7 +168,7 @@ export class Game {
 
   get player(): Point { return this.save?.player || {x:48,z:48}; }
   get hour(): number { return this.save ? ((this.save.elapsed / DAY_SECONDS) % 1) * 24 : 9; }
-  get isNight(): boolean { return this.hour < 6 || this.hour >= 19; }
+  get isNight(): boolean { return this.hour < 6 || this.hour >= 18; }
   get activeMonster(): Monster | undefined { return this.battle && this.save ? this.save.party[this.battle.allyIndex] : undefined; }
 
   advanceClock(seconds:number):void {
@@ -506,8 +506,8 @@ export class Game {
     this.playerPickupTime=PLAYER_PICKUP_SECONDS;
     this.setMove(0,0);
     this.effects.push({kind:'capture',x:cache.x,z:cache.z,element:cache.element});
-    this.notify('Você encontrou 1 carta de ' + ELEMENT_LABEL[cache.element] + '!');
     this.persist();
+    this.onChange?.();
   }
 
   private collectItem(spawn:ItemSpawn):void {
@@ -526,7 +526,6 @@ export class Game {
     this.playerPickupTime=PLAYER_PICKUP_SECONDS;
     this.setMove(0,0);
     this.effects.push({kind:'capture',x:spawn.x,z:spawn.z});
-    this.notify(ITEMS[spawn.itemId].name+' guardado no inventário!');
     this.persist();this.onChange?.();
   }
 

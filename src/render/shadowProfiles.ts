@@ -1,6 +1,7 @@
 import { ART_FOOTPRINTS, ART_FOOTPRINT_AREAS } from '../game/generatedFootprints';
 import { depthFor } from '../game/assetCollision';
 import type { SceneLightSource } from './lightSources';
+import { daylightPhase } from './daylightPhase';
 import { SHADOW_SLOPE } from './sun';
 
 const INV_SQRT2=Math.SQRT1_2;
@@ -58,7 +59,7 @@ export function sunlightDirection(_hour:number):{x:number;z:number} {
 }
 
 export function dominantShadowDirection(hour:number,x:number,z:number,sources:SceneLightSource[]):{x:number;z:number} {
-  const daylight=Math.max(0,Math.min(1,(hour-5)/2.5))*Math.max(0,Math.min(1,(20-hour)/2.5));
+  const daylight=daylightPhase(hour).daylight;
   if(daylight<0.45){
     let nearest:SceneLightSource|undefined,closest=Infinity;
     for(const source of sources){

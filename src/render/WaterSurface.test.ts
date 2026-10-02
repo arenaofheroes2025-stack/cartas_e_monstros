@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { generateWorld, tileAt } from '../game/world';
-import { shoreEdges, waterGeometry } from './WaterSurface';
+import { shoreEdges, waterGeometry, waterGlintIntensity } from './WaterSurface';
 
 describe('superfície contínua da água',()=>{
+  it('reflete mais o sol ao meio-dia e mantém um brilho discreto à noite',()=>{
+    expect(waterGlintIntensity(12)).toBeGreaterThan(waterGlintIntensity(9));
+    expect(waterGlintIntensity(9)).toBeGreaterThan(waterGlintIntensity(18));
+    expect(waterGlintIntensity(18)).toBeGreaterThan(0);
+    expect(waterGlintIntensity(18)).toBeCloseTo(waterGlintIntensity(0));
+  });
   it('marca somente margens externas, incluindo pontes',()=>{
     const world=generateWorld(40732);
     const edge=world.tiles.find(tile=>tile.terrain==='water'&&

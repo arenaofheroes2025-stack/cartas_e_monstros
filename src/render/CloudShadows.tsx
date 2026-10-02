@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Game } from '../game/game';
 import { WorldData } from '../game/world';
+import { daylightPhase } from './daylightPhase';
 
 const TEXTURE_SIZE = 64;
 
@@ -59,9 +60,7 @@ export function setWorldLightGrade(red:number,green:number,blue:number,fill:numb
 }
 
 export function cloudPhase(elapsed: number, hour: number): { x: number; y: number; strength: number } {
-  const dawn = THREE.MathUtils.clamp((hour - 5) / 2.5, 0, 1);
-  const dusk = THREE.MathUtils.clamp((20 - hour) / 2.5, 0, 1);
-  return { x: elapsed * 0.006, y: elapsed * 0.0025, strength: dawn * dusk * 0.2 };
+  return { x: elapsed * 0.006, y: elapsed * 0.0025, strength: daylightPhase(hour).daylight * 0.2 };
 }
 
 export function withCloudShadows<T extends THREE.MeshLambertMaterial>(material: T): T {

@@ -4,6 +4,25 @@
   border:0;border-radius:0;background:radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--creature-color),#1b5c79 62%),transparent 72%);
   box-shadow:none;
 }
+
+.game-app .toast.toast-corner{
+  left:auto;
+  right:max(16px,env(safe-area-inset-right));
+  top:max(66px,calc(env(safe-area-inset-top) + 52px));
+  transform:none;
+  max-width:min(340px,34vw);
+  padding:8px 11px;
+  font-size:11px;
+}
+@media(pointer:coarse),(max-width:700px){
+  .game-app .toast.toast-corner{
+    right:max(8px,env(safe-area-inset-right));
+    top:max(52px,calc(env(safe-area-inset-top) + 48px));
+    max-width:min(36vw,230px);
+    padding:5px 8px;
+    font-size:9px;
+  }
+}
 .game-app .companion-summary-stats,.game-app .companion-held,.game-app .companion-details-skill{
   border:0;border-bottom:1px solid #8cbdba7d;border-radius:0;background:transparent;box-shadow:none;
   padding:10px 0;

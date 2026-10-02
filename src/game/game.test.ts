@@ -116,8 +116,10 @@ describe('progressão e captura',()=>{
     const spawn=game.world!.items[0];
     game.player.x=spawn.x;game.player.z=spawn.z;
     const inventoryBefore=game.save!.inventory.length;
+    game.message='';
     game.interact();
     expect(game.save!.inventory).toHaveLength(inventoryBefore+1);
+    expect(game.message).toBe('');
     expect(game.playerPickupTime).toBe(0.6);
     game.update(0.05);
     expect(game.playerPickupTime).toBeCloseTo(0.55);
@@ -146,9 +148,11 @@ describe('progressão e captura',()=>{
     game.setMove(1,0);
     const cardsBefore=game.save!.cards[cache.element];
     expect(game.nearbyInteraction()?.kind).toBe('cache');
+    game.message='';
     game.interact();
     expect(game.save!.openedCaches).toContain(cache.id);
     expect(game.save!.cards[cache.element]).toBe(cardsBefore+1);
+    expect(game.message).toBe('');
     expect(game.playerPickupTime).toBe(0.6);
     expect(game.move).toEqual({x:0,z:0});
     game.update(0.05);

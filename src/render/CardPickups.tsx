@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { Game } from '../game/game';
 import { type CardCache } from '../game/world';
 import { imageTexture } from './art';
+import { daylightPhase } from './daylightPhase';
 import { makeProjectedShadowGeometry, projectedShadowMaterial, writeProjectedShadow } from './ProjectedShadows';
 
 const CARD_SIZE=0.82;
@@ -42,8 +43,7 @@ function Card({game,cache}:{game:Game;cache:CardCache}) {
     const elapsed=game.save?.elapsed??0;
     const lift=hoverHeight(elapsed,phase);
     group.current.position.y=ground+lift;
-    const daylight=THREE.MathUtils.clamp((game.hour-5)/2.5,0,1)*
-      THREE.MathUtils.clamp((20-game.hour)/2.5,0,1);
+    const daylight=daylightPhase(game.hour).daylight;
     shadowMaterial.uniforms.uOpacity.value=0.14+daylight*0.56;
     if(lastShadow.current.elapsed!==elapsed||lastShadow.current.ground!==ground){
       // Project the card's alpha onto the terrain, including lower adjacent tiles.

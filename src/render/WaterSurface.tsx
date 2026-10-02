@@ -19,6 +19,13 @@ const waterUv={
   top:1-waterRow/TILE_ATLAS.rows-0.5/(48*TILE_ATLAS.rows)
 };
 
+export function waterGlintIntensity(hour:number):number {
+  const daylight=daylightPhase(hour).daylight;
+  const noon=THREE.MathUtils.smoothstep(hour,9,12)*
+    (1-THREE.MathUtils.smoothstep(hour,12,15));
+  return 0.08+daylight*(0.7+0.22*noon);
+}
+
 // North, east, south, west. A bridge is a shoreline too: the water laps at its edge.
 export function shoreEdges(world:WorldData,x:number,z:number):[number,number,number,number] {
   return [[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dz])=>
@@ -164,13 +171,32 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
         outgoingLight*=0.66+0.12*uWaterSunlight;
         float sunGlint=smoothstep(0.87,0.98,ripple)*
           smoothstep(0.72,0.94,0.5+0.5*sin(vCloudWorldXZ.x*3.4-vCloudWorldXZ.y*2.8+uWaterTime*0.62));
-        outgoingLight+=vec3(0.075,0.115,0.13)*sunGlint*uWaterSunlight*
+        outgoingLight+=mix(vec3(0.045,0.085,0.11),vec3(0.15,0.17,0.15),uWaterSunlight)*
+          sunGlint*(0.16+0.84*uWaterSunlight)*
           (1.0-0.35*clamp(vWaterDepth,0.0,1.0));
+        // Sparse glints drift and blink on the water surface, in loose patches.
+        vec2 glintGrid=(vCloudWorldXZ+vec2(uWaterTime*0.035,uWaterTime*0.018))*1.35;
+        vec2 glintCell=floor(glintGrid);
+        float glintSeed=fract(sin(dot(glintCell,vec2(127.1,311.7)))*43758.5453);
+        vec2 glintCenter=vec2(fract(glintSeed*23.27),fract(glintSeed*47.11))*0.55+0.225;
+        vec2 glintOffset=fract(glintGrid)-glintCenter;
+        float glintPatch=smoothstep(0.42,0.65,0.5+0.5*
+          sin(vCloudWorldXZ.x*0.32+1.2)*sin(vCloudWorldXZ.y*0.29-0.6));
+        float glintBlink=smoothstep(0.4,0.88,0.5+0.5*sin(uWaterTime*2.4+glintSeed*19.0));
+        float glintCore=1.0-smoothstep(0.0,0.095,length(glintOffset));
+        float glintRayX=(1.0-smoothstep(0.0,0.025,abs(glintOffset.y)))*
+          (1.0-smoothstep(0.08,0.28,abs(glintOffset.x)));
+        float glintRayY=(1.0-smoothstep(0.0,0.025,abs(glintOffset.x)))*
+          (1.0-smoothstep(0.08,0.28,abs(glintOffset.y)));
+        float sparkle=step(0.84,glintSeed)*glintPatch*glintBlink*
+          min(1.0,glintCore+0.45*(glintRayX+glintRayY));
+        outgoingLight+=mix(vec3(0.12,0.2,0.24),vec3(0.85,0.91,0.78),uWaterSunlight)*
+          sparkle*(0.15+0.85*uWaterSunlight);
       #endif
       #include <opaque_fragment>
     `);
   };
-  material.customProgramCacheKey=()=> 'water-depth-surface-v5';
+  material.customProgramCacheKey=()=> 'water-depth-surface-v7';
   return material;
 }
 
@@ -203,7 +229,7 @@ export const WaterSurface=memo(function WaterSurface({world,game}:{world:WorldDa
     time.value=game.save?.elapsed??clock.elapsedTime;
     const daylight=daylightPhase(game.hour).daylight;
     artwork.value=0.48+0.08*daylight;
-    sunlight.value=daylight;
+    sunlight.value=waterGlintIntensity(game.hour);
   });
   const width=WORLD_SIZE/CHUNK_SIZE;
   return <group>{chunks.map((tiles,index)=>tiles.length>0&&

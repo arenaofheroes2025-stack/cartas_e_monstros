@@ -51,6 +51,6 @@ export function Hud({game,onCollection,onBag,onMap,onCompanion}:{game:Game;onCol
         <button type="button" onClick={onCollection} className="hud-menu-button" aria-label={`Abrir equipe, ${save.party.length} de 3 criaturas em campo`}><span className="hud-menu-icon hud-team-icon"><img src={monsterPortrait(current.species)} alt=""/></span><strong>Equipe</strong><span className="hud-menu-count">{save.party.length}/3</span></button>
       </div>
     </>:null}
-    {game.mode!=='battle'&&game.message&&game.messageTime>0?<div className="toast" key={game.message}>{game.message}</div>:null}
+    {game.mode!=='battle'&&game.message&&game.messageTime>0?<div className="toast toast-corner" key={game.message}>{game.message}</div>:null}
   </>;
 }
