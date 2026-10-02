@@ -17,7 +17,9 @@ describe('geração da região',()=>{
       const world=generateWorld(seed*9173);
       expect(world.tiles).toHaveLength(WORLD_SIZE*WORLD_SIZE);
       expect(world.places.filter(place=>place.kind==='shrine')).toHaveLength(3);
-      expect(world.decorations.map(place=>place.id).sort()).toEqual(['boathouse','casa-padaria','casa-vila','woodcutter-hut']);
+      expect(world.decorations.map(place=>place.id).sort(),'seed '+seed).toEqual([
+        'boathouse','casa-caverna','casa-estalagem','casa-padaria','casa-pedra','casa-vila','woodcutter-hut'
+      ]);
       expect(world.walkers.map(npc=>npc.id).sort(),'seed '+seed).toEqual(['lina','nara','olmo','tavio']);
       expect(validateWorld(world),'seed '+seed).toBe(true);
       expect(world.items,'seed '+seed).toHaveLength(GROUND_ITEM_LIMIT);
@@ -97,7 +99,7 @@ describe('geração da região',()=>{
   });
   it('coloca os novos objetos da vila sem fechar caminhos principais',()=>{
     const world=generateWorld(40732);
-    for(const prop of ['village-lamp','bloom-bush','bench','well','crates','flower-planter'])
+    for(const prop of ['village-lamp','bloom-bush','bench','well','crates','flower-planter','carroca-mercador','arco-pedra'])
       expect(world.tiles.some(tile=>tile.prop===prop),prop).toBe(true);
     expect(validateWorld(world)).toBe(true);
   });

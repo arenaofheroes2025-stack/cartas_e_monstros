@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { spriteFootV } from './spriteAnchors';
 import { PLAYER_ANIMATIONS, type PlayerAnimation } from './playerAnimations';
+import { TREE_WIND, type TreeWindAsset } from './treeAnimations';
+import { BIRD_ANIMATIONS, type BirdAnimation, type BirdSpecies } from '../game/ambientBirds';
 
 const imageCache = new Map<string, THREE.Texture>();
 const stripCache = new Map<string, THREE.Texture[]>();
@@ -63,6 +65,16 @@ export function personTexture(role: 'player'|'artisan'|'healer'|'keeper'|'guardi
 export function playerTexture(animation: PlayerAnimation, frame = 0): THREE.Texture {
   const count=PLAYER_ANIMATIONS[animation].frames;
   return stripFrames(`/art/people/player-anim-${animation}.png`,count)[Math.max(0,Math.min(count-1,frame))];
+}
+
+export function treeWindTexture(asset: TreeWindAsset, frame = 0): THREE.Texture {
+  const count = TREE_WIND[asset].frames;
+  return stripFrames(`/art/environment/${asset}-wind.png`, count)[Math.max(0, Math.min(count - 1, frame))];
+}
+
+export function birdTexture(species: BirdSpecies, animation: BirdAnimation, frame = 0): THREE.Texture {
+  const count=BIRD_ANIMATIONS[animation].frames;
+  return stripFrames(`/art/birds/${species}-${animation}.png`,count)[Math.max(0,Math.min(count-1,frame))];
 }
 
 export function personPortrait(role: 'player'|'artisan'|'healer'|'keeper'|'guardian'): string {

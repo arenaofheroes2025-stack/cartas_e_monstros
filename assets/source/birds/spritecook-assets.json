@@ -1,0 +1,79 @@
+{
+  "style_reference_asset_id": "9ace9f5b-db21-4058-8800-baf873ea3d7a",
+  "stills_model": "gpt-image-2.5-flare",
+  "animations_model": "pixel-engine-v1.1",
+  "assets": [
+    {
+      "species": "verde-dourado",
+      "kind": "base",
+      "asset_id": "463443e8-1a96-4081-a6ee-eb18e59aa76a",
+      "sha12": "f6f79bdb6163",
+      "file": "verde-dourado-base.png",
+      "frames": 1
+    },
+    {
+      "species": "verde-dourado",
+      "kind": "idle",
+      "asset_id": "46cff084-0827-44ff-8a17-5104e094dda6",
+      "sha12": "d8dcb786fe9f",
+      "file": "verde-dourado-idle-spritesheet.png",
+      "frames": 4
+    },
+    {
+      "species": "verde-dourado",
+      "kind": "fly",
+      "asset_id": "3b225bb3-5136-49c3-8237-8b5c4c596956",
+      "sha12": "3dd75e2983a6",
+      "file": "verde-dourado-fly-spritesheet.png",
+      "frames": 6
+    },
+    {
+      "species": "azul",
+      "kind": "base",
+      "asset_id": "60cf1dbd-03fc-4803-ade3-297f097a1d62",
+      "sha12": "375dab5ee6b5",
+      "file": "azul-base.png",
+      "frames": 1
+    },
+    {
+      "species": "azul",
+      "kind": "idle",
+      "asset_id": "c6329a98-d675-45a5-b529-773f1ad3fe87",
+      "sha12": "cb88469982aa",
+      "file": "azul-idle-spritesheet.png",
+      "frames": 4
+    },
+    {
+      "species": "azul",
+      "kind": "fly",
+      "asset_id": "767ca927-df01-4a0b-8c75-9009790c432b",
+      "sha12": "9384192d8414",
+      "file": "azul-fly-spritesheet.png",
+      "frames": 6
+    },
+    {
+      "species": "cobre",
+      "kind": "base",
+      "asset_id": "4b43f90c-3bb4-4426-8725-cb0006808f77",
+      "sha12": "1918e8d84c0d",
+      "file": "cobre-base.png",
+      "frames": 1
+    },
+    {
+      "species": "cobre",
+      "kind": "idle",
+      "asset_id": "df4488d0-968e-48f7-b719-88b4f14926ba",
+      "sha12": "aec32f2963c2",
+      "file": "cobre-idle-spritesheet.png",
+      "frames": 4
+    },
+    {
+      "species": "cobre",
+      "kind": "fly",
+      "asset_id": "ce3c0614-614a-4290-b5dd-63ef0f0e1a7d",
+      "sha12": "49c2c9fab0fd",
+      "file": "cobre-fly-spritesheet.png",
+      "frames": 6
+    }
+  ]
+}

@@ -132,6 +132,9 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688,
     0.04688
   ],
+  "/art/environment/arco-pedra.png": [
+    0.04297
+  ],
   "/art/environment/ash-heap.png": [
     0.03906
   ],
@@ -153,17 +156,29 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/environment/boathouse.png": [
     0.01563
   ],
+  "/art/environment/carroca-mercador.png": [
+    0.04297
+  ],
   "/art/environment/casa-arquivo.png": [
     0.01758
   ],
   "/art/environment/casa-cartas.png": [
     0.01563
   ],
+  "/art/environment/casa-caverna.png": [
+    0.03516
+  ],
   "/art/environment/casa-cura.png": [
     0.01758
   ],
+  "/art/environment/casa-estalagem.png": [
+    0.02344
+  ],
   "/art/environment/casa-padaria.png": [
     0.01563
+  ],
+  "/art/environment/casa-pedra.png": [
+    0.02734
   ],
   "/art/environment/casa-vila.png": [
     0.01563
@@ -173,6 +188,14 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   ],
   "/art/environment/cave-mushrooms.png": [
     0.03906
+  ],
+  "/art/environment/copper-tree-wind.png": [
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953
   ],
   "/art/environment/copper-tree.png": [
     0.01953
@@ -252,6 +275,14 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/environment/market-crate.png": [
     0.01563
   ],
+  "/art/environment/marsh-willow-wind.png": [
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953,
+    0.01953
+  ],
   "/art/environment/marsh-willow.png": [
     0.01953
   ],
@@ -269,6 +300,12 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   ],
   "/art/environment/obsidian-spire.png": [
     0.03906
+  ],
+  "/art/environment/pine-wind.png": [
+    0.02344,
+    0.02344,
+    0.02344,
+    0.02344
   ],
   "/art/environment/pine.png": [
     0.02344
@@ -339,6 +376,14 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
   "/art/environment/town-fountain.png": [
     0.01563
   ],
+  "/art/environment/tree-wind.png": [
+    0.01563,
+    0.01563,
+    0.01563,
+    0.01563,
+    0.01563,
+    0.01563
+  ],
   "/art/environment/tree.png": [
     0.01563
   ],
@@ -352,6 +397,14 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.03125
   ],
   "/art/environment/wet-rock.png": [
+    0.01563
+  ],
+  "/art/environment/willow-wind.png": [
+    0.01563,
+    0.01563,
+    0.01563,
+    0.01563,
+    0.01563,
     0.01563
   ],
   "/art/environment/willow.png": [
@@ -501,6 +554,84 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688,
     0.04688,
     0.04688
+  ],
+  "/art/birds/azul-flutter.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/azul-fly.png": [
+    0.29688,
+    0.26563,
+    0.30469,
+    0.29688,
+    0.26563,
+    0.29688
+  ],
+  "/art/birds/azul-idle.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/azul-takeoff.png": [
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/cobre-flutter.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/cobre-fly.png": [
+    0.28906,
+    0.28906,
+    0.28906,
+    0.28906,
+    0.28906,
+    0.28906
+  ],
+  "/art/birds/cobre-idle.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/cobre-takeoff.png": [
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/verde-dourado-flutter.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/verde-dourado-fly.png": [
+    0.26563,
+    0.26563,
+    0.25781,
+    0.27344,
+    0.26563,
+    0.26563
+  ],
+  "/art/birds/verde-dourado-idle.png": [
+    0.0625,
+    0.0625,
+    0.0625,
+    0.0625
+  ],
+  "/art/birds/verde-dourado-takeoff.png": [
+    0.0625,
+    0.0625
   ]
 };
 

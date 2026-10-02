@@ -23,6 +23,7 @@ import { cameraZoom, captureCameraZoom, victoryCameraZoom } from './cameraZoom';
 import { RenderResolution } from './RenderResolution';
 import { preferredRenderDpr } from './resolutionBudget';
 import { NearbyTextureWarmup } from './NearbyTextureWarmup';
+import { AmbientBirds } from './AmbientBirds';
 
 function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:boolean}) {
   const accumulated=useRef(0);
@@ -137,7 +138,7 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef}:{game:Gam
       <WaterSurface world={world} game={game}/>
       <GroundShadows game={game} world={world}/>
       <Props world={world} game={game}/>
-      {game.world?<><CardPickups game={game}/><ItemPickups game={game}/><Creatures game={game}/><BattleArena game={game}/><BattleSummon game={game}/><BattleFinish game={game}/><BattleCapture game={game}/><StatusAuras game={game}/><Effects game={game}/></>:null}
+      {game.world?<><AmbientBirds game={game} world={world}/><CardPickups game={game}/><ItemPickups game={game}/><Creatures game={game}/><BattleArena game={game}/><BattleSummon game={game}/><BattleFinish game={game}/><BattleCapture game={game}/><StatusAuras game={game}/><Effects game={game}/></>:null}
     </group>
   </>;
 }

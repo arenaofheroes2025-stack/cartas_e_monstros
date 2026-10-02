@@ -5,12 +5,14 @@ import sharp from 'sharp';
 const bands={
   'casa-cartas':[.76,.86], 'casa-cura':[.76,.86], 'casa-arquivo':[.76,.86],
   'casa-padaria':[.76,.86], 'casa-vila':[.76,.86],
+  'casa-estalagem':[.76,.88], 'casa-pedra':[.76,.88], 'casa-caverna':[.76,.90],
   'woodcutter-hut':[.76,.88], boathouse:[.76,.88],
   'selo-natureza':[.82,.93], 'selo-fogo':[.82,.93], 'selo-agua':[.82,.93],
   tree:[.65,.75], willow:[.65,.75], pine:[.85,.95], 'copper-tree':[.75,.85], 'marsh-willow':[.75,.85],
   rock:[.8,.91], 'moss-rock':[.8,.91], 'basalt-rock':[.8,.91], lamp:[.82,.94],
   'village-lamp':[.8,.94], 'bloom-bush':[.78,.94], bench:[.75,.92],
-  well:[.75,.93], crates:[.76,.94], 'flower-planter':[.79,.95]
+  well:[.75,.93], crates:[.76,.94], 'flower-planter':[.79,.95],
+  'carroca-mercador':[.75,.94], 'arco-pedra':[.78,.94]
 };
 for(const name of [
   'fallen-log','moss-boulder','field-stump','fieldstone','mountain-boulder','basalt-shard',
@@ -22,7 +24,8 @@ for(const name of [
 
 const trunks=new Set(['tree','willow','pine','copper-tree','marsh-willow']);
 const people=['artisan','healer','keeper','guardian','cartographer','botanist','baker','courier'];
-const buildings=['casa-cartas','casa-cura','casa-arquivo','casa-padaria','casa-vila','woodcutter-hut','boathouse'];
+const buildings=['casa-cartas','casa-cura','casa-arquivo','casa-padaria','casa-vila',
+  'casa-estalagem','casa-pedra','casa-caverna','woodcutter-hut','boathouse'];
 
 async function alphaArea(file,start=.58,end=.97) {
   const {data,info}=await sharp(file).ensureAlpha().raw().toBuffer({resolveWithObject:true});

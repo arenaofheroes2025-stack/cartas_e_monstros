@@ -5,7 +5,7 @@ import sharp from 'sharp';
 
 export async function buildSpriteAnchors(root = process.cwd()) {
   const anchors = {};
-  for (const folder of ['creatures', 'environment', 'people']) {
+  for (const folder of ['creatures', 'environment', 'people', 'birds']) {
     const directory = path.join(root, 'public', 'art', folder);
     for (const name of fs.readdirSync(directory).filter(file => file.endsWith('.png')).sort()) {
       const file = path.join(directory, name);

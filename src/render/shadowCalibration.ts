@@ -33,7 +33,7 @@ const stones=new Set([
   'shale-fragments','mineral-cluster','scree-pile','basalt-shard','ash-heap',
   'obsidian-spire','lava-boulder','sandstone-boulder','sandstone-pillar',
   'desert-pebbles','frozen-boulder','ice-crystals','ice-block','wet-rock',
-  'river-stones','rune-stone','magic-crystal','stalagmites','cave-boulder','geode'
+  'river-stones','rune-stone','magic-crystal','stalagmites','cave-boulder','geode','arco-pedra'
 ]);
 const plants=new Set([
   'flower-bush','flowers','bloom-bush','forest-shrub','field-flowers','grass-tuft',

@@ -2,7 +2,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'rea
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { HEIGHT_STEP, type Decoration, type Place, type Tile, type WorldData } from '../game/world';
-import { imageTexture } from './art';
+import { imageTexture, treeWindTexture } from './art';
 import { withCloudShadows } from './CloudShadows';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
 import { Game } from '../game/game';
@@ -11,6 +11,7 @@ import { SPRITE_PITCH_COMPENSATION } from './camera';
 import { makeProjectedShadowGeometry, projectedShadowMaterial } from './ProjectedShadows';
 import { calibratedCasterHeight, shadowGroupForAsset, shadowGroupOffset } from './shadowCalibration';
 import { battlePropOpacity } from './battlePropOpacity';
+import { TREE_WIND_PHASES, treeWindBucket, treeWindConfig, treeWindFrame, type TreeWindAsset } from './treeAnimations';
 
 const facing = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/4);
 const propArt: {asset:string;size:number;matches:(tile:Tile)=>boolean}[] = Object.entries(PROP_SIZE).map(([asset,size])=>({
@@ -19,31 +20,39 @@ const propArt: {asset:string;size:number;matches:(tile:Tile)=>boolean}[] = Objec
     asset==='tree'?tile.prop==='tree'&&tile.biome!=='lago':tile.prop===asset
 }));
 
-function InstancedProp({tiles,asset,size,game,world,fading=false}:{tiles:Tile[];asset:string;size:number;game:Game;world:WorldData;fading?:boolean}) {
+function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:{tiles:Tile[];asset:string;size:number;game:Game;world:WorldData;phaseBucket?:number;fading?:boolean}) {
   const ref=useRef<THREE.InstancedMesh>(null);
   const ghostRef=useRef<THREE.InstancedMesh>(null);
   const faded=useRef(new Set<number>());
   const lastCheck=useRef(0);
+  const windFrame=useRef(-1);
   const canFade=size>=3;
   const ghostLimit=canFade?Math.min(16,tiles.length):0;
   const visualHeight=size*SPRITE_PITCH_COMPENSATION;
   const shadowGroup=shadowGroupForAsset(asset);
   const shadowOffset=shadowGroupOffset(shadowGroup);
+  const wind=treeWindConfig(asset);
+  const initialArt=wind?treeWindTexture(asset as TreeWindAsset):imageTexture(`/art/environment/${asset}.png`);
   const footV=imageTexture(`/art/environment/${asset}.png`).userData.footV as number;
   const geometry=useMemo(()=>new THREE.PlaneGeometry(size,visualHeight),[size,visualHeight]);
   const shadowGeometry=useMemo(()=>makeProjectedShadowGeometry(world,tiles.map(tile=>({
     x:tile.x+0.5+shadowOffset.x,z:tile.z+0.5+shadowOffset.z,y:0.1+tile.height*HEIGHT_STEP
   })),size,calibratedCasterHeight(visualHeight,shadowGroup),footV),[world,tiles,asset,size,visualHeight,footV]);
-  const shadowMaterial=useMemo(()=>projectedShadowMaterial(imageTexture(`/art/environment/${asset}.png`)),[asset]);
+  const shadowMaterial=useMemo(()=>{
+    const material=projectedShadowMaterial(initialArt);
+    material.uniforms.uRepeat.value.copy(initialArt.repeat);
+    material.uniforms.uOffset.value.copy(initialArt.offset);
+    return material;
+  },[initialArt]);
   useLayoutEffect(()=>()=>{geometry.dispose();shadowGeometry.dispose();shadowMaterial.dispose();},[geometry,shadowGeometry,shadowMaterial]);
-  const material=useMemo(()=>{const art=imageTexture(`/art/environment/${asset}.png`);return withCloudShadows(new THREE.MeshLambertMaterial({
+  const material=useMemo(()=>{const art=initialArt;return withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,alphaTest:fading?0.01:0.2,side:THREE.DoubleSide,depthWrite:true
-  }));},[asset,fading]);
-  const ghostMaterial=useMemo(()=>{if(!canFade)return null;const art=imageTexture(`/art/environment/${asset}.png`);return withCloudShadows(new THREE.MeshLambertMaterial({
+  }));},[initialArt,fading]);
+  const ghostMaterial=useMemo(()=>{if(!canFade)return null;const art=initialArt;return withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,opacity:0.42,alphaTest:0.16,side:THREE.DoubleSide,depthWrite:false
-  }));},[asset,canFade]);
+  }));},[initialArt,canFade]);
   useLayoutEffect(()=>()=>{material.dispose();ghostMaterial?.dispose();},[material,ghostMaterial]);
   useLayoutEffect(()=>{
     if(!ref.current)return;
@@ -68,6 +77,24 @@ function InstancedProp({tiles,asset,size,game,world,fading=false}:{tiles:Tile[];
     faded.current.clear();
   },[tiles,visualHeight,ghostLimit,footV]);
   useFrame(({clock})=>{
+    if(wind&&ref.current?.parent?.visible){
+      const frame=treeWindFrame(asset as TreeWindAsset,clock.elapsedTime,phaseBucket);
+      if(frame!==windFrame.current){
+        windFrame.current=frame;
+        const art=treeWindTexture(asset as TreeWindAsset,frame);
+        material.map=art;
+        material.emissiveMap=art;
+        material.needsUpdate=true;
+        if(ghostMaterial){
+          ghostMaterial.map=art;
+          ghostMaterial.emissiveMap=art;
+          ghostMaterial.needsUpdate=true;
+        }
+        shadowMaterial.uniforms.uTexture.value=art;
+        shadowMaterial.uniforms.uRepeat.value.copy(art.repeat);
+        shadowMaterial.uniforms.uOffset.value.copy(art.offset);
+      }
+    }
     if(!ref.current||!ghostRef.current||!canFade||!ref.current.parent?.visible||clock.elapsedTime-lastCheck.current<0.12)return;
     lastCheck.current=clock.elapsedTime;
     const player=game.player;
@@ -153,13 +180,19 @@ function chunkTouchesArena(x:number,z:number,arena:ArenaCutout):boolean {
 
 const PropChunk=memo(function PropChunk({tiles,places,world,x,z,arena,game,part}:{tiles:Tile[];places:(Place|Decoration)[];world:WorldData;x:number;z:number;arena?:ArenaCutout;game:Game;part:'inside'|'outside'}) {
   const visibility=useChunkVisibility(x,z,8);
-  const groups=useMemo(()=>propArt.map(config=>tiles.filter(tile=>config.matches(tile)&&
-    outsideArena(tile.x,tile.z,config.size,arena)===(part==='outside'))),
+  const groups=useMemo(()=>propArt.flatMap(config=>{
+    const matching=tiles.filter(tile=>config.matches(tile)&&
+      outsideArena(tile.x,tile.z,config.size,arena)===(part==='outside'));
+    if(!treeWindConfig(config.asset))return [{...config,tiles:matching,phaseBucket:0}];
+    const buckets=Array.from({length:TREE_WIND_PHASES},()=>[] as Tile[]);
+    matching.forEach(tile=>buckets[treeWindBucket(config.asset as TreeWindAsset,tile.x,tile.z)].push(tile));
+    return buckets.map((group,phaseBucket)=>({...config,tiles:group,phaseBucket}));
+  }),
     [tiles,part,arena?.x,arena?.z,arena?.radius]);
   const visiblePlaces=useMemo(()=>places.filter(place=>outsideArena(place.x,place.z,placeSize(place),arena)===(part==='outside')),
     [places,part,arena?.x,arena?.z,arena?.radius]);
   return <group ref={visibility}>
-    {propArt.map((config,index)=>groups[index].length>0&&<InstancedProp key={config.asset} tiles={groups[index]} asset={config.asset} size={config.size} game={game} world={world} fading={part==='inside'}/>)}
+    {groups.map(config=>config.tiles.length>0&&<InstancedProp key={`${config.asset}-${config.phaseBucket}`} tiles={config.tiles} asset={config.asset} size={config.size} game={game} world={world} phaseBucket={config.phaseBucket} fading={part==='inside'}/>)}
     {visiblePlaces.map(place=><PlaceArt key={place.id} place={place} world={world} fading={part==='inside'}/>)}
   </group>;
 });

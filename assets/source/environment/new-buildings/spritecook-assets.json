@@ -1,0 +1,45 @@
+{
+  "model": "gpt-image-2",
+  "style_reference": {
+    "asset_id": "6844ea1c-1242-4691-9f83-178155ea879d",
+    "sha12": "8326e5c966b2",
+    "file": "assets/source/environment/houses.png"
+  },
+  "assets": {
+    "casa-estalagem": {
+      "asset_id": "8454f37a-5c3e-42b5-bad4-85c228ac6645",
+      "raw_sha12": "5d90078d5c91",
+      "clean_asset_id": "0000a27e-1618-5632-8737-9b921792c1ba",
+      "clean_sha12": "b6ec998f2bfb",
+      "size": 512
+    },
+    "casa-pedra": {
+      "asset_id": "acc9bc59-efa0-4e13-9738-3c92eac508e6",
+      "raw_sha12": "b86ea2ef5bdf",
+      "clean_asset_id": "33c00b7f-af21-57c9-81d9-53dc8ba96ac0",
+      "clean_sha12": "0ca637334e37",
+      "size": 512
+    },
+    "casa-caverna": {
+      "asset_id": "4adf9dbb-25be-4ca8-9065-1784fb9ea9e1",
+      "raw_sha12": "f921f27b33ad",
+      "clean_asset_id": "297dd704-bddd-57c8-afd9-939e922782a7",
+      "clean_sha12": "1be3a73314c0",
+      "size": 512
+    },
+    "carroca-mercador": {
+      "asset_id": "ff491ac2-4fab-4d40-b9ad-744b97f3756e",
+      "raw_sha12": "2de75a8f33ac",
+      "clean_asset_id": "6c8e0ac5-8c6c-5846-8efa-e1c232fabead",
+      "clean_sha12": "83e712269c7a",
+      "size": 256
+    },
+    "arco-pedra": {
+      "asset_id": "372d1c81-504d-40aa-9364-67aaf11f0571",
+      "raw_sha12": "82047be84620",
+      "clean_asset_id": "e6c222d7-dcf4-53fb-91ce-9db93335ffe9",
+      "clean_sha12": "907d7e7c1631",
+      "size": 256
+    }
+  }
+}

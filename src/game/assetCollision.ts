@@ -16,6 +16,8 @@ export function depthFor(asset:string):number {
   if(asset==='bloom-bush'||asset==='flower-planter')return 0.46;
   if(asset==='bench'||asset==='crates')return 0.52;
   if(asset==='well')return 0.7;
+  if(asset==='carroca-mercador')return 0.65;
+  if(asset==='arco-pedra')return 0.52;
   if(asset.includes('rock')||asset==='rock')return 0.32;
   return asset==='tree'||asset==='willow'||asset==='pine'||asset==='copper-tree'||asset==='marsh-willow'?0.27:0.35;
 }

@@ -1,0 +1,17 @@
+{
+  "model": "pixel-engine-v1.1",
+  "sources": {
+    "tree": { "asset_id": "08628683-4505-4fca-9c80-ab6c7b85322b", "sha12": "275706859d45", "file": "public/art/environment/tree.png" },
+    "willow": { "asset_id": "411622d9-da53-4473-995c-82a24423687e", "sha12": "ea092614d2f3", "file": "public/art/environment/willow.png" },
+    "pine": { "asset_id": "cb6b4ce0-2dd0-4048-9527-8d3d337712d2", "sha12": "98e258f639a4", "file": "public/art/environment/pine.png" },
+    "copper-tree": { "asset_id": "bcf3f92d-8153-4292-8486-82c9f79810b9", "sha12": "fdcff0977c73", "file": "public/art/environment/copper-tree.png" },
+    "marsh-willow": { "asset_id": "f8077083-0de2-4082-ad72-712c2b3aad9f", "sha12": "aa472ca1802b", "file": "public/art/environment/marsh-willow.png" }
+  },
+  "animations": {
+    "tree": { "asset_id": "44dd7a5b-6bb1-4c0b-8adf-9e258b82daec", "sha12": "7a089cf18ec2", "frames": 6, "file": "assets/source/environment/tree-animations/tree-spritesheet.png" },
+    "willow": { "asset_id": "b8c295a7-7cd3-4b53-a08a-997a18e9c1ab", "sha12": "1219a1ea7094", "frames": 6, "file": "assets/source/environment/tree-animations/willow-spritesheet.png" },
+    "pine": { "asset_id": "9237668e-bbfe-4c48-92fd-aebea098ef1b", "sha12": "1c813412b4b6", "frames": 4, "file": "assets/source/environment/tree-animations/pine-spritesheet.png" },
+    "copper-tree": { "asset_id": "32fa30a1-3550-4388-a39e-690ac3e92486", "sha12": "acc82bacd4b9", "frames": 6, "file": "assets/source/environment/tree-animations/copper-tree-spritesheet.png" },
+    "marsh-willow": { "asset_id": "5c799647-b203-4d79-951f-1b01774f4812", "sha12": "407b7a549b41", "frames": 6, "file": "assets/source/environment/tree-animations/marsh-willow-spritesheet.png" }
+  }
+}

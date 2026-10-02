@@ -9,7 +9,7 @@ export const GROUND_ITEM_SPACING = 12;
 export const GROUND_ITEM_RESPAWN_DISTANCE = 18;
 
 export type Terrain = 'grass' | 'water' | 'path' | 'bridge' | 'plaza' | 'stone' | 'ramp';
-export type Prop = 'tree' | 'pine' | 'copper-tree' | 'marsh-willow' | 'rock' | 'moss-rock' | 'basalt-rock' | 'flower-bush' | 'reeds' | 'flowers' | 'lamp' | 'village-lamp' | 'bloom-bush' | 'bench' | 'well' | 'crates' | 'flower-planter' | BiomeProp | null;
+export type Prop = 'tree' | 'pine' | 'copper-tree' | 'marsh-willow' | 'rock' | 'moss-rock' | 'basalt-rock' | 'flower-bush' | 'reeds' | 'flowers' | 'lamp' | 'village-lamp' | 'bloom-bush' | 'bench' | 'well' | 'crates' | 'flower-planter' | 'carroca-mercador' | 'arco-pedra' | BiomeProp | null;
 
 export interface Tile {
   x: number;
@@ -24,7 +24,7 @@ export interface Tile {
 
 export interface Point { x: number; z: number }
 export interface Place extends Point { id: string; name: string; kind: 'house' | 'shrine'; element?: Element }
-export interface Decoration extends Point { id: 'woodcutter-hut' | 'boathouse' | 'casa-padaria' | 'casa-vila'; kind: 'decoration' }
+export interface Decoration extends Point { id: 'woodcutter-hut' | 'boathouse' | 'casa-padaria' | 'casa-vila' | 'casa-estalagem' | 'casa-pedra' | 'casa-caverna'; kind: 'decoration' }
 export interface WildSpawn extends Point { id: string; species: string; level: number; night: boolean; homeX: number; homeZ: number }
 export interface CardCache extends Point { id: string; element: Element }
 export interface ItemSpawn extends Point { id: string; itemId: ItemId }
@@ -283,25 +283,36 @@ function addLakeBridge(world: WorldData, shrine: Point): void {
 function addScenicBuildings(world: WorldData): void {
   const requests = [
     { id: 'woodcutter-hut' as const, biome: 'bosque' as const, target: { x: 37, z: 39 } },
-    { id: 'boathouse' as const, biome: 'lago' as const, target: { x: 77, z: 65 } }
+    { id: 'boathouse' as const, biome: 'lago' as const, target: { x: 77, z: 65 } },
+    { id: 'casa-estalagem' as const, biome: 'bosque' as const, target: { x: 31, z: 57 } },
+    { id: 'casa-pedra' as const, biome: 'brasa' as const, target: { x: 70, z: 42 } },
+    { id: 'casa-caverna' as const, biome: 'brasa' as const, target: { x: 81, z: 49 } }
   ];
   for (const request of requests) {
-    const options = world.tiles.filter(tile => tile.biome === request.biome && tile.terrain === 'grass' &&
-      distance(tile,request.target) < 19 && distance(tile,world.start) > 9 &&
-      world.places.every(place => distance(tile,place) > 6));
+    const rocky=request.id==='casa-pedra'||request.id==='casa-caverna';
+    const widthRadius=request.id==='casa-estalagem'?2:1;
+    const options = world.tiles.filter(tile => tile.biome === request.biome &&
+      (tile.terrain === 'grass' || rocky && tile.terrain === 'stone') &&
+      distance(tile,request.target) < 27 && distance(tile,world.start) > 9 &&
+      world.places.every(place => distance(tile,place) > (widthRadius===2?8:6)) &&
+      world.decorations.every(place => distance(tile,place) > (widthRadius===2?9:7)));
     options.sort((a,b) => distance(a,request.target)-distance(b,request.target) || hash(a.x,a.z,world.seed)-hash(b.x,b.z,world.seed));
     for (const center of options) {
       const footprint: Tile[] = [];
-      for (let dz=-1;dz<=1;dz++) for (let dx=-1;dx<=1;dx++) {
+      for (let dz=-1;dz<=1;dz++) for (let dx=-widthRadius;dx<=widthRadius;dx++) {
         const tile=tileAt(world,center.x+dx,center.z+dz);
         if (tile) footprint.push(tile);
       }
-      if (footprint.length!==9 || footprint.some(tile => tile.blocked || tile.prop || tile.terrain!=='grass' || tile.height!==center.height)) continue;
+      if (footprint.length!==3*(widthRadius*2+1) || footprint.some(tile => tile.blocked || tile.prop ||
+        tile.terrain!==center.terrain || tile.height!==center.height)) continue;
+      const door=tileAt(world,center.x,center.z+2);
+      if(request.id.startsWith('casa-')&&(!door||door.blocked||door.terrain==='water'))continue;
       for (const tile of footprint) tile.blocked=true;
+      world.decorations.push({id:request.id,kind:'decoration',x:center.x,z:center.z});
       if (validateWorld(world)) {
-        world.decorations.push({id:request.id,kind:'decoration',x:center.x,z:center.z});
         break;
       }
+      world.decorations.pop();
       for (const tile of footprint) tile.blocked=false;
     }
   }
@@ -334,11 +345,14 @@ function addTownProps(world:WorldData):void {
     [52,43,'bloom-bush'],[41,59,'bloom-bush'],[58,59,'bloom-bush'],
     [41,48,'village-lamp'],[57,48,'village-lamp'],[45,57,'village-lamp'],
     [53,57,'village-lamp'],[46,42,'flower-planter'],[51,42,'flower-planter'],
-    [42,57,'street-sign'],[56,45,'market-barrel'],[58,53,'market-crate']
+    [42,57,'street-sign'],[56,45,'market-barrel'],[58,53,'market-crate'],
+    [58,62,'carroca-mercador'],[33,47,'arco-pedra']
   ];
   for(const [preferredX,preferredZ,prop] of planned){
+    const largeProp=prop==='carroca-mercador'||prop==='arco-pedra';
     const options:Tile[]=[];
-    for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++){
+    const search=largeProp?4:2;
+    for(let dz=-search;dz<=search;dz++)for(let dx=-search;dx<=search;dx++){
       const tile=tileAt(world,preferredX+dx,preferredZ+dz);
       if(tile)options.push(tile);
     }
@@ -346,8 +360,12 @@ function addTownProps(world:WorldData):void {
     for(const tile of options){
       if(tile.height!==1||tile.blocked||tile.prop||!['grass','plaza'].includes(tile.terrain)||
         distance(tile,world.start)<1.7||
-        world.places.some(place=>place.kind==='house'&&distance(tile,place)<3.3)||
-        world.decorations.some(place=>place.id.startsWith('casa-')&&distance(tile,place)<3.4))continue;
+        world.places.some(place=>place.kind==='house'&&distance(tile,place)<(largeProp?4.8:3.3))||
+        world.decorations.some(place=>place.id.startsWith('casa-')&&distance(tile,place)<(largeProp?4.8:3.4)))continue;
+      if(largeProp&&[-1,0,1].some(dz=>[-1,0,1].some(dx=>{
+        const near=tileAt(world,tile.x+dx,tile.z+dz);
+        return !near||near.height!==tile.height||near.terrain==='water';
+      })))continue;
       const oldBlocked=tile.blocked;
       tile.prop=prop;tile.blocked=true;
       if(validateWorld(world))break;

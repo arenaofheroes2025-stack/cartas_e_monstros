@@ -131,6 +131,83 @@ for (const [animation,config] of Object.entries(playerAnimations)) {
     await sharp({create:{width:128*count,height:128,channels:4,background:'#00000000'}})
       .composite(frames.map((input,index)=>({input,left:128*index,top:0}))).png().toBuffer());
 }
+const birdSpecies=['verde-dourado','azul','cobre'];
+const birdAnimations={
+  idle:{source:'idle',indices:[0,1,2,3]},
+  // SpriteCook's grounded wing poses make a brief gesture between idle loops.
+  flutter:{source:'fly',indices:[0,2,3,4,5,0]},
+  takeoff:{source:'fly',indices:[0,1]},
+  // The generated source begins and ends in perched poses. In flight we use
+  // its wing poses, tuck the legs and level the bird's body.
+  fly:{source:'fly',indices:[2,3,4,5,3,2],airborne:true}
+};
+for(const species of birdSpecies){
+  const idleSource=source('birds',`${species}-idle-spritesheet.png`);
+  const idleInfo=await sharp(idleSource).metadata();
+  const {data:idlePixels,info:idleRaw}=await sharp(idleSource).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  let idleTop=idleInfo.height,idleBottom=-1;
+  for(let y=0;y<idleInfo.height;y++)for(let x=0;x<idleInfo.height;x++){
+    if(idlePixels[(y*idleRaw.width+x)*4+3]<115)continue;
+    idleTop=Math.min(idleTop,y);idleBottom=Math.max(idleBottom,y);
+  }
+  const scale=68/(idleBottom-idleTop+1);
+  for(const [animation,config] of Object.entries(birdAnimations)){
+    const count=config.indices.length;
+    const file=source('birds',`${species}-${config.source}-spritesheet.png`);
+    const meta=await sharp(file).metadata();
+    const sourceCount=config.source==='idle'?4:6;
+    if(!meta.hasAlpha||meta.width!==meta.height*sourceCount)
+      throw new Error(`Invalid ${species} ${animation}: expected ${sourceCount} transparent square cells`);
+    const cell=meta.height;
+    const width=Math.round(cell*scale);
+    const frames=[];
+    for(let index=0;index<count;index++){
+      const resized=await sharp(file).extract({left:config.indices[index]*cell,top:0,width:cell,height:cell})
+        .resize(width,width,{kernel:'nearest'}).ensureAlpha().raw().toBuffer();
+      const pixels=Buffer.from(resized);
+      if(config.airborne){
+        for(let y=Math.floor(width*0.79);y<width;y++)for(let x=Math.floor(width*0.36);x<Math.floor(width*0.74);x++)
+          pixels[(y*width+x)*4+3]=0;
+      }
+      const placed=await sharp(pixels,{raw:{width,height:width,channels:4}})
+        .rotate(config.airborne?28:0,{background:'#00000000'}).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+      const frameWidth=placed.info.width,frameHeight=placed.info.height;
+      // Remove SpriteCook's soft halo and isolated particles while preserving
+      // the same scale and center across every pose of each bird.
+      const clean=Buffer.from(placed.data);
+      const opaque=new Uint8Array(frameWidth*frameHeight);
+      for(let p=0;p<opaque.length;p++)opaque[p]=clean[p*4+3]>=115?1:0;
+      const seen=new Uint8Array(opaque.length);
+      for(let p=0;p<opaque.length;p++){
+        if(!opaque[p]||seen[p])continue;
+        const group=[p];seen[p]=1;
+        for(let head=0;head<group.length;head++){
+          const at=group[head],x=at%frameWidth,y=Math.floor(at/frameWidth);
+          for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+            const nx=x+dx,ny=y+dz,key=ny*frameWidth+nx;
+            if(nx<0||ny<0||nx>=frameWidth||ny>=frameHeight||!opaque[key]||seen[key])continue;
+            seen[key]=1;group.push(key);
+          }
+        }
+        if(group.length<30)for(const at of group)opaque[at]=0;
+      }
+      for(let p=0;p<opaque.length;p++)clean[p*4+3]=opaque[p]?255:0;
+      const trimmed=await sharp(clean,{raw:{width:frameWidth,height:frameHeight,channels:4}}).png().toBuffer();
+      if(frameWidth>128||frameHeight>128)throw new Error(`Oversize bird frame: ${species} ${animation} ${index}`);
+      const frame=await sharp({create:{width:128,height:128,channels:4,background:'#00000000'}})
+        .composite([{input:trimmed,left:Math.floor((128-frameWidth)/2),
+          top:config.airborne?Math.floor((128-frameHeight)/2):120-frameHeight}]).png().toBuffer();
+      frames.push(frame);
+      const frameDir=output('birds',`${species}-${animation}-frames`);
+      fs.mkdirSync(frameDir,{recursive:true});
+      fs.writeFileSync(path.join(frameDir,`${String(index).padStart(2,'0')}.png`),frame);
+    }
+    fs.mkdirSync(output('birds'),{recursive:true});
+    fs.writeFileSync(output('birds',`${species}-${animation}.png`),
+      await sharp({create:{width:128*count,height:128,channels:4,background:'#00000000'}})
+        .composite(frames.map((input,index)=>({input,left:128*index,top:0}))).png().toBuffer());
+  }
+}
 await normalizeCells(source('people','npcs.png'),2,2,512,['artisan','healer','keeper','guardian'],'people',false,'lanczos3');
 await normalizeCells(source('people','cartographer-walk.png'),3,1,384,['cartographer'],'people',true,'lanczos3');
 await normalizeCells(source('people','botanist-walk.png'),3,1,384,['botanist'],'people',true,'lanczos3');
@@ -151,7 +228,55 @@ for(const [sheet,names] of Object.entries(biomeProps))
 for (const name of ['pine','copper-tree','marsh-willow','moss-rock','basalt-rock','flower-bush']) {
   await normalizeCells(source('environment','single',`${name}.png`),1,1,256,[name],'environment');
 }
+const treeWindAnimations={tree:6,willow:6,pine:4,'copper-tree':6,'marsh-willow':6};
+const treeBaseLocks={
+  tree:{top:170,left:0,right:256},
+  willow:{top:210,left:24,right:180},
+  pine:{top:210,left:0,right:256},
+  'copper-tree':{top:180,left:0,right:256},
+  'marsh-willow':{top:210,left:55,right:185}
+};
+for(const [name,count] of Object.entries(treeWindAnimations)){
+  const sheet=source('environment','tree-animations',`${name}-spritesheet.png`);
+  const metadata=await sharp(sheet).metadata();
+  if(metadata.width!==256*count||metadata.height!==256||metadata.channels!==4)
+    throw new Error(`Invalid ${name} wind sheet: expected ${count} transparent 256x256 cells`);
+  const {data:base}=await sharp(output('environment',`${name}.png`)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  let baseBottom=-1;
+  for(let y=255;y>=0&&baseBottom<0;y--)for(let x=0;x<256;x++)
+    if(base[(y*256+x)*4+3]>=50){baseBottom=y;break;}
+  const frames=[];
+  for(let index=0;index<count;index++){
+    const {data}=await sharp(sheet).extract({left:index*256,top:0,width:256,height:256})
+      .ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    let bottom=-1;
+    for(let y=255;y>=0&&bottom<0;y--)for(let x=0;x<256;x++)
+      if(data[(y*256+x)*4+3]>=50){bottom=y;break;}
+    if(bottom<0)throw new Error(`Empty ${name} wind frame ${index}`);
+    const shift=baseBottom-bottom;
+    const pixels=Buffer.alloc(256*256*4);
+    for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+      const targetY=y+shift;
+      if(targetY<0||targetY>=256||name==='willow'&&x<24)continue;
+      const from=(y*256+x)*4,to=(targetY*256+x)*4;
+      data.copy(pixels,to,from,from+4);
+    }
+    const lock=treeBaseLocks[name];
+    for(let y=lock.top;y<256;y++)for(let x=lock.left;x<lock.right;x++){
+      const at=(y*256+x)*4;
+      base.copy(pixels,at,at,at+4);
+    }
+    frames.push(await sharp(pixels,{raw:{width:256,height:256,channels:4}}).png().toBuffer());
+  }
+  fs.writeFileSync(output('environment',`${name}-wind.png`),
+    await sharp({create:{width:256*count,height:256,channels:4,background:'#00000000'}})
+      .composite(frames.map((input,index)=>({input,left:256*index,top:0}))).png().toBuffer());
+}
 await normalizeCells(source('environment','houses-variants.png'),2,1,512,['woodcutter-hut','boathouse'],'environment',false,'lanczos3');
+for(const name of ['casa-estalagem','casa-pedra','casa-caverna'])
+  await normalizeCells(source('environment','new-buildings',`${name}-clean.png`),1,1,512,[name],'environment',false,'lanczos3');
+for(const name of ['carroca-mercador','arco-pedra'])
+  await normalizeCells(source('environment','new-buildings',`${name}-clean.png`),1,1,256,[name],'environment',false,'lanczos3');
 for(const element of ['fogo','agua','natureza'])
   await normalizeCells(source('environment','cards-simple',`${element}.png`),1,1,192,[element],'cards');
 await normalizeCells(source('environment','effects.png'),3,2,192,['fire-hit','water-hit','nature-hit','capture','evolve','seal'],'effects');
