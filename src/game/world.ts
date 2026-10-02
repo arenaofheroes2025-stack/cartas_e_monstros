@@ -15,6 +15,7 @@ export interface Tile {
   x: number;
   z: number;
   height: number;
+  waterDepth: number;
   biome: Biome;
   terrain: Terrain;
   prop: Prop;
@@ -167,6 +168,7 @@ export function findPath(world: WorldData, start: Point, goal: Point, maxNodes =
 function roadTile(tile: Tile, terrain: Terrain): void {
   tile.terrain = terrain;
   tile.height = 1;
+  tile.waterDepth = 0;
   tile.prop = null;
   tile.blocked = false;
 }
@@ -192,6 +194,7 @@ function clearArea(world: WorldData, center: Point, radius: number, height: numb
       if (!tile || distance({x,z}, center) > radius + 0.25) continue;
       tile.height = height;
       tile.terrain = terrain;
+      tile.waterDepth = 0;
       tile.prop = null;
       tile.blocked = false;
     }
@@ -199,17 +202,63 @@ function clearArea(world: WorldData, center: Point, radius: number, height: numb
 }
 
 function raiseTerraces(world:WorldData):void {
-  for(const center of [{x:19,z:46},{x:81,z:43},{x:61,z:80}]) {
-    for(let z=center.z-6;z<=center.z+6;z++)for(let x=center.x-6;x<=center.x+6;x++) {
+  for(const center of [{x:19,z:46,peak:3},{x:81,z:43,peak:4},{x:61,z:80,peak:3}]) {
+    for(let z=center.z-8;z<=center.z+8;z++)for(let x=center.x-8;x<=center.x+8;x++) {
       const tile=tileAt(world,x,z);
       if(!tile)continue;
-      const dist=distance({x,z},center);
-      if(dist>5.7)continue;
-      tile.height=dist<=1.25?4:dist<=2.7?3:dist<=4.1?2:1;
+      const warpedX=x+(noise(x/5,z/5,world.seed+811)-0.5)*4;
+      const warpedZ=z+(noise(x/5,z/5,world.seed+812)-0.5)*4;
+      const dist=Math.hypot((warpedX-center.x)*0.91,(warpedZ-center.z)*1.12);
+      const rise=dist<2.5?center.peak:dist<4.8?center.peak-1:
+        dist<6.8?center.peak-2:dist<7.9&&center.peak===4?1:0;
+      if(!rise||tile.height>=rise)continue;
+      tile.height=rise;
       tile.terrain=tile.height>=3?'stone':'grass';
+      tile.waterDepth=0;
       tile.blocked=false;
       tile.prop=null;
     }
+    // A narrow winding ascent connects the concentric levels without opening
+    // every cliff face to walking.
+    const ascent=[
+      [-8,1,1],[-7,1,1],[-6,1,1],[-5,1,2],[-4,1,2],
+      [-4,0,2],[-3,0,3],[-2,0,3],[-1,0,4],[0,0,4]
+    ];
+    for(const [dx,dz,height] of ascent){
+      const tile=tileAt(world,center.x+dx,center.z+dz);
+      if(!tile)continue;
+      tile.height=Math.min(height,center.peak);
+      tile.terrain='ramp';tile.waterDepth=0;tile.prop=null;tile.blocked=false;
+    }
+  }
+}
+
+export function assignWaterDepth(world:WorldData):void {
+  const distances=new Uint8Array(world.tiles.length);
+  distances.fill(255);
+  const queue:number[]=[];
+  for(const tile of world.tiles){
+    if(tile.terrain!=='water'){tile.waterDepth=0;continue;}
+    const edge=[[0,-1],[1,0],[0,1],[-1,0]].some(([dx,dz])=>
+      tileAt(world,tile.x+dx,tile.z+dz)?.terrain!=='water');
+    if(edge){const key=index(tile.x,tile.z);distances[key]=0;queue.push(key);}
+  }
+  for(let head=0;head<queue.length;head++){
+    const key=queue[head],x=key%WORLD_SIZE,z=Math.floor(key/WORLD_SIZE);
+    for(const [dx,dz] of [[0,-1],[1,0],[0,1],[-1,0]]){
+      const neighbor=tileAt(world,x+dx,z+dz);
+      if(!neighbor||neighbor.terrain!=='water')continue;
+      const next=index(neighbor.x,neighbor.z);
+      if(distances[next]<=distances[key]+1)continue;
+      distances[next]=distances[key]+1;
+      queue.push(next);
+    }
+  }
+  for(const tile of world.tiles)if(tile.terrain==='water'){
+    const depth=distances[index(tile.x,tile.z)];
+    const variation=(noise(tile.x/8,tile.z/8,world.seed+1183)-0.5)*0.05;
+    tile.height=0;
+    tile.waterDepth=clamp(0.14+Math.min(depth,5)*0.172+variation,0.12,1);
   }
 }
 
@@ -225,7 +274,7 @@ function addLakeBridge(world: WorldData, shrine: Point): void {
     for (const side of [-1,1]) {
       const water=tileAt(world,tile.x+(horizontal?0:side),tile.z+(horizontal?side:0));
       if (water && !['path','bridge','plaza','ramp'].includes(water.terrain)) {
-        water.terrain='water';water.height=0;water.prop=null;water.blocked=true;
+        water.terrain='water';water.height=0;water.waterDepth=0;water.prop=null;water.blocked=true;
       }
     }
   }
@@ -327,13 +376,15 @@ export function generateWorld(seed: number): WorldData {
     }
     let biome = biomes[nearest];
     if (distance({x,z}, start) < 10) biome = 'bosque';
-    const elevation = 0.64 * noise(x / 15, z / 15, seed + 2) + 0.36 * noise(x / 6, z / 6, seed + 3);
+    const elevation = 0.6 * noise(x / 22, z / 22, seed + 2) +
+      0.29 * noise(x / 10, z / 10, seed + 3) +
+      0.11 * noise(x / 4.5, z / 4.5, seed + 4);
     const bias = biome === 'brasa' ? 0.2 : biome === 'lago' ? -0.13 : 0;
-    const height = clamp(Math.floor((elevation + bias) * 3.3), 0, 3);
+    const height = clamp(Math.floor((elevation + bias) * 3.35), 0, 3);
     const moisture = noise(x / 9, z / 9, seed + 17);
-    const lake = biome === 'lago' && ((distance({x,z}, {x:81,z:82}) < 12 + moisture * 4) || (height === 0 && moisture > 0.45));
+    const lake = biome === 'lago' && ((distance({x,z}, {x:81,z:82}) < 12 + moisture * 4) || (height === 0 && moisture > 0.54));
     const terrain: Terrain = lake ? 'water' : biome === 'brasa' && height >= 2 ? 'stone' : 'grass';
-    tiles.push({ x, z, height, biome, terrain, prop: null, blocked: terrain === 'water' });
+    tiles.push({ x, z, height:lake?0:height, waterDepth:0, biome, terrain, prop: null, blocked: terrain === 'water' });
   }
   const world: WorldData = { seed, size: WORLD_SIZE, tiles, start, places: [], decorations: [], wild: [], walkers: [], caches: [], items: [] };
   raiseTerraces(world);
@@ -479,6 +530,7 @@ export function generateWorld(seed: number): WorldData {
     if(!chosen)break;
     world.items.push({id:'item-'+i,itemId:ITEM_IDS[i%ITEM_IDS.length],x:chosen.x,z:chosen.z});
   }
+  assignWaterDepth(world);
   return world;
 }
 

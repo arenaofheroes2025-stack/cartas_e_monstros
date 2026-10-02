@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canStep, generateWorld, GROUND_ITEM_LIMIT, GROUND_ITEM_RESPAWN_DISTANCE, GROUND_ITEM_SPACING, reachable, replacementGroundItem, tileAt, validateWorld, WORLD_SIZE, index } from './world';
+import { canStep, findPath, generateWorld, GROUND_ITEM_LIMIT, GROUND_ITEM_RESPAWN_DISTANCE, GROUND_ITEM_SPACING, reachable, replacementGroundItem, tileAt, validateWorld, WORLD_SIZE, index } from './world';
 import { canPlayerOccupy } from './assetCollision';
 
 describe('geração da região',()=>{
@@ -68,6 +68,24 @@ describe('geração da região',()=>{
       expect(tileAt(world,house.x,house.z)?.blocked).toBe(true);
       expect(tileAt(world,house.x,house.z+1)?.blocked).toBe(false);
       expect(connected.has(index(house.x,house.z+1))).toBe(true);
+    }
+  });
+  it('forma fundos submersos progressivos e elevações com subida',()=>{
+    const world=generateWorld(74123);
+    const water=world.tiles.filter(tile=>tile.terrain==='water');
+    expect(water.some(tile=>tile.waterDepth<0.22)).toBe(true);
+    expect(water.some(tile=>tile.waterDepth>0.8)).toBe(true);
+    expect(water.every(tile=>tile.height===0&&tile.waterDepth>0)).toBe(true);
+    for(const tile of water)for(const [dx,dz] of [[1,0],[0,1]]){
+      const next=tileAt(world,tile.x+dx,tile.z+dz);
+      if(next?.terrain==='water')
+        expect(Math.abs(next.waterDepth-tile.waterDepth)).toBeLessThan(0.23);
+    }
+    for(const center of [{x:19,z:46,peak:3},{x:81,z:43,peak:4},{x:61,z:80,peak:3}]){
+      expect(tileAt(world,center.x,center.z)?.height).toBe(center.peak);
+      expect(world.tiles.some(tile=>tile.terrain==='ramp'&&
+        Math.hypot(tile.x-center.x,tile.z-center.z)<8)).toBe(true);
+      expect(findPath(world,{x:center.x-8,z:center.z+1},center,800).length).toBeGreaterThan(0);
     }
   });
   it('distribui as novas árvores e pedras sem bloquear recursos',()=>{

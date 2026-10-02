@@ -15,8 +15,10 @@ describe('mapa ampliado',()=>{
   it('usa altura real para a leitura de relevo e mantém a água identificável',()=>{
     const world=generateWorld(346);
     const land=world.tiles.find(tile=>tile.terrain==='grass')!;
-    const water=world.tiles.find(tile=>tile.terrain==='water')!;
+    const water=world.tiles.find(tile=>tile.terrain==='water'&&tile.waterDepth<0.22)!;
     expect(mapTileColor(land,'height')).not.toBe(mapTileColor(land,'terrain'));
-    expect(mapTileColor(water,'height')).toBe('#245b87');
+    expect(mapTileColor(water,'height')).not.toBe(mapTileColor(water,'terrain'));
+    const deep=world.tiles.find(tile=>tile.terrain==='water'&&tile.waterDepth>water.waterDepth+0.5)!;
+    expect(mapTileColor(deep,'terrain')).not.toBe(mapTileColor(water,'terrain'));
   });
 });

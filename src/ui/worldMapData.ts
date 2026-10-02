@@ -11,9 +11,17 @@ const BIOME_COLORS:Record<Tile['biome'],string[]>={
 const HEIGHT_COLORS=['#356f93','#438e98','#74a67c','#c0b572','#e1a876'];
 const FOG_BIOME:Record<Tile['biome'],string>={bosque:'#18372f',brasa:'#382b2a',lago:'#18393d'};
 const FOG_HEIGHT=['#163447','#204348','#344b3c','#494837','#554536'];
+function mixColor(a:string,b:string,amount:number):string {
+  const t=Math.max(0,Math.min(1,amount));
+  return '#'+[1,3,5].map(offset=>Math.round(
+    parseInt(a.slice(offset,offset+2),16)*(1-t)+parseInt(b.slice(offset,offset+2),16)*t
+  ).toString(16).padStart(2,'0')).join('');
+}
 
 export function mapTileColor(tile:Tile,view:MapView):string {
-  if(tile.terrain==='water')return view==='height'?'#245b87':'#307596';
+  if(tile.terrain==='water')return view==='height'
+    ?mixColor('#4b8bb1','#182e59',tile.waterDepth)
+    :mixColor('#69aeb0','#1d496d',tile.waterDepth);
   if(view==='height')return HEIGHT_COLORS[Math.min(4,tile.height)];
   if(tile.terrain==='bridge')return '#b79a6d';
   if(tile.terrain==='path'||tile.terrain==='plaza'||tile.terrain==='ramp')return '#c1a77b';
@@ -50,7 +58,7 @@ export function drawWorldMap(canvas:HTMLCanvasElement,world:WorldData,discovered
     const known=discovered.has(index(tile.x,tile.z));
     const x=tile.x*step,z=tile.z*step;
     ctx.fillStyle=known?mapTileColor(tile,view):view==='height'?FOG_HEIGHT[Math.min(4,tile.height)]:
-      tile.terrain==='water'?'#17394e':FOG_BIOME[tile.biome];
+      tile.terrain==='water'?mixColor('#1c4850','#102a45',tile.waterDepth):FOG_BIOME[tile.biome];
     ctx.fillRect(x,z,step,step);
     const right=tile.x<world.size-1?world.tiles[index(tile.x+1,tile.z)]:undefined;
     const bottom=tile.z<world.size-1?world.tiles[index(tile.x,tile.z+1)]:undefined;

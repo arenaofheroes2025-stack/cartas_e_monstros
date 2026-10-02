@@ -19,12 +19,31 @@ describe('superfície contínua da água',()=>{
     const left=world.tiles.find(tile=>tile.terrain==='water'&&tileAt(world,tile.x+1,tile.z)?.terrain==='water')!;
     const right=tileAt(world,left.x+1,left.z)!;
     const geometry=waterGeometry([left,right],world);
+    const floor=waterGeometry([left,right],world,true);
     const positions=geometry.getAttribute('position');
+    const bottom=floor.getAttribute('position');
+    const depths=geometry.getAttribute('waterDepth');
     const shoreline=geometry.getAttribute('waterEdges');
     expect([positions.getX(1),positions.getY(1),positions.getZ(1)]).toEqual(
       [positions.getX(4),positions.getY(4),positions.getZ(4)]);
+    expect(bottom.getY(1)).toBeCloseTo(bottom.getY(4),5);
+    expect(bottom.getY(2)).toBeCloseTo(bottom.getY(7),5);
+    expect(depths.getX(1)).toBeCloseTo(depths.getX(4),5);
     expect(shoreline.getY(0)).toBe(0);
     expect(shoreline.getW(4)).toBe(0);
-    geometry.dispose();
+    geometry.dispose();floor.dispose();
+  });
+  it('coloca o fundo abaixo da superfície e suaviza a profundidade entre tiles',()=>{
+    const world=generateWorld(40732);
+    const tile=world.tiles.find(item=>item.terrain==='water'&&item.waterDepth>0.5)!;
+    const surface=waterGeometry([tile],world);
+    const floor=waterGeometry([tile],world,true);
+    const top=surface.getAttribute('position'),bottom=floor.getAttribute('position');
+    const depth=surface.getAttribute('waterDepth');
+    for(let i=0;i<4;i++){
+      expect(bottom.getY(i)).toBeLessThan(top.getY(i)-0.15);
+      expect(depth.getX(i)).toBeGreaterThan(0);
+    }
+    surface.dispose();floor.dispose();
   });
 });

@@ -24,11 +24,26 @@ export function shoreEdges(world:WorldData,x:number,z:number):[number,number,num
     tileAt(world,x+dx,z+dz)?.terrain==='water'?0:1) as [number,number,number,number];
 }
 
-export function waterGeometry(tiles:Tile[],world:WorldData):THREE.BufferGeometry {
-  const positions:number[]=[],uvs:number[]=[],normals:number[]=[],localUvs:number[]=[],edges:number[]=[],indices:number[]=[];
+function cornerDepth(world:WorldData,x:number,z:number):number {
+  let total=0,count=0;
+  for(const dz of [-1,0])for(const dx of [-1,0]){
+    const tile=tileAt(world,x+dx,z+dz);
+    if(tile?.terrain==='water'){total+=tile.waterDepth;count++;}
+  }
+  return count?total/count:0.14;
+}
+
+export function waterGeometry(tiles:Tile[],world:WorldData,floor=false):THREE.BufferGeometry {
+  const positions:number[]=[],uvs:number[]=[],normals:number[]=[],localUvs:number[]=[],edges:number[]=[],depths:number[]=[],indices:number[]=[];
   for(const tile of tiles){
     const {x,z}=tile,y=SURFACE+tile.height*HEIGHT_STEP,vertex=positions.length/3;
-    positions.push(x,y,z,x+1,y,z,x+1,y,z+1,x,y,z+1);
+    const corners=[cornerDepth(world,x,z),cornerDepth(world,x+1,z),
+      cornerDepth(world,x+1,z+1),cornerDepth(world,x,z+1)];
+    positions.push(x,floor?y-0.12-corners[0]*0.78:y,z,
+      x+1,floor?y-0.12-corners[1]*0.78:y,z,
+      x+1,floor?y-0.12-corners[2]*0.78:y,z+1,
+      x,floor?y-0.12-corners[3]*0.78:y,z+1);
+    depths.push(...corners);
     normals.push(0,1,0,0,1,0,0,1,0,0,1,0);
     localUvs.push(0,0,1,0,1,1,0,1);
     // The map supplies the atlas uniform; these UVs keep Three's lighting shader map path enabled.
@@ -44,15 +59,53 @@ export function waterGeometry(tiles:Tile[],world:WorldData):THREE.BufferGeometry
   geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
   geometry.setAttribute('waterLocalUv',new THREE.Float32BufferAttribute(localUvs,2));
   geometry.setAttribute('waterEdges',new THREE.Float32BufferAttribute(edges,4));
+  geometry.setAttribute('waterDepth',new THREE.Float32BufferAttribute(depths,1));
   geometry.setIndex(indices);
   geometry.computeBoundingSphere();
   return geometry;
 }
 
+function underwaterFloorMaterial(time:THREE.IUniform<number>):THREE.MeshLambertMaterial {
+  const material=withCloudShadows(new THREE.MeshLambertMaterial({
+    map:imageTexture('/art/terrain-atlas.png',true),side:THREE.DoubleSide
+  }));
+  const cloudCompile=material.onBeforeCompile.bind(material);
+  const beach=TILE_ATLAS.base.beach,river=TILE_ATLAS.biome.riverbank;
+  const atlasUv=(id:number)=>`vec2((${id%TILE_ATLAS.columns}.0+0.0104+mirrored.x*0.9792)/4.0,
+    1.0-(${Math.floor(id/TILE_ATLAS.columns)}.0+1.0)/20.0+(0.0104+mirrored.y*0.9792)/20.0)`;
+  material.onBeforeCompile=(shader,renderer)=>{
+    cloudCompile(shader,renderer);
+    shader.uniforms.uWaterTime=time;
+    shader.vertexShader=`attribute float waterDepth;
+      varying float vWaterDepth;\n${shader.vertexShader}`.replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+       vWaterDepth=waterDepth;`);
+    shader.fragmentShader=`uniform float uWaterTime;
+      varying float vWaterDepth;\n${shader.fragmentShader}`.replace('#include <map_fragment>',`
+      #ifdef USE_MAP
+        float refraction=sin(vCloudWorldXZ.x*4.3+uWaterTime*0.9)*
+          cos(vCloudWorldXZ.y*3.8-uWaterTime*0.7);
+        vec2 shifted=vCloudWorldXZ+vec2(refraction,-refraction)*
+          (0.006+0.013*smoothstep(0.2,0.7,vWaterDepth));
+        vec2 mirrored=1.0-abs(mod(shifted*0.56,2.0)-1.0);
+        vec3 sand=texture2D(map,${atlasUv(beach)}).rgb;
+        vec3 stones=texture2D(map,${atlasUv(river)}).rgb;
+        float deposits=smoothstep(0.38,0.72,
+          0.5+0.28*sin(vCloudWorldXZ.x*0.81+0.4)*sin(vCloudWorldXZ.y*1.07));
+        vec3 bottom=mix(sand,stones,deposits*0.44);
+        bottom*=mix(vec3(0.71,0.94,0.88),vec3(0.34,0.61,0.68),clamp(vWaterDepth,0.0,1.0));
+        diffuseColor.rgb*=bottom;
+      #endif
+    `);
+  };
+  material.customProgramCacheKey=()=> 'water-floor-world-atlas-v2';
+  return material;
+}
+
 function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUniform<number>):THREE.MeshLambertMaterial {
   const material=withCloudShadows(new THREE.MeshLambertMaterial({
     map:imageTexture('/art/terrain-atlas.png',true),
-    side:THREE.DoubleSide
+    side:THREE.DoubleSide,transparent:true,depthWrite:false
   }));
   const cloudCompile=material.onBeforeCompile.bind(material);
   material.onBeforeCompile=(shader,renderer)=>{
@@ -61,15 +114,19 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
     shader.uniforms.uWaterArtwork=artwork;
     shader.vertexShader=`attribute vec2 waterLocalUv;
       attribute vec4 waterEdges;
+      attribute float waterDepth;
       varying vec2 vWaterLocalUv;
-      varying vec4 vWaterEdges;\n${shader.vertexShader}`.replace('#include <begin_vertex>',
+      varying vec4 vWaterEdges;
+      varying float vWaterDepth;\n${shader.vertexShader}`.replace('#include <begin_vertex>',
       `#include <begin_vertex>
        vWaterLocalUv=waterLocalUv;
-       vWaterEdges=waterEdges;`);
+       vWaterEdges=waterEdges;
+       vWaterDepth=waterDepth;`);
     shader.fragmentShader=`uniform float uWaterTime;
       uniform float uWaterArtwork;
       varying vec2 vWaterLocalUv;
-      varying vec4 vWaterEdges;\n${shader.fragmentShader}`.replace('#include <map_fragment>',`
+      varying vec4 vWaterEdges;
+      varying float vWaterDepth;\n${shader.fragmentShader}`.replace('#include <map_fragment>',`
       #ifdef USE_MAP
         vec4 waterPaint;
         vec2 flow=vec2(
@@ -82,7 +139,11 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
         vec2 waterUv=vec2(mix(${waterUv.left.toFixed(6)},${waterUv.right.toFixed(6)},mirrored.x),
           mix(${waterUv.bottom.toFixed(6)},${waterUv.top.toFixed(6)},mirrored.y));
         waterPaint=texture2D(map,waterUv);
+        float depth=clamp(vWaterDepth,0.0,1.0);
+        waterPaint.rgb*=mix(vec3(1.12,1.12,1.05),vec3(0.58,0.73,0.83),
+          smoothstep(0.25,1.0,depth));
         diffuseColor*=waterPaint;
+        diffuseColor.a=mix(0.38,0.94,smoothstep(0.12,1.0,depth));
         float ripple=0.5+0.5*sin(vCloudWorldXZ.x*7.1+vCloudWorldXZ.y*4.3-uWaterTime*1.1)
           *sin(vCloudWorldXZ.y*5.6-vCloudWorldXZ.x*2.4+uWaterTime*0.78);
         diffuseColor.rgb*=0.975+0.05*ripple;
@@ -102,21 +163,26 @@ function animatedWaterMaterial(time:THREE.IUniform<number>,artwork:THREE.IUnifor
       #include <opaque_fragment>
     `);
   };
-  material.customProgramCacheKey=()=> 'water-world-space-v3-artwork-cloud-v1';
+  material.customProgramCacheKey=()=> 'water-depth-surface-v4';
   return material;
 }
 
-function WaterChunk({tiles,world,x,z,material}:{tiles:Tile[];world:WorldData;x:number;z:number;material:THREE.Material}) {
+function WaterChunk({tiles,world,x,z,material,floorMaterial}:{tiles:Tile[];world:WorldData;x:number;z:number;material:THREE.Material;floorMaterial:THREE.Material}) {
   const geometry=useMemo(()=>waterGeometry(tiles,world),[tiles,world]);
+  const floor=useMemo(()=>waterGeometry(tiles,world,true),[tiles,world]);
   const visible=useChunkVisibility(x,z);
-  useEffect(()=>()=>geometry.dispose(),[geometry]);
-  return <group ref={visible}><mesh geometry={geometry} material={material} receiveShadow /></group>;
+  useEffect(()=>()=>{geometry.dispose();floor.dispose();},[geometry,floor]);
+  return <group ref={visible}>
+    <mesh geometry={floor} material={floorMaterial} receiveShadow />
+    <mesh geometry={geometry} material={material} receiveShadow />
+  </group>;
 }
 
 export function WaterSurface({world,game}:{world:WorldData;game:Game}) {
   const time=useMemo<THREE.IUniform<number>>(()=>({value:0}),[]);
   const artwork=useMemo<THREE.IUniform<number>>(()=>({value:0.55}),[]);
   const material=useMemo(()=>animatedWaterMaterial(time,artwork),[time,artwork]);
+  const floorMaterial=useMemo(()=>underwaterFloorMaterial(time),[time]);
   const chunks=useMemo(()=>{
     const width=WORLD_SIZE/CHUNK_SIZE;
     const groups=Array.from({length:width*width},()=>[] as Tile[]);
@@ -124,7 +190,7 @@ export function WaterSurface({world,game}:{world:WorldData;game:Game}) {
       groups[Math.floor(tile.z/CHUNK_SIZE)*width+Math.floor(tile.x/CHUNK_SIZE)].push(tile);
     return groups;
   },[world]);
-  useEffect(()=>()=>material.dispose(),[material]);
+  useEffect(()=>()=>{material.dispose();floorMaterial.dispose();},[material,floorMaterial]);
   useFrame(({clock})=>{
     time.value=game.save?.elapsed??clock.elapsedTime;
     const hour=game.hour;
@@ -133,5 +199,5 @@ export function WaterSurface({world,game}:{world:WorldData;game:Game}) {
   });
   const width=WORLD_SIZE/CHUNK_SIZE;
   return <group>{chunks.map((tiles,index)=>tiles.length>0&&
-    <WaterChunk key={index} tiles={tiles} world={world} x={index%width} z={Math.floor(index/width)} material={material}/>)}</group>;
+    <WaterChunk key={index} tiles={tiles} world={world} x={index%width} z={Math.floor(index/width)} material={material} floorMaterial={floorMaterial}/>)}</group>;
 }

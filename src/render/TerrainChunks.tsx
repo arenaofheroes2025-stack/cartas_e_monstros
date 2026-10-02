@@ -23,11 +23,26 @@ function surfaceTone(x:number,z:number,seed:number):number {
   const b=hash(ix,iz+1,seed)*(1-fx)+hash(ix+1,iz+1,seed)*fx;
   return 0.94+0.12*(a*(1-fz)+b*fz);
 }
+function shoreTone(world:WorldData,x:number,z:number):number {
+  let nearest=3;
+  for(let dz=-2;dz<=1;dz++)for(let dx=-2;dx<=1;dx++){
+    if(tileAt(world,x+dx,z+dz)?.terrain==='water')
+      nearest=Math.min(nearest,Math.hypot(dx+0.5,dz+0.5));
+  }
+  return nearest<0.8?0.81:nearest<1.6?0.91:1;
+}
 
 function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THREE.BufferGeometry {
   const positions: number[] = [], normals: number[] = [], uvs: number[] = [], colors:number[]=[], indices: number[] = [];
   const localUvs:number[]=[],neighbors:number[]=[],parities:number[]=[],overlays:number[]=[],brushEnabled:number[]=[];
   const palette=new Map<number,number>();
+  const coast=new Map<number,number>();
+  const wetTone=(x:number,z:number):number=>{
+    const key=z*(WORLD_SIZE+1)+x;
+    let value=coast.get(key);
+    if(value===undefined){value=shoreTone(world,x,z);coast.set(key,value);}
+    return value;
+  };
   const indexFor=(tile:NonNullable<ReturnType<typeof tileAt>>):number=>{
     const key=tile.z*WORLD_SIZE+tile.x;
     let value=palette.get(key);
@@ -66,8 +81,10 @@ function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THR
         return otherIndex===ownIndex?-1:otherIndex;
       });
       add([x,y,z],[x+1,y,z],[x+1,y,z+1],[x,y,z+1],[0,1,0],ownIndex,x%2===1,z%2===1,[
-        surfaceTone(x,z,world.seed),surfaceTone(x+1,z,world.seed),
-        surfaceTone(x+1,z+1,world.seed),surfaceTone(x,z+1,world.seed)
+        surfaceTone(x,z,world.seed)*wetTone(x,z),
+        surfaceTone(x+1,z,world.seed)*wetTone(x+1,z),
+        surfaceTone(x+1,z+1,world.seed)*wetTone(x+1,z+1),
+        surfaceTone(x,z+1,world.seed)*wetTone(x,z+1)
       ],edgeIndices,overlayIndices(tile),
         ['grass','stone','path'].includes(tile.terrain)||
         (tile.terrain==='plaza'&&ownIndex===biomeProfile(tile).base)?1:0);
@@ -84,10 +101,16 @@ function geometryForChunk(world: WorldData, chunkX: number, chunkZ: number): THR
         const wall=cliffIndex(world,tile);
         let top=y,level=0;
         while(top-otherY>0.01){
-          const bottom=Math.max(otherY,top-HEIGHT_STEP);
+          let bottom=Math.max(otherY,top-HEIGHT_STEP);
+          const wetLine=other?.terrain==='water'?otherY+0.19:0;
+          if(wetLine>otherY&&bottom<wetLine&&top>wetLine+0.01)bottom=wetLine;
+          const face=edge.n[0]>0?0.84:edge.n[2]>0?0.9:0.97;
+          const wet=other?.terrain==='water'&&top<=wetLine+0.01;
+          const upper=wet?0.69*face:0.98*face;
+          const lower=wet?0.55*face:0.73*face;
           add([edge.a[0],top,edge.a[2]],[edge.b[0],top,edge.b[2]],
             [edge.c[0],bottom,edge.c[2]],[edge.d[0],bottom,edge.d[2]],edge.n,wall,
-            (x+z)%2===1,level%2===1);
+            (x+z)%2===1,level%2===1,[upper,upper,lower,lower]);
           top=bottom;level++;
         }
       }
