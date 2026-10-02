@@ -1,0 +1,172 @@
+/* A loja estabelece o material visual de todas as telas de menu. As cores de
+   elementos e itens continuam vindo dos dados de cada criatura ou objeto. */
+.game-app{
+  --menu-veil:#06141de3;
+  --menu-edge:#b5a57a;
+  --menu-ink:#f4e8d3;
+  --menu-gold:#f0be77;
+  --menu-muted:#b8d3cd;
+  --menu-counter:radial-gradient(circle at 82% 9%,#176c91 0%,#0d5074 33%,#0b3654 75%,#092b42);
+  --menu-scene:linear-gradient(150deg,#513b2f,#173b45 68%,#092432);
+  --menu-shadow:0 28px 80px #000b,0 0 0 5px #132b38a8;
+}
+.game-app .overlay,.game-app .shop-overlay,.game-app .world-map-overlay,.game-app .heal-picker-backdrop{
+  background:var(--menu-veil);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.game-app .modal-panel,.game-app .dialog-panel,.game-app .world-map-panel,.game-app .companion-details-panel,.game-app .heal-picker,.game-app .shop-panel{
+  border:1px solid var(--menu-edge);
+  border-radius:18px;
+  box-shadow:var(--menu-shadow);
+  color:var(--menu-ink);
+}
+.game-app .modal-panel,.game-app .dialog-panel{
+  background:radial-gradient(circle at 86% 8%,#176c9166,transparent 42%),linear-gradient(140deg,#153b4e,#102f40 55%,#0b2534);
+}
+.game-app .modal-panel h2,.game-app .dialog-panel h2{color:#fff0ce;letter-spacing:-.02em}
+.game-app .modal-panel p,.game-app .dialog-panel p{color:#d0e0d7}
+.game-app .eyebrow,.game-app .small-heading{color:#e4bd80}
+.game-app .close-button,.game-app .shop-close,.game-app .world-map-close{
+  display:grid;place-items:center;border:1px solid #91b3b0a6;border-radius:9px;
+  background:#153a52;color:#f9e8c9;transition:background .16s,transform .16s,border-color .16s;
+}
+.game-app .close-button:hover,.game-app .shop-close:hover,.game-app .world-map-close:hover{
+  background:#245975;border-color:#e4c28b;transform:translateY(-1px);
+}
+.game-app .primary,.game-app .shop-buy{background:#f0be77;color:#1c3947;box-shadow:0 3px 0 #996b47}
+.game-app .secondary{background:#173d51;border:1px solid #82a9a7;color:#f6e8ce}
+.game-app .segment,.game-app .setting-row,.game-app .battle-inspection-skill{
+  border-color:#8cbdba7d;background:linear-gradient(100deg,#0b2c3d,#123f57);
+}
+.game-app .segment button.selected{background:var(--menu-gold);color:#193a48}
+.game-app :is(.modal-panel,.dialog-panel,.world-map-panel,.companion-details-panel) button:focus-visible{
+  outline:2px solid #ffe0a7;outline-offset:2px;
+}
+
+/* Inventário: a equipe ocupa a ala ilustrada; itens e escolhas, o balcão azul. */
+.game-app .inventory-panel{background:#102c3e;border-color:var(--menu-edge);box-shadow:var(--menu-shadow)}
+.game-app .inventory-heading h2{color:#fff0ce}
+.game-app .inventory-party{
+  border-color:#987f63;background:var(--menu-scene);color:#ffe8c4;
+  box-shadow:inset 0 1px #e7c99546,0 8px 20px #04172266;
+}
+.game-app .inventory-party-heading small{color:#e4bd80}
+.game-app .inventory-party-card{
+  border-color:#ae9b7c;background:linear-gradient(105deg,#153744,#1b4653);
+  color:#ffedcf;box-shadow:inset 3px 0 #d59d64,0 4px 13px #03141f66;
+  transition:transform .16s,background .16s,border-color .16s;
+}
+.game-app .inventory-party-card:hover,.game-app .inventory-party-card:focus-visible{
+  border-color:#f0ca8b;background:linear-gradient(105deg,#1f5060,#226074);transform:translateX(2px);
+}
+.game-app .inventory-party-card small,.game-app .inventory-party-card small b{color:#cce0d7}
+.game-app .inventory-party-health{background:#082634}
+.game-app .inventory-main{
+  border-color:#638f99;border-left:4px solid #d48f55;background:var(--menu-counter);
+  box-shadow:inset 0 1px #b9d5cd37,0 8px 22px #041b286b;color:#e7efe3;
+}
+.game-app .inventory-main .inventory-section-title{border-color:#88ada781}
+.game-app .inventory-main .inventory-section-title h3{color:#ffe7bf}
+.game-app .inventory-main .inventory-section-title span,.game-app .inventory-main .loadout-help{color:#bdd5cc!important}
+.game-app .inventory-main .loadout-slot{
+  border-color:#7f9d98;background:linear-gradient(145deg,#1a4051,#102b3b);color:#f7e6c7;
+  box-shadow:inset 0 1px #e4e4c927,0 4px 9px #03182687;
+}
+.game-app .inventory-main .loadout-slot.selected{border-color:var(--item-accent,#f0be77);box-shadow:0 0 0 2px color-mix(in srgb,var(--item-accent,#f0be77),transparent 65%),0 5px 12px #03182687}
+.game-app .inventory-categories button{
+  border-color:#7aa8a5;background:#123c55;color:#d7e7dd;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.game-app .inventory-categories button:hover{background:#245a73;transform:translateY(-1px)}
+.game-app .inventory-categories button.active{border-color:#ffe1a8;background:var(--menu-gold);color:#193a48;box-shadow:0 2px 0 #926d47}
+.game-app .inventory-main .inventory-slot,.game-app .inventory-main .inventory-slot.occupied{
+  border-color:#6d99945c;background:#123d5378;color:#e5f0e7;
+  transition:transform .15s,background .15s,border-color .15s;
+}
+.game-app .inventory-main .inventory-slot:hover{background:#2a688a91;transform:translateX(2px)}
+.game-app .inventory-main .inventory-slot.selected{
+  border-color:var(--item-accent);background:linear-gradient(95deg,#061e31,#082c49);
+  box-shadow:inset 4px 0 var(--item-accent),0 3px 9px #041b2877;color:#fff0cf;
+}
+.game-app .inventory-row-name small,.game-app .inventory-main .inventory-none{color:#bed7d0}
+.game-app .inventory-main .inventory-detail{
+  border-color:#8cbdba7d;background:linear-gradient(100deg,#0b2c3d,#123f57);
+  box-shadow:0 6px 18px #0420358a;
+}
+.game-app .inventory-main .inventory-art{background:radial-gradient(circle,#32617a,#123a50 65%,transparent 72%)}
+.game-app .inventory-heal-use{background:#82c49b;color:#113840}
+.game-app .inventory-use{background:#f0be77;color:#173a48}
+
+/* Coleção, ficha e seleções preservam seus acentos elementais. */
+.game-app .collection-panel{
+  border-top:3px solid #d48f55;
+  background:radial-gradient(circle at 85% 8%,#176c9177,transparent 40%),linear-gradient(145deg,#153c51,#102e40 65%,#0a2636);
+}
+.game-app .collection-panel h3{color:#f3c78c}
+.game-app .collection-panel .creature-card{
+  background:radial-gradient(circle at 48% 10%,color-mix(in srgb,var(--creature-accent),transparent 78%),transparent 58%),linear-gradient(155deg,#19465a,#0e2a3c);
+  box-shadow:inset 0 1px #d9e4d02e,0 4px 0 color-mix(in srgb,var(--creature-accent),#102f3a 77%),0 9px 17px #061a24a3;
+}
+.game-app .collection-panel .creature-card-art{background:radial-gradient(ellipse at 50% 80%,color-mix(in srgb,var(--creature-accent),#3b7184 34%),#1c475c 55%,#102d3d 83%)}
+.game-app .companion-details-panel{background:#102c3e}
+.game-app .companion-summary-header{
+  border-bottom:3px solid color-mix(in srgb,var(--creature-color),#d48f55 45%);
+  background:radial-gradient(circle at 13% 20%,color-mix(in srgb,var(--creature-color),transparent 77%),transparent 38%),linear-gradient(95deg,#183f51,#0d3043);
+}
+.game-app .companion-summary-layout{background:radial-gradient(circle at 80% 2%,#176c9160,transparent 42%),linear-gradient(140deg,#12384a,#0a2739)}
+.game-app .companion-summary-portrait{background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--creature-color),#1b5c79 62%),#1a4960 55%,#0d293a 88%)}
+.game-app .companion-summary-stats,.game-app .companion-held,.game-app .companion-details-skill{
+  border-color:#8cbdba7d;background:linear-gradient(100deg,#0b2c3d,#123f57);box-shadow:0 5px 14px #04203566;
+}
+.game-app .companion-held-slot{background:#194458;border-color:#719f9b}
+.game-app .companion-held-slot:hover{background:#245d75}
+.game-app .companion-item-picker{background:radial-gradient(circle at 85% 10%,#176c9166,transparent 42%),linear-gradient(140deg,#13394c,#0a2939);border-color:var(--menu-edge)}
+.game-app .companion-item-options button{background:#123b50;border-color:color-mix(in srgb,var(--held-color),#6c9b98 55%)}
+.game-app .companion-item-options button:hover{background:#235d74}
+
+/* Mapa, pausa, batalha e diálogos usam o mesmo palco e cartões de escolha. */
+.game-app .world-map-panel{background:#102c3e}
+.game-app .world-map-heading{background:linear-gradient(90deg,#224758,#0d344a);border-bottom:3px solid #d48f55}
+.game-app .world-map-frame{background:radial-gradient(circle at center,#326a7a78,#0b2d42 75%)}
+.game-app .world-map-sidebar{background:var(--menu-counter);border-left:3px solid #d48f55}
+.game-app .world-map-landmark-info{border-color:#8cbdba7d;background:linear-gradient(100deg,#0b2c3d,#123f57)}
+.game-app .world-map-places button:hover,.game-app .world-map-places button.active{background:linear-gradient(95deg,#061e31,#082c49);box-shadow:inset 3px 0 #e1bc7e}
+.game-app .pause-panel{border-top:3px solid #d48f55}
+.game-app .pause-panel .setting-row{padding:12px;border:1px solid #8cbdba7d;border-radius:10px}
+.game-app .battle-menu-panel{border-top:3px solid #d48f55}
+.game-app .battle-menu-item{
+  border-color:#719b9b;background:radial-gradient(circle at 50% 10%,#28677b,#14394e 75%);
+  box-shadow:inset 0 1px #ffffff2a,0 5px 13px #041b286b;transition:transform .16s,border-color .16s,background .16s;
+}
+.game-app .battle-menu-item:not(:disabled):hover{background:radial-gradient(circle at 50% 10%,#3287a0,#174b64 78%);transform:translateY(-2px)}
+.game-app .battle-inspection-panel{border-top:3px solid #d48f55}
+.game-app .battle-inspection-skill{border-left:3px solid #c9a2ec;color:#f1e3fb}
+.game-app .dialog-panel{border-top:3px solid #d48f55}
+.game-app .pwa-install-panel{border-top:3px solid #d48f55}
+.game-app .heal-picker{background:radial-gradient(circle at 82% 8%,#176c9170,transparent 42%),linear-gradient(140deg,#153b4e,#0b293a)}
+.game-app .heal-choice{background:radial-gradient(circle at 50% 20%,#35756b,#143c4e 76%);box-shadow:inset 0 1px #ffffff2e,0 6px 18px #031826a6}
+.game-app .quick-bag-cluster,.game-app .quick-cards-cluster{
+  border-color:var(--menu-edge);background:var(--menu-counter);box-shadow:var(--menu-shadow);
+}
+.game-app .battle-command-cluster .quick-bag-slot,.game-app .battle-command-cluster .quick-card-option{background:linear-gradient(95deg,#0d344b,#143f55);border-color:#719b9b}
+.game-app .quick-bag-detail,.game-app .quick-cards-hint{background:#0b2c3d}
+
+/* Tela inicial: mantém a arte existente como ala ilustrada da loja. */
+.game-app .start-screen{background:linear-gradient(90deg,#06141de8,#06141db8 37%,#06141d18 78%)}
+.game-app .start-card{
+  border:1px solid var(--menu-edge);border-left:4px solid #d48f55;
+  background:radial-gradient(circle at 85% 8%,#176c9170,transparent 42%),linear-gradient(135deg,#173d51ed,#0b293ae6);
+  box-shadow:var(--menu-shadow);backdrop-filter:blur(8px);
+}
+.game-app .starter-card{border-color:#7da6a4;background:radial-gradient(circle at 50% 12%,#28677b,#123447 82%);box-shadow:0 5px 13px #03182691}
+.game-app .starter-card:focus-visible{outline:2px solid #ffe0a7;outline-offset:2px}
+.game-app .rotate-device{background:var(--menu-veil);backdrop-filter:blur(8px)}
+.game-app .rotate-device-card{
+  border:1px solid var(--menu-edge);border-top:3px solid #d48f55;
+  background:radial-gradient(circle at 80% 10%,#176c9170,transparent 44%),linear-gradient(145deg,#173d51,#0b293a);
+  box-shadow:var(--menu-shadow);
+}
+@media(prefers-reduced-motion:reduce){
+  .game-app .close-button,.game-app .inventory-party-card,.game-app .inventory-main .inventory-slot,.game-app .battle-menu-item{transition:none}
+}

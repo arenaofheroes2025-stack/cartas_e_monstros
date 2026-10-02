@@ -21,6 +21,7 @@ import './style.css';
 import './ui/mobileLandscape.css';
 import './ui/mobileMenus.css';
 import './ui/inventoryReference.css';
+import './ui/screenTheme.css';
 
 function App() {
   const [game]=useState(()=>new Game());
