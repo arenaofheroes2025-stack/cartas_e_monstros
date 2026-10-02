@@ -41,10 +41,10 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           if(touchLayout.matches){
             const width=element.offsetWidth,height=element.offsetHeight;
             const choosing=game.battleMenu==='items'||game.battleMenu==='cards';
-            const bottomReserve=parent.height<=350?60:70;
-            const y=choosing?(parent.height-height)/2:Math.max(95,Math.min(126,parent.height-height-bottomReserve));
+            const bottomReserve=parent.height<=350?42:58;
+            const y=choosing?(parent.height-height)/2:Math.max(104,Math.min(155,parent.height-height-bottomReserve));
             element.style.left=choosing?`${Math.max(8,(parent.width-width)/2)}px`:'auto';
-            element.style.right=choosing?'auto':'max(10px, env(safe-area-inset-right))';
+            element.style.right=choosing?'auto':'max(100px, calc(env(safe-area-inset-right) + 96px))';
             element.style.top=`${Math.max(8,y)}px`;
             element.style.visibility='visible';
           }else{
@@ -119,7 +119,9 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           const duration=attackInterval(monster)+(ally.skillWindup?0.45:0);
           const ready=ally.windup>0?1:Math.max(0,Math.min(1,1-cooldown/duration));
           attack.current.style.setProperty('--attack-ready',`${ready*100}%`);
+          attack.current.style.setProperty('--ring-progress',`${ready*100}%`);
           attack.current.classList.toggle('winding',ally.windup>0);
+          attack.current.classList.toggle('recharging',cooldown>0&&ally.windup<=0);
           attackLabel.current.textContent=ally.windup>0?'Golpe':cooldown>0?`${cooldown.toFixed(1)}s`:
             battle.command==='attack'&&Math.hypot(ally.x-battle.foe.x,ally.z-battle.foe.z)>attackRadius(monster)+0.05?'Indo':'Pronto';
         }
@@ -128,12 +130,14 @@ export function BattleCommands({game,cameraRef}:{game:Game;cameraRef:RefObject<C
           const total=dodgeCooldown(game.activeMonster!);
           dodge.current.disabled=cooldown>0;
           dodge.current.style.setProperty('--cooldown',`${Math.min(100,cooldown/total*100)}%`);
+          dodge.current.style.setProperty('--ring-progress',`${Math.max(0,100-cooldown/total*100)}%`);
           dodgeLabel.current.textContent=cooldown>0?cooldown.toFixed(1)+'s':'';
         }
         if(special.current&&specialLabel.current){
           const charge=battle.ally.charge;
           special.current.disabled=charge<100;
           special.current.style.setProperty('--special-charge',`${Math.min(100,charge)}%`);
+          special.current.style.setProperty('--ring-progress',`${Math.min(100,charge)}%`);
           special.current.classList.toggle('ready',charge>=100);
           specialLabel.current.textContent=charge>=100?'Pronto':`${Math.floor(charge)}%`;
         }

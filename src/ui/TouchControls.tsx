@@ -65,7 +65,14 @@ export function TouchControls({game,controls}:{game:Game;controls:Controls}) {
       <button type="button" className={`touch-jump ${game.mode==='battle'?'battle-jump':''}`}
         onPointerDown={event=>{if(event.pointerType==='touch'){lastTouchJump.current=Date.now();game.jumpForward();}}}
         onClick={event=>{if((event.nativeEvent as PointerEvent).pointerType!=='touch'&&Date.now()-lastTouchJump.current>2000)game.jumpForward();}}
-        aria-label="Pular">Pular</button>
+        aria-label="Pular">
+        <svg className="touch-jump-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <path d="M5 25h8m12 0h3M9 20l5-3 4 2 4-8m-8 6-2-5m6 7 3 5m1-13 4 1"/>
+          <circle cx="23" cy="7" r="2"/>
+          <path d="M7 10c2-4 5-6 9-6m-3-2 4 2-3 4"/>
+        </svg>
+        <span>Pular</span>
+      </button>
     </div>
   </>;
 }

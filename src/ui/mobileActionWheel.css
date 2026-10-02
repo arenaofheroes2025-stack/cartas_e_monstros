@@ -1,0 +1,145 @@
+/* Compact touch controls: the arena stays visible between the joystick and action wheel. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:600px){
+  .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){
+    --action-size:58px;
+    position:absolute;
+    display:grid;
+    grid-template-columns:repeat(2,var(--action-size));
+    grid-template-rows:repeat(2,var(--action-size));
+    width:max-content;
+    gap:6px;
+    padding:0;
+    border:0;
+    background:none;
+    box-shadow:none;
+    overflow:visible;
+  }
+  .game-app .battle-actions-cluster .battle-command-title{display:none}
+  .game-app .battle-command-cluster.battle-actions-cluster button:not(.command-bag):not(.command-cards){
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:var(--action-size);
+    height:var(--action-size);
+    min-height:var(--action-size);
+    gap:0;
+    padding:3px;
+    overflow:hidden;
+    border:0;
+    border-radius:50%;
+    background:conic-gradient(from -90deg,var(--accent) var(--ring-progress,100%),#506773 var(--ring-progress,100%) 100%);
+    box-shadow:0 3px 10px #04141ca8,0 0 8px color-mix(in srgb,var(--accent),transparent 65%);
+    text-align:center;
+    color:#f7eddf;
+  }
+  .game-app .battle-command-cluster.battle-actions-cluster button:not(.command-bag):not(.command-cards):before{
+    content:'';
+    position:absolute;
+    inset:3px;
+    width:auto;
+    height:auto;
+    border:1px solid color-mix(in srgb,var(--accent),#243945 72%);
+    border-radius:50%;
+    background:radial-gradient(circle at 48% 32%,#274b59,#0c2838 78%);
+    pointer-events:none;
+  }
+  .game-app .battle-command-cluster.battle-actions-cluster button:not(.command-bag):not(.command-cards):after{display:none}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) .command-icon{
+    position:relative;
+    z-index:1;
+    display:block;
+    width:auto;
+    height:24px;
+    font-size:22px;
+    line-height:24px;
+    color:var(--accent);
+    text-shadow:0 1px 5px #000a;
+  }
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) strong{
+    position:relative;
+    z-index:1;
+    display:block;
+    width:calc(var(--action-size) - 10px);
+    max-width:calc(var(--action-size) - 10px);
+    max-height:17px;
+    min-width:0;
+    overflow:hidden;
+    white-space:normal;
+    text-overflow:clip;
+    font-size:8px;
+    line-height:8px;
+    text-align:center;
+  }
+  .game-app .battle-actions-cluster button.command-special strong{font-size:7px;line-height:8px}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) .command-cooldown{display:none}
+  .game-app .battle-actions-cluster button:disabled:not(.command-bag):not(.command-cards){opacity:1;filter:none;box-shadow:0 3px 9px #04141c82}
+  .game-app .battle-actions-cluster button:disabled:not(.command-bag):not(.command-cards):before{background:#102631;border-color:#3f545b}
+  .game-app .battle-actions-cluster button:disabled:not(.command-bag):not(.command-cards) .command-icon,
+  .game-app .battle-actions-cluster button:disabled:not(.command-bag):not(.command-cards) strong{opacity:.42;filter:grayscale(.75)}
+  .game-app .battle-actions-cluster button.command-attack.recharging:before{background:radial-gradient(circle at 48% 32%,#233c47,#102530 78%)}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards):active{transform:scale(.92)}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards):focus-visible,
+  .game-app .battle-actions-cluster button.command-bag:focus-visible,
+  .game-app .battle-actions-cluster button.command-cards:focus-visible{outline:2px solid #ffe1a1;outline-offset:3px}
+
+  /* Bag and cards sit on the edge, away from the four combat actions. */
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-bag,
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-cards{
+    position:fixed;
+    right:0;
+    left:auto;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    width:calc(91px + env(safe-area-inset-right));
+    height:36px;
+    min-height:36px;
+    gap:4px;
+    padding:3px calc(5px + env(safe-area-inset-right)) 3px 7px;
+    border:1px solid var(--accent);
+    border-right:0;
+    border-radius:18px 0 0 18px;
+    background:linear-gradient(100deg,color-mix(in srgb,var(--accent),#153747 74%),#102b3b 80%);
+    box-shadow:0 3px 12px #071622b8;
+    text-align:left;
+  }
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-bag{top:max(82px,calc(env(safe-area-inset-top) + 78px));--accent:#f0bb76}
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-cards{top:max(123px,calc(env(safe-area-inset-top) + 119px));--accent:#bba5f0}
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-bag:before,
+  .game-app .battle-command-cluster.battle-actions-cluster button.command-cards:before{display:none}
+  .game-app .battle-actions-cluster .command-bag-icon{width:23px;height:23px;object-fit:contain}
+  .game-app .battle-actions-cluster .command-cards .command-icon{width:20px;font-size:18px;line-height:22px}
+  .game-app .battle-actions-cluster button.command-bag strong,
+  .game-app .battle-actions-cluster button.command-cards strong{font-size:9px}
+  .game-app .battle-actions-cluster button.command-bag small,
+  .game-app .battle-actions-cluster button.command-cards small{margin-left:auto;font-size:7px;color:#f5dcc2}
+
+  .game-app .touch-controls .touch-jump{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    padding:3px;
+    font-size:9px;
+    line-height:10px;
+  }
+  .game-app .touch-controls .touch-jump .touch-jump-icon{
+    width:28px;
+    height:28px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2.2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:350px){
+  .game-app .battle-command-cluster.battle-actions-cluster:not(.quick-bag-cluster):not(.quick-cards-cluster){--action-size:52px;gap:5px}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) .command-icon{height:21px;font-size:19px;line-height:21px}
+  .game-app .battle-actions-cluster button:not(.command-bag):not(.command-cards) strong{font-size:7px;line-height:7px}
+  .game-app .battle-actions-cluster button.command-special strong{font-size:6.5px;line-height:7px}
+  .game-app .touch-controls .touch-jump .touch-jump-icon{width:24px;height:24px}
+}
