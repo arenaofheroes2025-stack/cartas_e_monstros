@@ -23,6 +23,7 @@ import './ui/mobileMenus.css';
 import './ui/inventoryReference.css';
 import './ui/screenTheme.css';
 import './ui/mobileActionWheel.css';
+import './ui/streamlinedMenus.css';
 
 function App() {
   const [game]=useState(()=>new Game());

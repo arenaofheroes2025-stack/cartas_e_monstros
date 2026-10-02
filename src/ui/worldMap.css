@@ -14,7 +14,7 @@
 .world-map-viewport:active{cursor:grabbing}
 .world-map-viewport:after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 28px #041723b8}
 .world-map-compass{position:absolute;z-index:4;top:8px;right:9px;padding:3px 5px;border:1px solid #b3c0a484;border-radius:5px;background:#0b2a38dc;color:#ffe6ab;font:800 10px Consolas,monospace;pointer-events:none}
-.world-map-content{position:absolute;inset:0;transform-origin:center;will-change:transform}
+.world-map-content{position:absolute;top:50%;left:50%;transform-origin:center;will-change:transform}
 .world-map-content canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 .world-map-marker{position:absolute;z-index:1;display:grid;place-items:center;width:22px;height:22px;padding:0;border:1px solid #f5e3bf;border-radius:7px;background:#1c3d48;color:#fff2cf;font-size:15px;font-weight:900;box-shadow:0 2px 8px #031620bf;transform:translate(-50%,-50%) scale(var(--pin-scale));transition:background .15s,border-color .15s;touch-action:manipulation}
 .world-map-marker.village{background:#d4a665;color:#213b45}.world-map-marker.shop{background:#346b80;color:#ffda97}.world-map-marker.shrine{background:#884f72;color:#ffe1f4}
