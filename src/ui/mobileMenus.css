@@ -57,39 +57,6 @@
   .game-app .inventory-actions{gap:5px;padding-top:5px}
   .game-app .inventory-actions button{min-height:29px;padding:4px 6px;font-size:10px}
 
-  .game-app .companion-details-panel{width:min(755px,calc(100vw - 16px));max-height:calc(100dvh - 16px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:auto auto auto auto auto;column-gap:10px;row-gap:3px;overflow:hidden;padding:8px 13px}
-  .game-app .companion-details-panel>.eyebrow{grid-column:1/-1;font-size:8px}
-  .game-app .companion-details-intro{grid-column:1;grid-row:2;margin:0;gap:7px}
-  .game-app .companion-details-intro img{width:74px;height:74px}
-  .game-app .companion-details-intro h2{font-size:20px}
-  .game-app .companion-details-intro p{display:none}
-  .game-app .companion-details-meters{grid-column:1;grid-row:3;gap:4px;margin:0}
-  .game-app .companion-details-meters>div>span{font-size:9px;margin-bottom:2px}
-  .game-app .companion-details-meters b{font-size:9px}
-  .game-app .companion-details-stats{grid-column:1;grid-row:4;gap:3px}
-  .game-app .companion-details-stats span{padding:4px 1px;font-size:8px}
-  .game-app .companion-details-stats b{font-size:12px}
-  .game-app .companion-held{grid-column:2;grid-row:2/4;margin:0;padding:6px}
-  .game-app .companion-held-heading{margin-bottom:4px}
-  .game-app .companion-held-heading h3{font-size:13px}
-  .game-app .companion-held-heading span{display:none}
-  .game-app .companion-held-grid{grid-template-columns:1fr;gap:4px}
-  .game-app .companion-held-slot{min-height:44px;padding:3px 5px}
-  .game-app .companion-held-art{width:37px;height:37px}
-  .game-app .companion-held-art img{width:35px;height:35px}
-  .game-app .companion-held-slot em{display:none}
-  .game-app .companion-held-note{font-size:8px;margin:2px 0 0}
-  .game-app .companion-details-skill{grid-column:2;grid-row:4/6;margin:0;padding:6px 8px;gap:2px}
-  .game-app .companion-details-skill small{font-size:8px}
-  .game-app .companion-details-skill strong{font-size:12px}
-  .game-app .companion-details-skill span{font-size:9px;line-height:1.2}
-  .game-app .companion-details-evolution{display:none}
-  .game-app .companion-details-collection{grid-column:1;grid-row:5;justify-self:start;align-self:start;margin-top:3px;padding:5px 8px;font-size:10px}
-  .game-app .companion-picker-overlay{z-index:12;background:#07151dd9}
-  .game-app .companion-item-picker{width:min(570px,calc(100vw - 20px));max-height:calc(100dvh - 20px);margin:0;padding:11px 13px}
-  .game-app .companion-item-options{grid-template-columns:repeat(2,minmax(0,1fr));max-height:calc(100dvh - 105px);overflow:auto}
-  .game-app .companion-item-options button{min-width:0}
-
   .game-app .collection-panel{width:min(610px,calc(100vw - 16px));height:auto;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
   .game-app .collection-panel>.eyebrow,.game-app .collection-panel>p,.game-app .collection-foot{display:none}
   .game-app .collection-panel h2{margin:0 0 2px;font-size:18px}
