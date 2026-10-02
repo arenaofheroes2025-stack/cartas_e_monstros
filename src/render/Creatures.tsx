@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import { BATTLE_RECALL_END_SECONDS, CAPTURE_RECALL_END_SECONDS, Game, type BattleActor, type WalkingNpcActor, type WildActor } from '../game/game';
 import { SPECIES } from '../game/content';
 import { staticNpcAt } from '../game/npcs';
-import { attackInterval } from '../game/battle/rules';
 import { imageTexture, monsterTexture, personTexture } from './art';
 import { SPRITE_PITCH_COMPENSATION } from './camera';
 import { withCloudShadows } from './CloudShadows';
@@ -148,31 +147,6 @@ function BattleCreature({game,side}:{game:Game;side:'ally'|'foe'}) {
   }}/>;
 }
 
-function EnemyCooldown({game}:{game:Game}) {
-  const bar=useRef<THREE.Mesh>(null);
-  const group=useRef<THREE.Group>(null);
-  useFrame(({camera})=>{
-    const battle=game.battle;
-    if(!battle||!group.current||!bar.current)return;
-    const visible=game.mode==='battle'&&battle.intro===0&&!battle.finisher&&!battle.captureSequence;
-    group.current.visible=visible;
-    if(!visible)return;
-    const foe=battle.foe;
-    const ready=foe.windup>0?1:Math.max(0,Math.min(1,1-foe.attackTimer/attackInterval(battle.enemy)));
-    group.current.position.set(foe.x,game.getGroundHeight(foe.x,foe.z)+1.58,foe.z);
-    group.current.quaternion.copy(camera.quaternion);
-    bar.current.scale.x=Math.max(0.005,ready);
-    bar.current.position.x=-0.35*(1-ready);
-    (bar.current.material as THREE.MeshBasicMaterial).color.set(foe.windup>0?'#ff705c':ready>0.85?'#ffd17c':'#73d6d1');
-  });
-  return <>
-    <group ref={group} visible={false} renderOrder={10}>
-      <mesh renderOrder={10}><planeGeometry args={[0.82,0.13]}/><meshBasicMaterial color="#183343" depthTest={false} depthWrite={false} transparent opacity={0.86} fog={false} toneMapped={false}/></mesh>
-      <mesh ref={bar} position={[0,0,0.01]} renderOrder={11}><planeGeometry args={[0.7,0.075]}/><meshBasicMaterial color="#73d6d1" depthTest={false} depthWrite={false} transparent fog={false} toneMapped={false}/></mesh>
-    </group>
-  </>;
-}
-
 function Npc({game,x,z,role}:{game:Game;x:number;z:number;role:'artisan'|'healer'|'keeper'|'guardian'}) {
   return <PixelActor game={game} get={()=>({x,z,visible:game.mode!=='title'&&Math.hypot(x-game.player.x,z-game.player.z)<20,texture:personTexture(role),scale:0.98})}/>;
 }
@@ -196,6 +170,6 @@ export function Creatures({game}:{game:Game}) {
     {game.wildActors.map(wild=><Wild key={wild.id} game={game} wild={wild}/>)}
     {world.places.map(place=><Npc key={place.id} game={game} {...staticNpcAt(place)}/>)}
     {game.walkingNpcs.map(npc=><WalkingNpc key={npc.id} game={game} npc={npc}/>)}
-    {game.battle?<><BattleCreature game={game} side="ally"/><BattleCreature game={game} side="foe"/><EnemyCooldown game={game}/></>:null}
+    {game.battle?<><BattleCreature game={game} side="ally"/><BattleCreature game={game} side="foe"/></>:null}
   </group>;
 }

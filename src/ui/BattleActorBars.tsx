@@ -3,9 +3,18 @@ import { type Camera, Vector3 } from 'three';
 import { Game } from '../game/game';
 import { maxHp, SPECIES } from '../game/content';
 import { attackInterval, enemyAttackInterval } from '../game/battle/rules';
+import { SPRITE_PITCH_COMPENSATION } from '../render/camera';
 import './battleActorBars.css';
 
 const projected=new Vector3();
+const spriteHeight=1.42*SPRITE_PITCH_COMPENSATION;
+// Tallest visible combat frame (0-4), measured in each 128px creature frame.
+// Frame 5 is the victory pose, when these battle bars are already hidden.
+const visibleCombatHeight:Record<string,number>={
+  brasito:80,brasalto:89,cinzuri:99,vulcazuri:100,
+  gotejo:80,marejo:100,conchilo:90,coracilo:110,
+  brotelho:114,cervaflor:117,musgato:89,floragato:96
+};
 
 function ActorBars({game,cameraRef,side,onDetails}:{game:Game;cameraRef:RefObject<Camera|null>;side:'ally'|'foe';onDetails?:()=>void}) {
   const root=useRef<HTMLDivElement>(null);
@@ -23,12 +32,13 @@ function ActorBars({game,cameraRef,side,onDetails}:{game:Game;cameraRef:RefObjec
         const monster=side==='foe'?battle.enemy:game.activeMonster;
         const bounds=element.parentElement?.getBoundingClientRect();
         if(monster&&bounds){
-          const evolved=SPECIES[monster.species].evolved;
-          projected.set(actor.x,game.getGroundHeight(actor.x,actor.z)+(evolved?1.55:1.25),actor.z).project(camera);
+          const scale=SPECIES[monster.species].evolved?1.2:0.93;
+          const visibleHeight=(visibleCombatHeight[monster.species]??128)/128*spriteHeight*scale;
+          projected.set(actor.x,game.getGroundHeight(actor.x,actor.z)+0.1+visibleHeight+0.1,actor.z).project(camera);
           const x=(projected.x+1)*bounds.width*0.5;
           const y=(1-projected.y)*bounds.height*0.5;
           element.style.left=`${x}px`;
-          element.style.top=`${y}px`;
+          element.style.top=`${y-6}px`;
           element.style.visibility=projected.z<1&&Math.abs(projected.x)<1.05&&Math.abs(projected.y)<1.05?'visible':'hidden';
           health.current.style.width=`${Math.max(0,Math.min(100,actor.hp/maxHp(monster)*100))}%`;
           const interval=side==='foe'?enemyAttackInterval(monster,game.statusBonus(monster.uid,'speed')):
