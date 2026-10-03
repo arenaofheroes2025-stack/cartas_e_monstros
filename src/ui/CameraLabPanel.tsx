@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { cameraZoom, perspectiveFovForZoom } from '../render/cameraZoom';
+import { cameraProfileZoomScale, cameraZoom, perspectiveFovForZoom } from '../render/cameraZoom';
 import { DEFAULT_CAMERA_LAB_SETTINGS, cameraLabExport, type CameraLabSettings } from '../render/cameraLabSettings';
 import './cameraLab.css';
 
@@ -24,7 +24,7 @@ export function CameraLabPanel({settings,setSettings,onClose}:{
   const [copyState,setCopyState]=useState('');
   const exportRef=useRef<HTMLTextAreaElement>(null);
   const width=window.innerWidth,height=window.innerHeight;
-  const zoom=Math.round(cameraZoom(width,height,false)*settings.zoomScale*10)/10;
+  const zoom=Math.round(cameraZoom(width,height,false)*cameraProfileZoomScale(width,settings.zoomScale)*10)/10;
   const fov=perspectiveFovForZoom(height,zoom,settings.distance);
   const exportText=useMemo(()=>cameraLabExport(settings,width,height),[settings,width,height]);
   const update=(key:NumericKey)=>(value:number)=>setSettings(previous=>({...previous,[key]:value}));

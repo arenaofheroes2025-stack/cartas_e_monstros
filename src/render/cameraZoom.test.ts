@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
+import { cameraProfileZoomScale, cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
 import { CAMERA_OFFSET, SPRITE_FACING, SPRITE_RIGHT, SPRITE_UP, spriteSurfaceOffset } from './camera';
 import { BATTLE_RECALL_END_SECONDS, BATTLE_ZOOM_OUT_END_SECONDS, CAPTURE_RECALL_END_SECONDS, CAPTURE_ZOOM_OUT_END_SECONDS } from '../game/game';
 
 describe('enquadramento da câmera',()=>{
+  it('reduz 0,2 da escala apenas no mobile, inclusive no zoom de batalha',()=>{
+    expect(cameraProfileZoomScale(1912,0.91)).toBe(0.91);
+    expect(cameraProfileZoomScale(844,0.91)).toBeCloseTo(0.71);
+    expect(cameraZoom(844,390,false)*cameraProfileZoomScale(844,0.91)).toBeCloseTo(51.83);
+    expect(cameraZoom(844,390,true)*cameraProfileZoomScale(844,0.91)).toBeCloseTo(58.93);
+  });
   it('aproxima a arena em desktop e celular horizontal',()=>{
     expect(cameraZoom(1280,800,true)).toBeGreaterThan(cameraZoom(1280,800,false));
     expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));

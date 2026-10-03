@@ -9,6 +9,11 @@ export function cameraZoom(width:number,height:number,inBattle:boolean):number {
   return inBattle?89:77;
 }
 
+/** Give phone-sized viewports a little more room without changing desktop framing. */
+export function cameraProfileZoomScale(width:number,zoomScale:number):number {
+  return width<1000?Math.max(0.1,zoomScale-0.2):zoomScale;
+}
+
 /** Match the old framing at the focus plane while allowing real depth perspective. */
 export function perspectiveFovForZoom(height:number,pixelsPerUnit:number,distance:number):number {
   return 2*Math.atan(height/(2*pixelsPerUnit*distance))*180/Math.PI;

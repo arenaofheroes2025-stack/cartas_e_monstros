@@ -18,7 +18,7 @@ import { StatusAuras } from './StatusAuras';
 import { CloudShadows } from './CloudShadows';
 import { GroundShadows } from './GroundShadows';
 import { WaterSurface } from './WaterSurface';
-import { cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
+import { cameraProfileZoomScale, cameraZoom, captureCameraZoom, perspectiveFovForZoom, victoryCameraZoom } from './cameraZoom';
 import { cameraLookAhead, smoothCameraLookAhead } from './cameraLead';
 import { RenderResolution } from './RenderResolution';
 import { preferredRenderDpr } from './resolutionBudget';
@@ -124,7 +124,7 @@ function CameraRig({game,cameraRef,cameraLab}:{game:Game;cameraRef:RefObject<THR
       else if(game.mode==='explore'&&game.playerPickupTime>0)interactionPush=1.18;
     }
     const zoom=(capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):
-      finish?finishZoom:baseZoom*introPush*interactionPush)*cameraLab.zoomScale;
+      finish?finishZoom:baseZoom*introPush*interactionPush)*cameraProfileZoomScale(size.width,cameraLab.zoomScale);
     const desiredFov=perspectiveFovForZoom(size.height,zoom,offset.length());
     if(camera instanceof THREE.PerspectiveCamera&&Math.abs(camera.fov-desiredFov)>0.01){
       camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,cameraLab.zoomResponse,delta);
@@ -181,7 +181,8 @@ export function WorldScene({game,quality,orientationPaused=false,cameraRef,camer
   return <Canvas shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,stencil:true,powerPreference:'high-performance'}}
     dpr={preferredRenderDpr(window.innerWidth,window.innerHeight,window.devicePixelRatio,quality)}
     camera={{position:[61,22,61],fov:perspectiveFovForZoom(window.innerHeight,
-      cameraZoom(window.innerWidth,window.innerHeight,false)*DEFAULT_CAMERA_LAB_SETTINGS.zoomScale,
+      cameraZoom(window.innerWidth,window.innerHeight,false)*
+      cameraProfileZoomScale(window.innerWidth,DEFAULT_CAMERA_LAB_SETTINGS.zoomScale),
       DEFAULT_CAMERA_LAB_SETTINGS.distance),near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
     <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef} revision={game.world?.revision??0} cameraLab={cameraLab??DEFAULT_CAMERA_LAB_SETTINGS}/>
   </Canvas>;

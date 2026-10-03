@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { cameraZoom, perspectiveFovForZoom } from './cameraZoom';
+import { cameraProfileZoomScale, cameraZoom, perspectiveFovForZoom } from './cameraZoom';
 
 export interface CameraLabSettings {
   zoomScale: number;
@@ -80,7 +80,7 @@ export function saveCameraLabSettings(settings:CameraLabSettings):void {
 }
 
 export function cameraLabExport(settings:CameraLabSettings,width=window.innerWidth,height=window.innerHeight):string {
-  const zoom=cameraZoom(width,height,false)*settings.zoomScale;
+  const zoom=cameraZoom(width,height,false)*cameraProfileZoomScale(width,settings.zoomScale);
   return JSON.stringify({
     tipo:'Cartas e Monstros — teste de câmera no jogo',
     unidade:'unidades do mundo e graus',
