@@ -1,0 +1,23 @@
+.position-axis-note{margin-top:10px!important;padding:9px 10px;border-left:3px solid #e8b36c;background:#102b36;border-radius:0 7px 7px 0}
+.position-control-row{display:flex;align-items:center;gap:9px}
+.position-control-row input[type=range]{min-width:0;flex:1}
+.position-control-row input[type=number]{width:70px;padding:6px 5px;border:1px solid #6c918d;border-radius:6px;background:#102b36;color:#ffe2ad;text-align:right;font:700 11px Consolas,monospace}
+.position-control-row input[type=number]:focus-visible{outline:2px solid #ffe3a8;outline-offset:2px}
+.position-front-controls{margin:17px 0;padding:12px;border:1px solid #567781;border-radius:9px;background:#102e39}
+.position-front-controls h3{margin:0 0 6px;color:#ffdfad;font-size:12px}
+.position-front-controls p{margin:0;color:#b5cbc7;font-size:10px;line-height:1.5}
+.position-front-controls .qa-check{margin:13px 0 10px}
+.position-specific{margin-top:8px;border-top:1px solid #47646d;padding-top:10px}
+.position-specific summary{color:#f0d5a9;font-size:10px;font-weight:800;cursor:pointer}
+.position-specific[open] summary{margin-bottom:9px}
+.position-asset-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.position-asset-list label{display:flex;align-items:center;gap:7px;min-width:0;padding:7px;border:1px solid #47646d;border-radius:6px;background:#193b47;color:#dce9dd;font-size:10px;cursor:pointer}
+.position-asset-list label:has(input:disabled){opacity:.7;cursor:default}
+.position-asset-list input{flex:none;width:15px;height:15px;margin:0;accent-color:#eeb977}
+.position-asset-list span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.position-front-controls .position-front-note{margin-top:9px;color:#e8c792}
+.qa-mode-tabs{position:sticky;top:0;z-index:8;display:flex;gap:7px;align-items:center;padding:10px 14px;border-bottom:1px solid #54717a;background:#102b36}
+.qa-mode-tabs button:not(.qa-panel-close){flex:1;padding:10px;border:1px solid #688780;border-radius:8px;background:#23434e;color:#e0eade;font-size:12px;font-weight:900}
+.qa-mode-tabs button.selected{border-color:#f4cf8e;background:#e8b36c;color:#1e3945}
+.qa-mode-tabs button:focus-visible{outline:2px solid #ffe3a8;outline-offset:2px}
+@media(max-width:899px){.qa-mode-tabs .qa-panel-close{position:static;flex:none}}

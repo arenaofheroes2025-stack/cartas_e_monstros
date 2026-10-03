@@ -10,10 +10,10 @@ export function cameraLookAhead(vx:number,vz:number,width:number,height:number):
 
 /** Ease into and out of the look-ahead at the same deliberately gentle pace. */
 export function smoothCameraLookAhead(
-  current:{x:number;z:number},desired:{x:number;z:number},delta:number
+  current:{x:number;z:number},desired:{x:number;z:number},delta:number,response=1.6
 ):{x:number;z:number} {
   // A long frame must not cause a visible jump in the camera's focus.
-  const blend=1-Math.exp(-1.6*Math.min(Math.max(delta,0),0.1));
+  const blend=1-Math.exp(-response*Math.min(Math.max(delta,0),0.1));
   return {
     x:current.x+(desired.x-current.x)*blend,
     z:current.z+(desired.z-current.z)*blend,

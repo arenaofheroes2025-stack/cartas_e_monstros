@@ -81,7 +81,7 @@ export function writeProjectedShadow(geometry: THREE.BufferGeometry, world: Worl
   uvs.needsUpdate = true;
 }
 
-export function projectedShadowMaterial(texture: THREE.Texture): THREE.ShaderMaterial {
+export function projectedShadowMaterial(texture: THREE.Texture, opacity?: number): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTexture: { value: texture },
@@ -92,7 +92,7 @@ export function projectedShadowMaterial(texture: THREE.Texture): THREE.ShaderMat
       uEdgeSoftness: { value: SHADOW_CALIBRATION.softness },
       uFootGain: { value: SHADOW_CALIBRATION.footGain },
       uTopGain: { value: 0.9 },
-      uOpacity: sharedOpacity,
+      uOpacity: opacity === undefined ? sharedOpacity : { value: opacity },
       uFade: { value: 1 }
     },
     vertexShader: `varying vec2 vUv;

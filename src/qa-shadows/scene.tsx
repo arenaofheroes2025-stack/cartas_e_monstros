@@ -11,7 +11,7 @@ import { groupShadowOffset, groupShadowValues, type ShadowSettings, type ShadowG
 const GROUND = 0.1;
 const facing = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
 
-interface SampleAsset {
+export interface SampleAsset {
   id: string;
   label: string;
   path: string;
@@ -22,7 +22,7 @@ interface SampleAsset {
   smooth?: boolean;
 }
 
-const samples: SampleAsset[] = [
+export const samples: SampleAsset[] = [
   {id:'house-cards',label:'Casa das Cartas',path:'/art/environment/casa-cartas.png',size:placeSize({kind:'house',id:'casa-cartas',x:0,z:0} as Parameters<typeof placeSize>[0]),x:-6.2,z:-3.5,group:'casas'},
   {id:'house-village',label:'Casa da Vila',path:'/art/environment/casa-vila.png',size:6.25,x:-6.2,z:0.8,group:'casas'},
   {id:'house-healing',label:'Casa de Cura',path:'/art/environment/casa-cura.png',size:6.25,x:-6.2,z:5.1,group:'casas'},
@@ -60,7 +60,7 @@ function shadowDirection(settings: ShadowSettings): {x:number;z:number} {
   };
 }
 
-function flatShadowGeometry(asset:SampleAsset, footV:number, settings:ShadowSettings):THREE.BufferGeometry {
+export function flatShadowGeometry(asset:SampleAsset, footV:number, settings:ShadowSettings):THREE.BufferGeometry {
   const positions:number[]=[],uvs:number[]=[],indices:number[]=[];
   const direction=shadowDirection(settings);
   const visualHeight=asset.size*SPRITE_PITCH_COMPENSATION;

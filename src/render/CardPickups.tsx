@@ -27,9 +27,8 @@ function Card({game,cache}:{game:Game;cache:CardCache}) {
     x,z,y:game.getGroundHeight(x,z)+0.1
   }],CARD_SIZE,CARD_SIZE),[game.world,x,z]);
   const shadowMaterial=useMemo(()=>{
-    const material=projectedShadowMaterial(texture);
+    const material=projectedShadowMaterial(texture,0.7);
     material.uniforms.uAlphaCut.value=0.18;
-    material.uniforms.uOpacity={value:0.7};
     return material;
   },[texture]);
   useEffect(()=>()=>{shadowGeometry.dispose();shadowMaterial.dispose();},[shadowGeometry,shadowMaterial]);

@@ -12,6 +12,7 @@ import { withSpriteDepth } from './spriteDepth';
 import { facingForDirection, facingToward } from './facing';
 import { makeProjectedShadowGeometry, projectedShadowMaterial, writeProjectedShadow } from './ProjectedShadows';
 import { calibratedCasterHeight, shadowGroupOffset } from './shadowCalibration';
+import { ASSET_POSITION_CALIBRATION, groundOnlyOverlay, groundingDepthBias, markSpriteStencil } from './assetPositionCalibration';
 
 interface SpriteState { x:number; z:number; visible:boolean; texture:THREE.Texture; flash?:number; scale?:number; facing?:1|-1; bob?:number; lift?:number; opacity?:number }
 const spriteWidth = 1.42;
@@ -20,10 +21,20 @@ const characterShadowOffset=shadowGroupOffset('personagens');
 
 function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>SpriteState;canFlash?:boolean}) {
   const body=useRef<THREE.Mesh>(null);
+  const overlay=useRef<THREE.Mesh>(null);
   const silhouette=useRef<THREE.Mesh>(null);
   const flash=useRef<THREE.Mesh>(null);
   const lastFacing=useRef<1|-1>(1);
-  const material=useMemo(()=>{const art=personTexture('player');return withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.28,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,depthWrite:true})));},[]);
+  const material=useMemo(()=>{const art=personTexture('player');return markSpriteStencil(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.28,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,depthWrite:true})),0,-spriteHeight*0.5));},[]);
+  const overlayMaterial=useMemo(()=>{
+    if(!ASSET_POSITION_CALIBRATION.frontOfTerrain.personagens)return null;
+    const art=personTexture('player');
+    return groundOnlyOverlay(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+      map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.28,
+      transparent:true,alphaTest:0.45,side:THREE.DoubleSide
+    })),groundingDepthBias(ASSET_POSITION_CALIBRATION.heightY.personagens),-spriteHeight*0.5));
+  },[]);
+  useEffect(()=>()=>{material.dispose();overlayMaterial?.dispose();},[material,overlayMaterial]);
   const shadowGeometry=useMemo(()=>makeProjectedShadowGeometry(game.world!,
     [{x:characterShadowOffset.x,z:characterShadowOffset.z,y:0.1}],spriteWidth,
     calibratedCasterHeight(spriteHeight,'personagens')),[game.world]);
@@ -40,15 +51,21 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
     if(!body.current||!silhouette.current||!game.world)return;
     const state=get(clock.elapsedTime);
     body.current.visible=silhouette.current.visible=state.visible;
+    if(overlay.current)overlay.current.visible=state.visible;
     if(!state.visible){if(flash.current)flash.current.visible=false;return;}
     const h=game.getGroundHeight(state.x,state.z)+0.1;
     const scale=state.scale||1;
     const footV=(state.texture.userData.footV as number|undefined)??0;
-    body.current.position.set(state.x,h+(state.bob||0)+(state.lift||0),state.z)
+    body.current.position.set(state.x,h+ASSET_POSITION_CALIBRATION.heightY.personagens+(state.bob||0)+(state.lift||0),state.z)
       .addScaledVector(SPRITE_UP,spriteHeight*scale*(0.5-footV));
     lastFacing.current=state.facing||lastFacing.current;
     body.current.scale.set(lastFacing.current*scale,scale,scale);
     body.current.quaternion.copy(SPRITE_FACING);
+    if(overlay.current){
+      overlay.current.position.copy(body.current.position);
+      overlay.current.scale.copy(body.current.scale);
+      overlay.current.quaternion.copy(body.current.quaternion);
+    }
     writeProjectedShadow(shadowGeometry,game.world,
       {x:state.x+characterShadowOffset.x,z:state.z+characterShadowOffset.z,y:h},
       spriteWidth*scale,calibratedCasterHeight(spriteHeight*scale,'personagens'),
@@ -59,6 +76,14 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
     shadowMaterial.uniforms.uFlip.value=lastFacing.current<0?1:0;
     if(material.map!==state.texture){material.map=state.texture;material.emissiveMap=state.texture;material.needsUpdate=true;}
     material.opacity=state.opacity??1;
+    if(overlayMaterial){
+      if(overlayMaterial.map!==state.texture){
+        overlayMaterial.map=state.texture;
+        overlayMaterial.emissiveMap=state.texture;
+        overlayMaterial.needsUpdate=true;
+      }
+      overlayMaterial.opacity=state.opacity??1;
+    }
     if(flash.current&&flashMaterial){
       flash.current.visible=!!state.flash&&state.flash>0;
       if(flash.current.visible){
@@ -74,10 +99,13 @@ function PixelActor({game,get,canFlash=false}:{game:Game;get:(time:number)=>Spri
     }
   });
   return <group>
-    <mesh ref={silhouette} geometry={shadowGeometry} material={shadowMaterial} renderOrder={3} frustumCulled={false}/>
-    <mesh ref={body} material={material}>
+    <mesh ref={silhouette} geometry={shadowGeometry} material={shadowMaterial} renderOrder={1} frustumCulled={false}/>
+    <mesh ref={body} material={material} renderOrder={2}>
       <planeGeometry args={[spriteWidth,spriteHeight]} />
     </mesh>
+    {overlayMaterial&&<mesh ref={overlay} material={overlayMaterial} renderOrder={7}>
+      <planeGeometry args={[spriteWidth,spriteHeight]}/>
+    </mesh>}
     {canFlash?<mesh ref={flash} material={flashMaterial!} visible={false} renderOrder={9}>
       <planeGeometry args={[spriteWidth,spriteHeight]}/>
     </mesh>:null}

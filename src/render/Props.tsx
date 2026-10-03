@@ -13,6 +13,7 @@ import { placeSize, PROP_SIZE } from '../game/assets';
 import { SPRITE_FACING, SPRITE_UP } from './camera';
 import { makeProjectedShadowGeometry, projectedShadowMaterial } from './ProjectedShadows';
 import { calibratedCasterHeight, shadowGroupForAsset, shadowGroupOffset } from './shadowCalibration';
+import { ASSET_POSITION_CALIBRATION, groundOnlyOverlay, groundingDepthBias, markSpriteStencil } from './assetPositionCalibration';
 import { battlePropOpacity } from './battlePropOpacity';
 import { TREE_WIND_PHASES, treeWindBucket, treeWindConfig, treeWindFrame, type TreeWindAsset } from './treeAnimations';
 
@@ -24,6 +25,7 @@ const propArt: {asset:string;size:number;matches:(tile:Tile)=>boolean}[] = Objec
 
 function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:{tiles:Tile[];asset:string;size:number;game:Game;world:WorldData;phaseBucket?:number;fading?:boolean}) {
   const ref=useRef<THREE.InstancedMesh>(null);
+  const overlayRef=useRef<THREE.InstancedMesh>(null);
   const ghostRef=useRef<THREE.InstancedMesh>(null);
   const faded=useRef(new Set<number>());
   const lastCheck=useRef(0);
@@ -32,6 +34,8 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
   const ghostLimit=canFade?Math.min(16,tiles.length):0;
   const visualHeight=size;
   const shadowGroup=shadowGroupForAsset(asset);
+  const heightOffset=ASSET_POSITION_CALIBRATION.heightY[shadowGroup];
+  const frontOfTerrain=ASSET_POSITION_CALIBRATION.frontOfTerrain[shadowGroup];
   const shadowOffset=shadowGroupOffset(shadowGroup);
   const wind=treeWindConfig(asset);
   const initialArt=wind?treeWindTexture(asset as TreeWindAsset):imageTexture(`/art/environment/${asset}.png`);
@@ -47,20 +51,30 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
     return material;
   },[initialArt]);
   useLayoutEffect(()=>()=>{geometry.dispose();shadowGeometry.dispose();shadowMaterial.dispose();},[geometry,shadowGeometry,shadowMaterial]);
-  const material=useMemo(()=>{const art=initialArt;return withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+  const material=useMemo(()=>{const art=initialArt;return markSpriteStencil(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,alphaTest:fading?0.01:0.2,side:THREE.DoubleSide,depthWrite:true
-  })));},[initialArt,fading]);
+  })),0,-visualHeight*(0.5-footV)));},[initialArt,fading,visualHeight,footV]);
+  const overlayMaterial=useMemo(()=>{
+    if(!frontOfTerrain)return null;
+    const art=initialArt;
+    const overlay=groundOnlyOverlay(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+      map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
+      transparent:true,alphaTest:fading?0.01:0.2,side:THREE.DoubleSide
+    })),groundingDepthBias(heightOffset),-visualHeight*(0.5-footV)));
+    overlay.userData.groundOnlyOverlay=true;
+    return overlay;
+  },[initialArt,fading,frontOfTerrain,heightOffset,visualHeight,footV]);
   const ghostMaterial=useMemo(()=>{if(!canFade)return null;const art=initialArt;return withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,opacity:0.42,alphaTest:0.16,side:THREE.DoubleSide,depthWrite:false
-  })));},[initialArt,canFade]);
-  useLayoutEffect(()=>()=>{material.dispose();ghostMaterial?.dispose();},[material,ghostMaterial]);
+  })),0,-visualHeight*(0.5-footV));},[initialArt,canFade,visualHeight,footV]);
+  useLayoutEffect(()=>()=>{material.dispose();overlayMaterial?.dispose();ghostMaterial?.dispose();},[material,overlayMaterial,ghostMaterial]);
   useLayoutEffect(()=>{
     if(!ref.current)return;
     const dummy=new THREE.Object3D();
     tiles.forEach((tile,i)=>{
-      dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP,tile.z+0.5)
+      dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP+heightOffset,tile.z+0.5)
         .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV));
       dummy.quaternion.copy(SPRITE_FACING);
       dummy.scale.set(1,1,1);
@@ -69,6 +83,10 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
     });
     ref.current.instanceMatrix.needsUpdate=true;
     ref.current.computeBoundingSphere();
+    if(overlayRef.current){
+      overlayRef.current.instanceMatrix=ref.current.instanceMatrix;
+      overlayRef.current.computeBoundingSphere();
+    }
     if(ghostRef.current){
       for(let i=0;i<ghostLimit;i++){
         dummy.scale.setScalar(0);dummy.updateMatrix();
@@ -78,7 +96,7 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
       ghostRef.current.visible=false;
     }
     faded.current.clear();
-  },[tiles,visualHeight,ghostLimit,footV]);
+  },[tiles,visualHeight,ghostLimit,footV,heightOffset]);
   useFrame(({clock})=>{
     if(wind&&ref.current?.parent?.visible){
       const frame=treeWindFrame(asset as TreeWindAsset,clock.elapsedTime,phaseBucket);
@@ -88,6 +106,11 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
         material.map=art;
         material.emissiveMap=art;
         material.needsUpdate=true;
+        if(overlayMaterial){
+          overlayMaterial.map=art;
+          overlayMaterial.emissiveMap=art;
+          overlayMaterial.needsUpdate=true;
+        }
         if(ghostMaterial){
           ghostMaterial.map=art;
           ghostMaterial.emissiveMap=art;
@@ -113,7 +136,7 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
     const dummy=new THREE.Object3D();
     for(const i of new Set([...faded.current,...next])){
       const tile=tiles[i];
-      dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP,tile.z+0.5)
+      dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP+heightOffset,tile.z+0.5)
         .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV));
       dummy.quaternion.copy(SPRITE_FACING);
       dummy.scale.setScalar(next.has(i)?0:1);
@@ -123,7 +146,7 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
     ref.current.instanceMatrix.needsUpdate=true;
     for(let slot=0;slot<ghostLimit;slot++){
       const tile=candidates[slot]&&tiles[candidates[slot].i];
-      if(tile)dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP,tile.z+0.5)
+      if(tile)dummy.position.set(tile.x+0.5,0.1+tile.height*HEIGHT_STEP+heightOffset,tile.z+0.5)
         .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV));
       dummy.quaternion.copy(SPRITE_FACING);
       dummy.scale.setScalar(tile?1:0);
@@ -136,14 +159,16 @@ function InstancedProp({tiles,asset,size,game,world,phaseBucket=0,fading=false}:
   });
   if(!tiles.length)return null;
   return <>
-    <mesh geometry={shadowGeometry} material={shadowMaterial} renderOrder={3}/>
-    <instancedMesh ref={ref} args={[geometry,material,tiles.length]} receiveShadow/>
+    <mesh geometry={shadowGeometry} material={shadowMaterial} renderOrder={1}/>
+    <instancedMesh ref={ref} args={[geometry,material,tiles.length]} receiveShadow renderOrder={2}/>
+    {overlayMaterial&&<instancedMesh ref={overlayRef} args={[geometry,overlayMaterial,tiles.length]} renderOrder={7}/>}
     {canFade&&ghostMaterial?<instancedMesh ref={ghostRef} args={[geometry,ghostMaterial,ghostLimit]} renderOrder={8} frustumCulled={false}/>:null}
   </>;
 }
 
 function PlaceArt({place,world,fading=false}:{place:Place|Decoration;world:WorldData;fading?:boolean}) {
   const meshRef=useRef<THREE.Mesh>(null);
+  const overlayRef=useRef<THREE.Mesh>(null);
   const tile=world.tiles[place.z*world.size+place.x];
   const size=placeSize(place);
   const visualHeight=size;
@@ -152,6 +177,8 @@ function PlaceArt({place,world,fading=false}:{place:Place|Decoration;world:World
     place.id==='woodcutter-hut'||place.id==='boathouse';
   const art=imageTexture(`/art/environment/${place.id}.png`,building);
   const shadowGroup=place.kind==='house'?'casas':shadowGroupForAsset(place.id);
+  const heightOffset=ASSET_POSITION_CALIBRATION.heightY[shadowGroup];
+  const frontOfTerrain=ASSET_POSITION_CALIBRATION.frontOfTerrain[shadowGroup];
   const shadowOffset=shadowGroupOffset(shadowGroup);
   const footV=art.userData.footV as number;
   const shadowGeometry=useMemo(()=>makeProjectedShadowGeometry(world,[{
@@ -164,26 +191,40 @@ function PlaceArt({place,world,fading=false}:{place:Place|Decoration;world:World
     return material;
   },[art]);
   useLayoutEffect(()=>()=>{shadowGeometry.dispose();shadowMaterial.dispose();},[shadowGeometry,shadowMaterial]);
-  const material=useMemo(()=>withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+  const material=useMemo(()=>markSpriteStencil(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
     map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
     transparent:true,alphaTest:fading?0.01:0.14,side:THREE.DoubleSide,depthWrite:true
-  }))),[art,fading]);
-  useLayoutEffect(()=>()=>material.dispose(),[material]);
+  })),0,-visualHeight*(0.5-footV))),[art,fading,visualHeight,footV]);
+  const overlayMaterial=useMemo(()=>{
+    if(!frontOfTerrain)return null;
+    const overlay=groundOnlyOverlay(withSpriteDepth(withCloudShadows(new THREE.MeshLambertMaterial({
+      map:art,emissiveMap:art,emissive:'#ffffff',emissiveIntensity:0.3,
+      transparent:true,alphaTest:fading?0.01:0.14,side:THREE.DoubleSide
+    })),groundingDepthBias(heightOffset),-visualHeight*(0.5-footV)));
+    overlay.userData.groundOnlyOverlay=true;
+    return overlay;
+  },[art,fading,frontOfTerrain,heightOffset,visualHeight,footV]);
+  useLayoutEffect(()=>()=>{material.dispose();overlayMaterial?.dispose();},[material,overlayMaterial]);
   const matrix=useMemo(()=>new THREE.Matrix4().compose(
-    new THREE.Vector3(place.x+0.5,0.1+tile.height*HEIGHT_STEP,place.z+0.5)
+    new THREE.Vector3(place.x+0.5,0.1+tile.height*HEIGHT_STEP+heightOffset,place.z+0.5)
       .addScaledVector(SPRITE_UP,visualHeight*(0.5-footV)),
     SPRITE_FACING,new THREE.Vector3(1,1,1)),
-    [place.x,place.z,tile.height,visualHeight,footV]);
+    [place.x,place.z,tile.height,visualHeight,footV,heightOffset]);
   useLayoutEffect(()=>{
-    if(!meshRef.current)return;
-    meshRef.current.matrix.copy(matrix);
-    meshRef.current.matrixWorldNeedsUpdate=true;
+    for(const mesh of [meshRef.current,overlayRef.current]){
+      if(!mesh)continue;
+      mesh.matrix.copy(matrix);
+      mesh.matrixWorldNeedsUpdate=true;
+    }
   },[matrix]);
   return <>
-    <mesh geometry={shadowGeometry} material={shadowMaterial} renderOrder={3}/>
-    <mesh ref={meshRef} matrixAutoUpdate={false} material={material} receiveShadow>
+    <mesh geometry={shadowGeometry} material={shadowMaterial} renderOrder={1}/>
+    <mesh ref={meshRef} matrixAutoUpdate={false} material={material} receiveShadow renderOrder={2}>
       <planeGeometry args={[size,visualHeight]}/>
     </mesh>
+    {overlayMaterial&&<mesh ref={overlayRef} matrixAutoUpdate={false} material={overlayMaterial} renderOrder={7}>
+      <planeGeometry args={[size,visualHeight]}/>
+    </mesh>}
   </>;
 }
 
@@ -253,7 +294,7 @@ export function Props({world,game,revision=0}:{world:WorldData;game:Game;revisio
           const base=material.userData.arenaBaseOpacity??material.opacity;
           material.userData.arenaBaseOpacity=base;
           material.opacity=base*next;
-          material.depthWrite=base===1&&next>0.995;
+          material.depthWrite=!material.userData.groundOnlyOverlay&&base===1&&next>0.995;
         }
       });
       lastFade.current=next;

@@ -154,34 +154,34 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.04688
   ],
   "/art/environment/boathouse.png": [
-    0.02344
+    0.02148
   ],
   "/art/environment/carroca-mercador.png": [
     0.05859
   ],
   "/art/environment/casa-arquivo.png": [
-    0.02539
+    0.02148
   ],
   "/art/environment/casa-cartas.png": [
-    0.02344
+    0.02148
   ],
   "/art/environment/casa-caverna.png": [
-    0.04297
+    0.02148
   ],
   "/art/environment/casa-cura.png": [
-    0.02539
+    0.02148
   ],
   "/art/environment/casa-estalagem.png": [
-    0.03125
+    0.02148
   ],
   "/art/environment/casa-padaria.png": [
-    0.02344
+    0.02148
   ],
   "/art/environment/casa-pedra.png": [
-    0.03516
+    0.02148
   ],
   "/art/environment/casa-vila.png": [
-    0.02344
+    0.02148
   ],
   "/art/environment/cave-boulder.png": [
     0.05469
@@ -411,7 +411,7 @@ export const SPRITE_FOOT_V: Record<string, readonly number[]> = {
     0.03125
   ],
   "/art/environment/woodcutter-hut.png": [
-    0.02344
+    0.02148
   ],
   "/art/people/artisan.png": [
     0.02148

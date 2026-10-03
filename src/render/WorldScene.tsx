@@ -15,7 +15,6 @@ import { ItemPickups } from './ItemPickups';
 import { Lighting } from './Lighting';
 import { Effects } from './Effects';
 import { StatusAuras } from './StatusAuras';
-import { CAMERA_OFFSET } from './camera';
 import { CloudShadows } from './CloudShadows';
 import { GroundShadows } from './GroundShadows';
 import { WaterSurface } from './WaterSurface';
@@ -26,6 +25,8 @@ import { preferredRenderDpr } from './resolutionBudget';
 import { NearbyTextureWarmup } from './NearbyTextureWarmup';
 import { AmbientBirds } from './AmbientBirds';
 import { DepthOfField } from './DepthOfField';
+import { cameraOffsetForSettings, DEFAULT_CAMERA_LAB_SETTINGS, type CameraLabSettings } from './cameraLabSettings';
+import { setSpriteCameraAppearance } from './spriteDepth';
 
 function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:boolean}) {
   const accumulated=useRef(0);
@@ -49,12 +50,15 @@ function SimulationLoop({game,orientationPaused}:{game:Game;orientationPaused:bo
   return null;
 }
 
-function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|null>}) {
+function CameraRig({game,cameraRef,cameraLab}:{game:Game;cameraRef:RefObject<THREE.Camera|null>;cameraLab:CameraLabSettings}) {
   const {camera,size,invalidate}=useThree();
   useEffect(()=>{cameraRef.current=camera;return()=>{cameraRef.current=null;};},[camera,cameraRef]);
   useEffect(()=>{if(game.mode==='dialog')invalidate();},[game.mode,invalidate]);
   const look=useMemo(()=>new THREE.Vector3(),[]);
   const target=useMemo(()=>new THREE.Vector3(),[]);
+  const offset=useMemo(()=>cameraOffsetForSettings(cameraLab),
+    [cameraLab.elevation,cameraLab.azimuth,cameraLab.distance]);
+  useEffect(()=>()=>setSpriteCameraAppearance(null),[]);
   const previousPlayer=useRef({x:game.player.x,z:game.player.z,mode:game.mode});
   const leadOffset=useRef({x:0,z:0});
   const timeSinceMovement=useRef(1);
@@ -68,10 +72,11 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
     const movingContinuously=game.mode==='explore'&&previous.mode==='explore'&&movement>0.003&&movement<1;
     timeSinceMovement.current=movingContinuously?0:Math.min(1,timeSinceMovement.current+delta);
     const walking=game.mode==='explore'&&timeSinceMovement.current<0.2&&Math.hypot(game.move.x,game.move.z)>0.1;
-    const desiredLead=walking
+    const rawLead=walking
       ?cameraLookAhead(game.move.x*4,game.move.z*4,size.width,size.height)
       :{x:0,z:0};
-    leadOffset.current=smoothCameraLookAhead(leadOffset.current,desiredLead,delta);
+    const desiredLead={x:rawLead.x*cameraLab.lookAhead,z:rawLead.z*cameraLab.lookAhead};
+    leadOffset.current=smoothCameraLookAhead(leadOffset.current,desiredLead,delta,cameraLab.leadResponse);
     previousPlayer.current={x:player.x,z:player.z,mode:game.mode};
     if(battle?.captureSequence?.success){
       const capture=battle.captureSequence;
@@ -103,6 +108,10 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
       const lead=game.mode==='explore'?leadOffset.current:{x:0,z:0};
       target.set(player.x+lead.x,h,player.z+lead.z);
     }
+    target.x+=cameraLab.focusX;
+    target.y+=cameraLab.focusHeight;
+    target.z+=cameraLab.focusZ;
+    setSpriteCameraAppearance(cameraLab);
     const baseZoom=cameraZoom(size.width,size.height,!!battle);
     const introProgress=battle?1-battle.intro/BATTLE_INTRO_SECONDS:0;
     const introPush=battle&&battle.intro>0?1+0.035*Math.sin(Math.PI*introProgress):1;
@@ -114,24 +123,24 @@ function CameraRig({game,cameraRef}:{game:Game;cameraRef:RefObject<THREE.Camera|
       if(game.mode==='dialog')interactionPush=1.22;
       else if(game.mode==='explore'&&game.playerPickupTime>0)interactionPush=1.18;
     }
-    const zoom=capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):finish?finishZoom:baseZoom*introPush*interactionPush;
-    const desiredFov=perspectiveFovForZoom(size.height,zoom,CAMERA_OFFSET.length());
+    const zoom=(capture?.success?captureCameraZoom(size.width,size.height,capture.elapsed):
+      finish?finishZoom:baseZoom*introPush*interactionPush)*cameraLab.zoomScale;
+    const desiredFov=perspectiveFovForZoom(size.height,zoom,offset.length());
     if(camera instanceof THREE.PerspectiveCamera&&Math.abs(camera.fov-desiredFov)>0.01){
-      const zoomDamping=finish||capture?.success?6.5:battle?3.6:interactionPush>1?8:5.2;
-      camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,zoomDamping,delta);
+      camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,cameraLab.zoomResponse,delta);
       camera.updateProjectionMatrix();
     }
-    const desired=look.copy(target).add(CAMERA_OFFSET);
+    const desired=look.copy(target).add(offset);
     const positionDelta=camera.position.distanceToSquared(desired);
-    camera.position.lerp(desired,1-Math.exp(-(finish||capture?.success?8.5:battle?4.2:6.2)*delta));
+    camera.position.lerp(desired,1-Math.exp(-cameraLab.followResponse*delta));
     // Keep the projection angle fixed while the camera glides toward the arena.
-    camera.lookAt(look.copy(camera.position).sub(CAMERA_OFFSET));
+    camera.lookAt(look.copy(camera.position).sub(offset));
     if(game.mode==='dialog'&&(camera instanceof THREE.PerspectiveCamera&&Math.abs(camera.fov-desiredFov)>0.01||positionDelta>0.0004))invalidate();
   });
   return null;
 }
 
-function SceneContent({game,world,quality,orientationPaused,cameraRef,revision}:{game:Game;world:WorldData;quality:'high'|'low';orientationPaused:boolean;cameraRef:RefObject<THREE.Camera|null>;revision:number}) {
+function SceneContent({game,world,quality,orientationPaused,cameraRef,revision,cameraLab}:{game:Game;world:WorldData;quality:'high'|'low';orientationPaused:boolean;cameraRef:RefObject<THREE.Camera|null>;revision:number;cameraLab:CameraLabSettings}) {
   const {scene,gl}=useThree();
   useEffect(()=>{
     scene.fog=new THREE.Fog('#9cccd4',23,60);
@@ -143,9 +152,9 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef,revision}:
   },[scene,gl]);
   return <>
     <RenderResolution quality={quality}/>
-    <DepthOfField game={game} quality={quality}/>
+    <DepthOfField game={game} quality={quality} cameraLab={cameraLab}/>
     <SimulationLoop game={game} orientationPaused={orientationPaused}/>
-    <CameraRig game={game} cameraRef={cameraRef}/>
+    <CameraRig game={game} cameraRef={cameraRef} cameraLab={cameraLab}/>
     <CloudShadows game={game} world={world}/>
     <Lighting game={game} quality={quality}/>
     <NearbyTextureWarmup game={game} world={world} revision={revision}/>
@@ -164,14 +173,16 @@ function SceneContent({game,world,quality,orientationPaused,cameraRef,revision}:
   </>;
 }
 
-export function WorldScene({game,quality,orientationPaused=false,cameraRef}:{game:Game;quality:'high'|'low';orientationPaused?:boolean;cameraRef:RefObject<THREE.Camera|null>}) {
+export function WorldScene({game,quality,orientationPaused=false,cameraRef,cameraLab=null}:{game:Game;quality:'high'|'low';orientationPaused?:boolean;cameraRef:RefObject<THREE.Camera|null>;cameraLab?:CameraLabSettings|null}) {
   const preview=useMemo(()=>generateWorld(40732),[]);
   const world=game.world||preview;
   useEffect(()=>{game.streamQuality=quality;game.world?.updateStreaming(game.player,game.move,quality,true);},[game,quality,game.world]);
   const framePaused=orientationPaused||game.mode==='pause'||game.mode==='dialog';
-  return <Canvas shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,powerPreference:'high-performance'}}
+  return <Canvas shadows="soft" frameloop={framePaused?'demand':'always'} gl={{antialias:false,stencil:true,powerPreference:'high-performance'}}
     dpr={preferredRenderDpr(window.innerWidth,window.innerHeight,window.devicePixelRatio,quality)}
-    camera={{position:[61,22,61],fov:perspectiveFovForZoom(window.innerHeight,cameraZoom(window.innerWidth,window.innerHeight,false),CAMERA_OFFSET.length()),near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
-    <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef} revision={game.world?.revision??0}/>
+    camera={{position:[61,22,61],fov:perspectiveFovForZoom(window.innerHeight,
+      cameraZoom(window.innerWidth,window.innerHeight,false)*DEFAULT_CAMERA_LAB_SETTINGS.zoomScale,
+      DEFAULT_CAMERA_LAB_SETTINGS.distance),near:0.1,far:150}} fallback={<div className="webgl-fallback">Este dispositivo não oferece WebGL. Tente outro navegador.</div>}>
+    <SceneContent game={game} world={world} quality={quality} orientationPaused={orientationPaused} cameraRef={cameraRef} revision={game.world?.revision??0} cameraLab={cameraLab??DEFAULT_CAMERA_LAB_SETTINGS}/>
   </Canvas>;
 }

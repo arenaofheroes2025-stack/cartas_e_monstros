@@ -10,9 +10,9 @@ describe('enquadramento da câmera',()=>{
     expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));
   });
   it('mantém a exploração próxima do herói em desktop e celular',()=>{
-    expect(cameraZoom(1280,800,false)).toBe(108);
-    expect(cameraZoom(844,390,false)).toBe(77);
-    expect(cameraZoom(390,844,false)).toBe(87);
+    expect(cameraZoom(1280,800,false)).toBe(102);
+    expect(cameraZoom(844,390,false)).toBe(73);
+    expect(cameraZoom(390,844,false)).toBe(83);
     expect(cameraZoom(844,390,true)).toBeGreaterThan(cameraZoom(844,390,false));
   });
   it.each([[1280,720],[844,390]])('mostra objetos abaixo menores ao subir em %ix%i',(width,height)=>{

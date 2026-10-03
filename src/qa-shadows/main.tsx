@@ -64,7 +64,7 @@ function App() {
   return <main className="qa-app">
     <header className="qa-header">
       <div className="qa-brand"><span className="qa-mark">✦</span><div><small>CARTAS E MONSTROS · FERRAMENTA DE QA</small><strong>Laboratório de sombras</strong></div></div>
-      <div className="qa-header-actions"><span className="qa-live"><i/>Prévia ao vivo</span><a href="/">Voltar ao jogo <span aria-hidden="true">↗</span></a></div>
+      <div className="qa-header-actions"><span className="qa-live"><i/>Prévia ao vivo</span><a href="/qa-posicao-assets.html">Posição dos assets ↗</a><a href="/">Voltar ao jogo <span aria-hidden="true">↗</span></a></div>
     </header>
     <div className="qa-layout">
       <section className="qa-stage" aria-label="Cena de teste das sombras">

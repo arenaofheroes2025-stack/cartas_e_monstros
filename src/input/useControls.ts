@@ -24,8 +24,10 @@ export function useControls(game:Game,blocked=false,onBag?:()=>void):Controls {
     const down=(event:KeyboardEvent)=>{
       if(blocked)return;
       const target=event.target as HTMLElement;
-      if(target?.tagName==='INPUT'||target?.tagName==='TEXTAREA')return;
       const key=event.key.toLowerCase();
+      const movementOnSlider=target instanceof HTMLInputElement&&target.type==='range'&&
+        ['w','a','s','d'].includes(key);
+      if((target?.tagName==='INPUT'||target?.tagName==='TEXTAREA')&&!movementOnSlider)return;
       if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(key))event.preventDefault();
       keys.current.add(key);update();
       if(event.repeat){if(key==='q'&&game.battleMenu==='items')qHeldViaRepeat.current=true;return;}

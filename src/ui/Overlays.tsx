@@ -75,12 +75,13 @@ export function CollectionPanel({game,covered=false,onClose,onDetails}:{game:Gam
   </div></div>;
 }
 
-export function PausePanel({game,quality,setQuality,pwa}:{game:Game;quality:'high'|'low';setQuality:(v:'high'|'low')=>void;pwa:PwaInstallState}) {
+export function PausePanel({game,quality,setQuality,pwa,onCameraLab}:{game:Game;quality:'high'|'low';setQuality:(v:'high'|'low')=>void;pwa:PwaInstallState;onCameraLab:()=>void}) {
   return <div className="overlay"><div className="modal-panel pause-panel"><div className="eyebrow">PAUSA</div><h2>A aventura espera</h2><p>O mundo e o relógio param enquanto este menu está aberto.</p>
     <button className="primary" onClick={()=>game.togglePause()}>Continuar</button>
     <button className="secondary" onClick={()=>{game.persist();game.notify('Jogo salvo neste dispositivo.');game.togglePause();}}>Salvar agora</button>
     <PwaInstallButton pwa={pwa}/>
     <div className="setting-row"><span>Qualidade gráfica</span><div className="segment"><button className={quality==='high'?'selected':''} onClick={()=>setQuality('high')}>Alta</button><button className={quality==='low'?'selected':''} onClick={()=>setQuality('low')}>Leve</button></div></div>
+    {game.previousMode==='explore'&&<button className="secondary" onClick={onCameraLab}>Testar câmera no jogo</button>}
     <div className="controls-copy">Exploração: WASD ou setas para andar, Z para interagir. Batalha: setas para andar · Z atacar · X esquivar · C especial · A perseguir/voltar · S cartas · Q mochila. Espaço pula · Esc pausa.</div>
     <button className="subtle-link" onClick={()=>{game.persist();window.location.reload();}}>Voltar ao início</button>
   </div></div>;

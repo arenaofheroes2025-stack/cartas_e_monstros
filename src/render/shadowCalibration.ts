@@ -9,21 +9,21 @@ interface GroupCalibration {
 // Approved in the shadow laboratory. Side/depth follow the fixed camera axes.
 export const SHADOW_CALIBRATION = {
   azimuth:12,
-  elevation:68,
-  casterHeight:4.4,
-  reach:1,
-  opacity:0.48,
-  footGain:1.2,
-  softness:0.3,
-  sunStrength:1.85,
-  sunOffset:{x:-24.4,y:72,z:-15.84},
+  elevation:63,
+  casterHeight:4.3,
+  reach:0.85,
+  opacity:0.5,
+  footGain:0.85,
+  softness:0.49,
+  sunStrength:2.15,
+  sunOffset:{x:-30.77,y:72,z:-19.98},
   groups:{
-    personagens:{heightScale:0.9,side:0,depth:-0.05},
-    casas:{heightScale:1.45,side:0,depth:-1.75},
-    arvores:{heightScale:0.65,side:0.1,depth:-0.55},
-    pedras:{heightScale:1.2,side:0,depth:-0.6},
-    plantas:{heightScale:1.2,side:0.05,depth:-0.6},
-    objetos:{heightScale:0.7,side:0.1,depth:-0.5}
+    personagens:{heightScale:0.95,side:0,depth:0},
+    casas:{heightScale:1.7,side:-0.1,depth:-1.1},
+    arvores:{heightScale:0.95,side:0.05,depth:-0.25},
+    pedras:{heightScale:1.2,side:-0.05,depth:-0.45},
+    plantas:{heightScale:1.25,side:0,depth:-0.25},
+    objetos:{heightScale:0.9,side:-0.05,depth:-0.3}
   } satisfies Record<ShadowGroup,GroupCalibration>
 } as const;
 

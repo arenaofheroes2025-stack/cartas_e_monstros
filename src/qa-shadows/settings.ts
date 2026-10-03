@@ -80,7 +80,7 @@ export const DEFAULT_SETTINGS:ShadowSettings = {
 export const PRESETS:Record<string,ShadowSettings> = {
   'Jogo atual': DEFAULT_SETTINGS,
   'Sol mais alto': {...DEFAULT_SETTINGS,azimuth:0,elevation:82,casterHeight:3.2,opacity:0.5,footGain:1.4},
-  'Sombra visível': {...DEFAULT_SETTINGS,azimuth:12,elevation:68,casterHeight:4.4,opacity:0.48,softness:0.3}
+  'Sombra visível': {...DEFAULT_SETTINGS,azimuth:12,elevation:68,casterHeight:4.4,opacity:SHADOW_CALIBRATION.opacity,softness:0.3}
 };
 
 export function shadowSunOffset(settings:ShadowSettings):{x:number;y:number;z:number} {

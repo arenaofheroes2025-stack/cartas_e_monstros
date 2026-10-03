@@ -8,6 +8,7 @@ import { terrainAtlas } from './art';
 import { withCloudShadows } from './CloudShadows';
 import { CHUNK_SIZE, useChunkVisibility } from './ChunkVisibility';
 import { WorldStore } from '../game/worldStore';
+import { markGroundStencil } from './assetPositionCalibration';
 
 const CHUNK = CHUNK_SIZE;
 const SURFACE = 0.1;
@@ -257,7 +258,7 @@ export const TerrainChunks=memo(function TerrainChunks({world,revision=0}:{world
       `);
     };
     surface.customProgramCacheKey=()=> 'terrain-world-brush-v4-continuous-exterior';
-    return surface;
+    return markGroundStencil(surface);
   },[brush,urbanBrush]);
   useEffect(()=>()=>material.dispose(),[material]);
   const chunks=[];

@@ -3,10 +3,10 @@ import { BATTLE_RECALL_END_SECONDS, BATTLE_ZOOM_OUT_END_SECONDS, CAPTURE_RECALL_
 /** Desired pixels per world unit at the player's elevation. */
 export function cameraZoom(width:number,height:number,inBattle:boolean):number {
   const portrait=height>width;
-  if(width>=1000)return inBattle?116:108;
-  if(portrait)return inBattle?98:87;
-  if(height<=500)return inBattle?87:77;
-  return inBattle?94:81;
+  if(width>=1000)return inBattle?110:102;
+  if(portrait)return inBattle?93:83;
+  if(height<=500)return inBattle?83:73;
+  return inBattle?89:77;
 }
 
 /** Match the old framing at the focus plane while allowing real depth perspective. */

@@ -229,8 +229,8 @@ await normalizeCells(source('people','cartographer-walk.png'),3,1,384,['cartogra
 await normalizeCells(source('people','botanist-walk.png'),3,1,384,['botanist'],'people',true,'lanczos3');
 await normalizeCells(source('people','baker-walk.png'),3,1,384,['baker'],'people',true,'lanczos3');
 await normalizeCells(source('people','courier-walk.png'),3,1,384,['courier'],'people',true,'lanczos3');
-await normalizeCells(source('environment','houses.png'),3,1,512,['casa-cartas','casa-cura','casa-arquivo'],'environment',false,'lanczos3');
-await normalizeCells(source('environment','town-houses.png'),2,1,512,['casa-padaria','casa-vila'],'environment',false,'lanczos3');
+for(const name of ['casa-cartas','casa-cura','casa-arquivo','casa-padaria','casa-vila'])
+  await normalizeCells(source('environment','house-perspective',`${name}.png`),1,1,512,[name],'environment',false,'lanczos3');
 await normalizeCells(source('environment','shrines.png'),3,1,256,['selo-natureza','selo-fogo','selo-agua'],'environment');
 await normalizeCells(source('environment','props.png'),3,2,256,['tree','willow','rock','reeds','flowers','lamp'],'environment',false,'nearest',true);
 await normalizeCells(source('environment','town-props.png'),3,2,256,['village-lamp','bloom-bush','bench','well','crates','flower-planter'],'environment',false,'lanczos3');
@@ -288,9 +288,8 @@ for(const [name,count] of Object.entries(treeWindAnimations)){
     await sharp({create:{width:256*count,height:256,channels:4,background:'#00000000'}})
       .composite(frames.map((input,index)=>({input,left:256*index,top:0}))).png().toBuffer());
 }
-await normalizeCells(source('environment','houses-variants.png'),2,1,512,['woodcutter-hut','boathouse'],'environment',false,'lanczos3');
-for(const name of ['casa-estalagem','casa-pedra','casa-caverna'])
-  await normalizeCells(source('environment','new-buildings',`${name}-clean.png`),1,1,512,[name],'environment',false,'lanczos3');
+for(const name of ['woodcutter-hut','boathouse','casa-estalagem','casa-pedra','casa-caverna'])
+  await normalizeCells(source('environment','house-perspective',`${name}.png`),1,1,512,[name],'environment',false,'lanczos3');
 for(const name of ['carroca-mercador','arco-pedra'])
   await normalizeCells(source('environment','new-buildings',`${name}-clean.png`),1,1,256,[name],'environment',false,'lanczos3');
 for(const element of ['fogo','agua','natureza'])

@@ -22,11 +22,15 @@ export default defineConfig({
         { src: '/art/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
       ]
     },
-    workbox: { globPatterns: ['**/*.{js,css,html,svg,png,webp}'] }
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
+      navigateFallbackDenylist: [/^\/qa-(?:sombras|posicao-assets)\.html$/]
+    }
   })],
   build: { rollupOptions: { input: {
     game: 'index.html',
-    shadowLab: 'qa-sombras.html'
+    shadowLab: 'qa-sombras.html',
+    assetPositionLab: 'qa-posicao-assets.html'
   } } },
   test: { environment: 'node', include: ['src/**/*.test.{ts,tsx}'] }
 });

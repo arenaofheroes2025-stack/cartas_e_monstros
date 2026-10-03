@@ -10,6 +10,7 @@ import { WorldStore } from '../game/worldStore';
 import type { WorldChunk } from '../game/chunkWorld';
 import { withCloudShadows } from './CloudShadows';
 import { daylightPhase } from './daylightPhase';
+import { markGroundStencil } from './assetPositionCalibration';
 
 const SURFACE=0.1;
 const waterColumn=TILE_ATLAS.base.water%TILE_ATLAS.columns;
@@ -236,8 +237,8 @@ export const WaterSurface=memo(function WaterSurface({world,game,revision=0}:{wo
   const time=useMemo<THREE.IUniform<number>>(()=>({value:0}),[]);
   const artwork=useMemo<THREE.IUniform<number>>(()=>({value:0.55}),[]);
   const sunlight=useMemo<THREE.IUniform<number>>(()=>({value:1}),[]);
-  const material=useMemo(()=>animatedWaterMaterial(time,artwork,sunlight),[time,artwork,sunlight]);
-  const floorMaterial=useMemo(()=>underwaterFloorMaterial(time),[time]);
+  const material=useMemo(()=>markGroundStencil(animatedWaterMaterial(time,artwork,sunlight)),[time,artwork,sunlight]);
+  const floorMaterial=useMemo(()=>markGroundStencil(underwaterFloorMaterial(time)),[time]);
   const chunks=useMemo(()=>{
     const width=WORLD_SIZE/CHUNK_SIZE;
     const groups=Array.from({length:width*width},()=>[] as Tile[]);

@@ -1,12 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { generateWorld, tileAt } from '../game/world';
-import { makeProjectedShadowGeometry, projectedPoint, projectedShadowMaterial, shadowCasterHeight } from './ProjectedShadows';
+import { makeProjectedShadowGeometry, projectedPoint, projectedShadowMaterial, setProjectedShadowOpacity, shadowCasterHeight } from './ProjectedShadows';
 import { reliefGeometry } from './GroundShadows';
+import { SHADOW_CALIBRATION } from './shadowCalibration';
 import { SUN_OFFSET } from './sun';
 import { spriteFootV } from './spriteAnchors';
 
 describe('sombras do sol',()=>{
+  it('não permite que sombras de itens alterem a opacidade dos demais assets',()=>{
+    const asset=projectedShadowMaterial(new THREE.Texture());
+    const item=projectedShadowMaterial(new THREE.Texture(),0.38);
+    try {
+      setProjectedShadowOpacity(0.68);
+      item.uniforms.uOpacity.value=0.36;
+      expect(asset.uniforms.uOpacity.value).toBe(0.68);
+      expect(item.uniforms.uOpacity.value).toBe(0.36);
+    } finally {
+      setProjectedShadowOpacity(SHADOW_CALIBRATION.opacity);
+      asset.dispose();
+      item.dispose();
+    }
+  });
   it('projeta a silhueta do próprio PNG na direção oposta ao sol',()=>{
     const world=generateWorld(40732);
     const origin={x:world.start.x+0.5,z:world.start.z+0.5,
@@ -19,7 +34,7 @@ describe('sombras do sol',()=>{
     expect(head[0]).toBeGreaterThan(foot[0]);
     expect(head[2]).toBeGreaterThan(foot[2]);
     expect(Math.hypot(head[0]-foot[0],head[2]-foot[2])).toBeCloseTo(
-      2/Math.tan(68*Math.PI/180),1);
+      2*SHADOW_CALIBRATION.reach/Math.tan(SHADOW_CALIBRATION.elevation*Math.PI/180),1);
     const geometry=makeProjectedShadowGeometry(world,[origin],1.4,2);
     expect(geometry.getAttribute('uv').count).toBe(36);
     expect(geometry.getAttribute('position').count).toBe(36);
@@ -42,7 +57,7 @@ describe('sombras do sol',()=>{
       y:0.1+tileAt(world,world.start.x,world.start.z)!.height*0.85};
     const houseHeight=7.8;
     const projected=shadowCasterHeight(houseHeight);
-    expect(projected).toBe(4.4);
+    expect(projected).toBe(SHADOW_CALIBRATION.casterHeight);
     const foot=projectedPoint(world,origin,6.25,projected,0.5,0);
     const roof=projectedPoint(world,origin,6.25,projected,0.5,1);
     expect(foot[0]).toBeCloseTo(origin.x,4);

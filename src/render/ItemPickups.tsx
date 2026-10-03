@@ -13,7 +13,7 @@ function Pickup({game,item}:{game:Game;item:ItemSpawn}) {
   const x=item.x+0.5,z=item.z+0.5;
   const texture=imageTexture(itemArt(item.itemId));
   const geometry=useMemo(()=>makeProjectedShadowGeometry(game.world!,[{x,z,y:game.getGroundHeight(x,z)+0.1}],SIZE,SIZE),[game.world,x,z]);
-  const material=useMemo(()=>{const value=projectedShadowMaterial(texture);value.uniforms.uAlphaCut.value=0.2;value.uniforms.uOpacity.value=0.38;return value;},[texture]);
+  const material=useMemo(()=>{const value=projectedShadowMaterial(texture,0.38);value.uniforms.uAlphaCut.value=0.2;return value;},[texture]);
   useEffect(()=>()=>{geometry.dispose();material.dispose();},[geometry,material]);
   useFrame(({camera})=>{
     if(!mesh.current||!shadow.current||!game.world)return;

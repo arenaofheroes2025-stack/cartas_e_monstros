@@ -17,20 +17,20 @@ describe('calibração das sombras aprovada',()=>{
   });
   it('desloca só a sombra e escala a altura pela família',()=>{
     const house=shadowGroupOffset('casas');
-    expect(house.x).toBeCloseTo(-1.75*Math.SQRT1_2);
-    expect(house.z).toBeCloseTo(-1.75*Math.SQRT1_2);
-    expect(calibratedCasterHeight(8,'casas')).toBeCloseTo(4.4*1.45);
-    expect(calibratedCasterHeight(2,'personagens')).toBeCloseTo(1.8);
-    expect(SHADOW_CALIBRATION.sunOffset).toEqual({x:-24.4,y:72,z:-15.84});
+    expect(house.x).toBeCloseTo(-1.2*Math.SQRT1_2);
+    expect(house.z).toBeCloseTo(-1*Math.SQRT1_2);
+    expect(calibratedCasterHeight(8,'casas')).toBeCloseTo(4.3*1.7);
+    expect(calibratedCasterHeight(2,'personagens')).toBeCloseTo(1.9);
+    expect(SHADOW_CALIBRATION.sunOffset).toEqual({x:-30.77,y:72,z:-19.98});
   });
   it('mantém os parâmetros atualizados de cada grupo',()=>{
     expect(SHADOW_CALIBRATION.groups).toEqual({
-      personagens:{heightScale:0.9,side:0,depth:-0.05},
-      casas:{heightScale:1.45,side:0,depth:-1.75},
-      arvores:{heightScale:0.65,side:0.1,depth:-0.55},
-      pedras:{heightScale:1.2,side:0,depth:-0.6},
-      plantas:{heightScale:1.2,side:0.05,depth:-0.6},
-      objetos:{heightScale:0.7,side:0.1,depth:-0.5}
+      personagens:{heightScale:0.95,side:0,depth:0},
+      casas:{heightScale:1.7,side:-0.1,depth:-1.1},
+      arvores:{heightScale:0.95,side:0.05,depth:-0.25},
+      pedras:{heightScale:1.2,side:-0.05,depth:-0.45},
+      plantas:{heightScale:1.25,side:0,depth:-0.25},
+      objetos:{heightScale:0.9,side:-0.05,depth:-0.3}
     });
   });
 });

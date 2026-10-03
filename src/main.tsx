@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import type { Camera } from 'three';
 import { Game } from './game/game';
 import { WorldScene } from './render/WorldScene';
+import { readCameraLabSettings, saveCameraLabSettings } from './render/cameraLabSettings';
+import { CameraLabPanel } from './ui/CameraLabPanel';
 import { useControls } from './input/useControls';
 import { StartMenu } from './ui/StartMenu';
 import { Hud } from './ui/Hud';
@@ -36,6 +38,8 @@ function App() {
   const [detailsUid,setDetailsUid]=useState<string|null>(null);
   const detailsReturnFocus=useRef<HTMLElement|null>(null);
   const [enemyDetails,setEnemyDetails]=useState(false);
+  const [cameraLabOpen,setCameraLabOpen]=useState(false);
+  const [cameraLabSettings,setCameraLabSettings]=useState(readCameraLabSettings);
   const [quality,setQualityState]=useState<'high'|'low'>(()=>{
     const stored=localStorage.getItem('cartas-quality');
     if(stored==='high'||stored==='low')return stored;
@@ -46,6 +50,19 @@ function App() {
   const overlayOpen=collection||detailsUid!==null||bagOpen||mapOpen||enemyDetails||game.shopOpen||pwa.helpOpen;
   const toggleBag=useCallback(()=>setBagOpen(value=>!value),[]);
   const controls=useControls(game,orientationPaused||overlayOpen,toggleBag);
+  useEffect(()=>saveCameraLabSettings(cameraLabSettings),[cameraLabSettings]);
+  useEffect(()=>{
+    if(cameraLabOpen&&game.mode!=='explore')setCameraLabOpen(false);
+  },[cameraLabOpen,game.mode]);
+  useEffect(()=>{
+    if(!cameraLabOpen)return;
+    const close=(event:KeyboardEvent)=>{
+      if(event.key!=='Escape')return;
+      event.preventDefault();event.stopImmediatePropagation();setCameraLabOpen(false);
+    };
+    window.addEventListener('keydown',close,true);
+    return()=>window.removeEventListener('keydown',close,true);
+  },[cameraLabOpen]);
   const openDetails=useCallback((uid:string)=>{
     detailsReturnFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
     setDetailsUid(uid);
@@ -68,19 +85,23 @@ function App() {
   },[game]);
   const setQuality=(value:'high'|'low')=>{setQualityState(value);localStorage.setItem('cartas-quality',value);};
   const inGame=game.mode!=='title';
+  const activeCameraLab=cameraLabOpen&&game.mode==='explore'?cameraLabSettings:null;
   const detailedMonster=detailsUid?game.save?.party.find(monster=>monster.uid===detailsUid)??
     game.save?.collection.find(monster=>monster.uid===detailsUid):undefined;
   return <main className="game-app">
-    <div className="scene"><WorldScene game={game} quality={quality} orientationPaused={orientationPaused||overlayOpen} cameraRef={cameraRef}/></div>
+    <div className="scene"><WorldScene game={game} quality={quality} orientationPaused={orientationPaused||overlayOpen} cameraRef={cameraRef} cameraLab={activeCameraLab}/></div>
     {game.mode==='title'?<StartMenu game={game} pwa={pwa}/>:null}
-    {inGame&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onMap={()=>setMapOpen(true)} onCompanion={openDetails}/>:null}
+    {inGame&&!cameraLabOpen&&game.mode!=='dialog'&&!game.battle?.finisher&&!game.battle?.captureSequence&&!(game.mode==='battle'&&(game.battle?.intro??0)>0)?<Hud game={game} onCollection={()=>setCollection(true)} onBag={()=>setBagOpen(true)} onMap={()=>setMapOpen(true)} onCompanion={openDetails}/>:null}
     {game.mode==='battle'&&game.battle?.intro===0?<BattleHud game={game} cameraRef={cameraRef} onAllyDetails={openDetails} onEnemyDetails={()=>setEnemyDetails(true)}/>:null}
     {game.mode==='battle'&&game.battleMenu==='party'?<BattleMenuPanel game={game}/>:null}
     {bagOpen?<InventoryPanel game={game} covered={detailsUid!==null} onClose={()=>setBagOpen(false)} onCompanion={openDetails}/>:null}
     {mapOpen?<WorldMapPanel game={game} onClose={()=>setMapOpen(false)}/>:null}
     {game.shopOpen?<ShopPanel game={game}/>:null}
-    {inGame&&!orientationPaused&&!game.shopOpen?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
-    {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}/>:null}
+    {inGame&&!cameraLabOpen&&!orientationPaused&&!game.shopOpen?<WorldInteraction game={game} cameraRef={cameraRef}/>:null}
+    {game.mode==='pause'?<PausePanel game={game} quality={quality} setQuality={setQuality} pwa={pwa}
+      onCameraLab={()=>{game.togglePause();setCameraLabOpen(true);}}/>:null}
+    {activeCameraLab&&<CameraLabPanel settings={cameraLabSettings} setSettings={setCameraLabSettings}
+      onClose={()=>setCameraLabOpen(false)}/>}
     {collection?<CollectionPanel game={game} covered={detailsUid!==null} onClose={()=>setCollection(false)} onDetails={openDetails}/>:null}
     {detailedMonster?<CompanionDetails game={game} monster={detailedMonster} onClose={closeDetails}
       onSelect={setDetailsUid}
